@@ -906,3 +906,189 @@ set order_mode_num = decode(order_mode,
 DECODE translates the ORDER_MODE column just as CASE does. If the values in the column do not match any of the values in the first of each pair of constants, DECODE returns 0.
 
 ---
+5-2. Sorting on Null Values
+Problem
+Results for a business report are sorted by department manager, but you need to find a way to override the sorting of nulls so they appear where you want at the beginning or end of the report.
+
+Solution
+Oracle provides two extensions to the ORDER BY clause to enable SQL developers to treat NULL values separately from the known data, allowing any NULL entries to sort explicitly to the beginning or end of the results.
+For our recipe, we’ll assume that the report desired is based on the department names and manager identifiers from the HR.DEPARTMENTS table. This SQL selects this data and uses the NULLS FIRST option to explicitly control NULL handling.
+
+select department_name, manager_id from hr.departments
+order by manager_id nulls first;
+
+The results present the “unmanaged” departments first, followed by the departments with managers by MANAGER_ID. We’ve abbreviated the results to save trees.
+
+
+
+How It Works
+Normally, Oracle sorts NULL values to the end of the results for default ascending sorts, and to the beginning of the results for descending sorts. The NULLS FIRST ORDER BY option, together with its complement, NULLS LAST, overrides Oracle’s normal sorting behavior for NULL values and places them exactly where you specify: either at the beginning or end of the results.
+Your first instinct when presented with the problem of NULL values sorting to the “wrong” end of your data might be to simply switch from ascending to descending sort, or vice versa. But if you think about more complex queries, subselects using ROWNUM or ROWID tricks, and other queries that need to
+
+
+preserve data order while getting NULL values moved, you’ll see that NULLS FIRST and NULLS LAST have real utility. Using them guarantees where the NULL values appear, regardless of how the data values are sorted.
+
+---
+5-4. Testing for the Existence of Data
+Problem
+You would like to compare the data in two related tables, to show where matching data exists, and to also show where matching data doesn’t exist.
+
+Solution
+Oracle supports the EXISTS and NOT EXISTS predicates, allowing you to correlate the data in one table or expression with matching or missing data in another table or expression. We’ll use the hypothetical situation of needing to find which departments currently have managers. Phrasing this in a way that best illustrates the EXISTS solution, the next SQL statement finds all departments where a manager is known to exist.
+
+select department_name from hr.departments d where exists
+(select e.employee_id
+
+
+from hr.employees e
+where d.manager_id = e.employee_id);
+
+The complement, testing for non-existence, is shown in the next statement. We ask to find all departments in HR.DEPARTMENTS with a manager that does not exist in the data held in HR.EMPLOYEES.
+
+select department_name from hr.departments d where not exists (select e.employee_id from hr.employees e
+where d.manager_id = e.employee_id);
+
+How It Works
+In any database, including Oracle, the EXISTS predicate answers the question, “Is there a relationship between two data items, and by extension, what items in one set are related to items in a second set?” The NOT EXISTS variant tests the converse, “Can it definitively be said that no relationship exists between two sets of data, based on a proposed criterion?” Each approach is referred to as correlation or a correlated subquery (literally, co-relation, sharing a relationship).
+Interestingly, Oracle bases its decision on whether satisfying data exists solely on this premise: was a matching row found that satisfied the subquery’s predicates? It’s almost too subtle, so we’ll point out the obvious thing Oracle isn’t seeking. What you select in the inner correlated query doesn’t matter—it’s only the criteria that matter. So you’ll often see versions of existence tests that form their subselect by selecting the value 1, the entire row using an asterisk, a literal value, or even NULL. Ultimately, it’s immaterial in this form of the recipe. The key point is the correlation expression. In our case, it’s WHERE D.MANAGER_ID = E.EMPLOYEE_ID.
+This also helps explain what Oracle is doing in the second half of the recipe, where we’re looking for DEPARTMENT_NAME values for rows where the MANAGER_ID doesn’t exist in the HR.EMPLOYEES table. Oracle drives the query by evaluating, for each row in the outer query, whether no rows are returned by the inner correlated query. Oracle doesn’t care what data exists in other columns not in the correlation criteria. It pays to be careful using such NOT EXISTS clauses on their own—not because the logic won’t work but because against large data sets, the optimizer can decided to repeatedly scan the inner data in full, which might affect performance. In our example, so long as a manager’s ID listed for a department is not found in the HR.EMPLOYEES table, the NOT EXISTS predicate will be satisfied, and department included in the results.
+
+
+Caution Correlated subqueries satisfy an important problem-solving niche, but it’s crucial to remember the nature of NULL values when using either EXISTS or NOT EXISTS. NULL values are not equivalent to any other value, including other NULL values. This means that a NULL in the outer part of a correlated query will never satisfy the
+correlation criterion for the inner table, view, or expression. In practice, this means you’ll see precisely the opposite effect as the one you might expect because the EXISTS test will always return false, even if both the inner and outer data sources have NULL values for the correlation, and NOT EXISTS will always return true. Not
+what the lay person would expect.
+
+---
+
+5-5. Conditional Branching In One SQL Statement
+Problem
+In order to produce a concise result in one query, you need to change the column returned on a row-by- row basis, conditional on a value from another row. You want to avoid awkward mixes of unions, subqueries, aggregation, and other inelegant techniques.
+
+Solution
+For circumstances where you need to conditionally branch or alternate between source data, Oracle provides the CASE statement. CASE mimics the traditional switch or case statement found in many programming languages like C or Java.
+To bring focus to our example, we’ll assume our problem is far more tangible and straightforward. We want to find the date employees in the shipping department (with the DEPARTMENT_ID of 50) started their current job. We know their initial hire date with the firm is tracked in the HIRE_DATE column on the HR.EMPLOYEES table, but if they’ve had a promotion or changed roles, the date when they commenced their new position can be inferred from the END_DATE of their previous position in the HR.JOB_HISTORY table. We need to branch between HIRE_DATE or END_DATE for each employee of the shipping department accordingly, as shown in the next SQL statement.
+
+select e.employee_id, case
+when old.job_id is null then e.hire_date else old.end_date end
+job_start_date
+from hr.employees e left outer join hr.job_history old on e.employee_id = old.employee_id
+where e.department_id = 50 order by e.employee_id;
+Our results are very straightforward, hiding the complexity that went into picking the correct
+
+JOB_START_DATE.
+
+
+
+
+…
+
+How It Works
+Our recipe uses the CASE feature, in Search form rather than Simple form, to switch between HIRE_DATE
+and END_DATE values from the joined tables. In some respects, it’s easiest to think of this CASE operation
+
+
+as a combination of two SELECT statements in one. For employees with no promotions, it’s as if we were selecting as follows:
+select e.employee_id, e.hire_date…
+Whereas for employees that have had promotions, the CASE statement switches the SELECT to the following form:
+select e.employee_id, old.end_date…
+
+The beauty is in not having to explicitly code these statements yourself, and for far more complex uses of CASE, not having to code many dozens or hundreds of statement combinations.
+To explore the solution from the data’s perspective, the following SQL statement extracts the employee identifier and the hire and end dates using the same left outer join as our recipe.
+
+select e.employee_id, e.hire_date, old.end_date end from hr.employees e left outer join hr.job_history old on e.employee_id = old.employee_id
+
+where e.department_id = 50 order by e.employee_id;
+
+
+
+…
+The results show the data that drove the CASE function’s decision in our recipe. The values in bold were the results returned by our recipe. For the first, second, fourth, and fifth rows shown, END_DATE from the HR.JOB_HISTORY table is NULL, so the CASE operation returned the HIRE_DATE. For the third row, with EMPLOYEE_ID 122, END_DATE has a date value, and thus was returned in preference to HIRE_DATE when examined by our original recipe. There is a shorthand form of the CASE statement known as the Simple CASE that only operates against one column or expression and has THEN clauses for possible values. This wouldn’t have suited us as Oracle limits the use of NULL with the Simple CASE in awkward ways.
+
+---
+
+5-6. Conditional Sorting and Sorting By Function
+Problem
+While querying some data, you need to sort by an optional value, and where that value is not present, you’d like to change the sorting condition to another column.
+
+
+Solution
+Oracle supports the use of almost all of its expressions and functions in the ORDER BY clause. This includes the ability to use the CASE statement and simple and complex functions like arithmetic operators to dynamically control ordering. For our recipe, we’ll tackle a situation where we want to show employees ordered by highest-paid to lowest-paid.
+For those with a commission, we want to assume the commission is earned but don’t want to actually calculate and show this value; we simply want to order on the implied result. The following SQL leverages the CASE statement in the ORDER BY clause to conditionally branch sorting logic for those with and without a COMMISSION_PCT value.
+
+select employee_id, last_name, salary, commission_pct from hr.employees
+order by case
+when commission_pct is null then salary else salary * (1+commission_pct)
+end desc;
+
+We can see from just the first few rows of results how the conditional branching while sorting has worked.
+
+
+
+
+…
+Even though employees 101 and 102 have a higher base salary, the ORDER BY clause using CASE has correctly positioned employees 145 and 146 based on their included commission percentage.
+
+How It Works
+The selection of data for our results follows Oracle’s normal approach, so employee identifiers, last names, and so forth are fetched from the HR.EMPLOYEES table. For the purposes of ordering the data using our CASE expression, Oracle performs additional calculations that aren’t shown in the results. All the candidate result rows that have a non-NULL commission value have the product of COMMISSION_PCT and SALARY calculated and then used to compare with the SALARY figures for all other employees for ordering purposes.
+The next SELECT statement helps you visualize the data Oracle is deriving for the ordering calculation.
+
+select employee_id, last_name, commission_pct, salary, salary * (1+commission_pct) sal_x_comm
+from hr.employees;
+
+
+
+…
+
+The values in bold show the calculations Oracle used for ordering when evaluating the data via the CASE expression in the ORDER BY clause. The general form of the CASE expression can be expressed simply as follows.
+case
+when <expression, column, etc.> then <expression, column, literal, etc.> when <expression, column, etc.> then <expression, column, literal, etc.>
+…
+else <default expression for unmatched cases> end
+
+We won’t needlessly repeat what the Oracle manual covers in plenty of detail. In short, the CASE expression evaluates the first WHEN clause for a match and if satisfied, performs the THEN expression. If the first WHEN clause isn’t satisfied, it tries the second WHEN clause, and so on. If no matches are found, the ELSE default expression is evaluated.
+
+---
+
+5-7. Overcoming Issues and Errors when Subselects Return Unexpected Multiple Values
+Problem
+In working with data from a subselect, you need to deal with ambiguous situations where in some cases the subselect will return a single (scalar) value, and in other cases multiple values.
+
+Solution
+Oracle supports three expressions that allow a subselect to be compared based on a single column of results. The operators ANY, SOME, and ALL allow one or more single-column values from a subselect to be compared to data in an outer SELECT. Using these operators allows you to deal with situations where you’d like to code your SQL to handle comparisons with flexible set sizes.
+Our recipe focuses on using these expressions for a concrete business problem. The order-entry system tracks product information in the OE.PRODUCT_INFORMATION table, including the LIST_PRICE value. However, we know discounts are often offered, so we’d like to get an approximate idea of which items have never sold at full price. To do this, we could do a precise correlated subquery of every sale against list price. Before doing that, a very quick approximation can be done to see if any LIST_PRICE value is
+
+
+higher than any known sale price for any item, indicated by the UNIT_PRICE column of the
+OE.ORDER_ITEMS table. Our SELECT statement takes this form.
+select product_id, product_name from oe.product_information where list_price > ALL
+(select unit_price from oe.order_items);
+From this query, we see three results:
+PRODUCT_ID  PRODUCT_NAME
+2351    Desk - W/48/R
+3003    Laptop 128/12/56/v90/110
+2779    Desk - OS/O/F
+These results mean at least three items—two desks and a laptop—have never sold a full price.
+
+How It Works
+Our example’s use of the ALL expression allows Oracle to compare the UNIT_PRICE values from every sale, to see if any known sale price was greater than the LIST_PRICE for an item. Breaking down the steps that make this approach useful, we can first look at the subselect.
+
+select unit_price from oe.order_items
+
+This is a very simple statement that returns a single-column result set of zero or more items, shown next in abbreviated form.
+UNIT_PRICE
+13
+38
+43
+43
+482.9
+…
+665 rows selected.
+Based on those results, our outer SELECT statement compares each LIST_PRICE from the OE.PRODUCTION_INFORMATION table with every item in the list, as we are using the ALL expression. If the LIST_PRICE is greater than all of the returned values, the expression resolves to true, and the product is included in the results. Where even one of the UNIT_PRICE values returned exceeds the LIST_PRICE of an item, the expression is false and that row is discarded from further consideration.
+If you review that logic, you’ll realize this is not a precise calculation of every item that didn’t sell for full price. Rather, it’s just a quick approximation, though one that shows off the ALL technique quite well.
+The alternatives SOME and ANY, which are effectively synonyms, resolve the true/false determination based on only needing one item in the subselect to satisfy the SOME/ANY condition. Oracle will happily
+
+
+accept more than one item matching the SOME/ANY criteria, but only needs to determine one value to evaluate the subselect.
+
+
+---
