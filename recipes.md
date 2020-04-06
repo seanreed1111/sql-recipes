@@ -754,3 +754,155 @@ Ultimately, the key to handling NULLs in join conditions is based on knowing you
 
 ---
 
+4-1. Deriving New Columns
+Problem
+You don’t want to store redundant data in your database tables, but you want to be able to create totals, derived values, or alternate formats for columns within a row.
+
+
+Solution
+In your SELECT statements, apply Oracle built-in functions or create expressions on one or more columns in the table, creating a virtual column in the query results. For example, suppose you want to summarize total compensation for an employee, combining salary and commissions.
+In the sample tables included for the OE user from a default installation of Oracle, the ORDER_ITEMS
+table contains UNIT_PRICE and QUANTITY columns as follows:
+select * from order_items;
+
+
+665 rows selected
+To provide a line-item total in the query results, add an expression that multiplies unit price by quantity, as follows:
+select order_id, line_item_id, product_id,
+unit_price, quantity, unit_price*quantity line_total_price from order_items;
+
+---
+[tablefunc extension](https://www.postgresql.org/docs/current/tablefunc.html)
+
+---
+[crosstab function](https://www.vertabelo.com/blog/creating-pivot-tables-in-postgresql-using-the-crosstab-function/)
+
+---
+
+[stack overflow using crosstab to make a pivot table](https://stackoverflow.com/questions/20618323/create-a-pivot-table-with-postgresql)
+
+---
+4-6. Concatenating Data for Readability
+Problem
+For reporting and readability purposes, you want to combine multiple columns into a single output column, eliminating extra blank space and adding punctuation where necessary.
+
+Solution
+Use Oracle string concatenation functions or operators to save space in your report and make the output more readable. For example, in the EMPLOYEES table, you can use the || (two vertical bars) operator or the CONCAT function to combine the employee’s first and last name:
+
+select employee_id, last_name || ', ' || first_name full_name, email from employees
+;
+
+
+
+
+
+
+107 rows selected
+The query concatenates the last name, a comma, and the first name into a single string, aliased as FULL_NAME in the results. If your platform’s character set does not support using || as a concatenation operator (as some IBM mainframe character sets do), or you might soon migrate your SQL to such a platform, you can make your code more platform-independent by using the CONCAT functions instead:
+
+select employee_id, concat(concat(last_name,', '),first_name) full_name, email from employees
+;
+Because the CONCAT function only supports two operands as of Oracle Database 11g, concatenating more than two strings can make the code unreadable very fast!
+
+How It Works
+You can apply a number of different Oracle built-in functions to make your output more readable; some Oracle shops I’ve worked in relied solely on SQL*Plus for their reporting. Applying the appropriate functions and using the right SQL*Plus commands makes the output extremely readable, even with queries returning Oracle objects, currency columns, and long character strings.
+If your text-based columns have leading or trailing blanks (which of course should have been cleaned up on import or by the GUI form), or the column is a fixed-length CHAR column, you can get rid of leading and trailing blanks using the TRIM function, as in this example:
+
+select employee_id, trim(last_name) || ', ' || trim(first_name) full_name, email from employees
+;
+If you only want to trim leading or trailing blanks, you can use LTRIM or RTRIM respectively. If some of your employees don’t have first names (or last names), your output using any of the previous solutions would look a little odd:
+
+select employee_id, last_name || ', ' || first_name full_name, email from celebrity_employees
+;
+
+
+
+
+To remedy this situation, you can add the NVL2 function to your SELECT statement:
+select employee_id, trim(last_name) ||
+nvl2(trim(first_name),', ','') || trim(first_name) full_name,
+email
+from employees
+;
+The NVL2 function evaluates the first argument TRIM(FIRST_NAME). If it is not NULL, it returns ', ', otherwise it returns a NULL (empty string), so that our celebrity employees won’t have a phantom comma at the end of their name:
+
+
+
+Finally, you can also take advantage of the INITCAP function to fix up character strings that might have been entered in all caps or have mixed case. If your EMPLOYEES table had some rows with last name and first name missing, you could derive most of the employee names from the e-mail address by using a combination of SUBSTR, UPPER, and INITCAP as in this example:
+select employee_id, email,
+upper(substr(email,1,1)) || ' ' || initcap(substr(email,2)) name from employees
+;
+
+
+
+This solution is not ideal if the e-mail address does not contain the complete employee name or if the employee’s last name has two parts, such as McDonald, DeVry, or DeHaan.
+
+---
+4-7. Translating Strings to Numeric Equivalents
+Problem
+In an effort to centralize your domain code management and further normalize the structure of your database tables, you want to clean up and convert some text-format business attributes to numeric equivalents. This will enhance reporting capabilities and reduce data entry errors in the future.
+
+Solution
+Use the CASE function to translate business keys or other intelligent numeric keys to numeric codes that are centrally stored in a domain code table. For example, the ORDERS table of the OE schema contains a column ORDER_MODE that currently has four possible values, identified in Table 4-1.
+
+Table 4-1. Mapping the Text in the ORDER_MODE Column to Numeric Values
+
+
+
+The second column of Table 4-1 contains the numeric value we want to map to for each of the possible values in the ORDER_MODE column. Here is the SQL you use to add the new column to the table:
+alter table orders add (order_mode_num number);
+Oracle versions 9i and later include the CASE statement, which is essentially a way to more easily execute procedural code within the confines of the typically non-procedural SQL command language. The CASE statement has two forms: one for simpler scenarios with a single expression that is compared to a list of constants or expressions, and a second that supports evaluation of any combination of columns and expressions. In both forms, CASE returns a single result that is assigned to a column in the SELECT query or DML statement.
+The recipe solution using the simpler form of the CASE statement is as follows:
+update orders
+set order_mode_num = case order_mode
+when 'direct' then 1 when 'online' then 2 when 'walmart' then 3
+
+
+when 'amazon' then 4 else 0
+end
+;
+Once you run the UPDATE statement, you can drop the ORDER_MODE column after verifying that no other existing SQL references it.
+
+How It Works
+The CASE statement performs the same function as the older (but still useful in some scenarios) DECODE function, and is a bit more readable as well. For more complex comparisons, such as those evaluating more than one expression or column, you can use the second form of the CASE statement. In the second form, the CASE clause does not contain a column or expression; instead, each WHEN clause contains the desired comparison operation. Here is an example where we want to assign a special code of 5 when the order is an employee order (the CUSTOMER_ID is less than 102):
+update orders
+set order_mode_num = case
+when order_mode = 'direct' and customer_id < 102 then 5
+when order_mode = 'direct' then 1 when order_mode = 'online' then 2 when order_mode = 'walmart' then 3 when order_mode = 'amazon' then 4 else 0
+end
+;
+
+Note that in this scenario you need to check for the employee order first in the list of WHEN clauses, otherwise the ORDER_MODE column will be set to 1 and no customer orders will be flagged, since both conditions check for ORDER_MODE = 'direct'. For both DECODE and CASE, the evaluation and assignment stops as soon as Oracle finds the first expression that evaluates to TRUE.
+In the solution, the string 'direct' is translated to 1, 'online' is translated to 2, and so forth. If the ORDER_MODE column does not contain any of the strings in the list, the ORDER_MODE_NUM column is assigned 0.
+Finally, reversing the mapping in a SELECT statement for reporting purposes is very straightforward: we can use CASE or DECODE with the text and numeric values reversed. Here is an example:
+
+select order_id, customer_id, order_mode_num, case order_mode_num
+when 1 then 'Direct, non-employee' when 2 then 'Online'
+when 3 then 'WalMart' when 4 then 'Amazon'
+when 5 then 'Direct, employee' else 'unknown'
+end order_mode_text
+
+
+from orders
+where order_id in (2458,2397,2355,2356)
+;
+
+
+4 rows selected
+The older DECODE statement is the most basic of the Oracle functions that converts one set of values to another; you can convert numeric codes to human-readable text values or vice versa, as we do in the previous solutions. DECODE has been available in Oracle since the earliest releases. DECODE has a variable number of arguments, but the arguments can be divided into three groups:
+The column or expression to be translated
+One or more pairs of values; the first value is the existing value and the second is the translated value
+A single default value if the column or expression to be translated does not match the first value of any of the specified pairs
+Here is the UPDATE statement using DECODE:
+update orders
+set order_mode_num = decode(order_mode,
+'direct',1,
+'online',2,
+'walmart',3,
+'amazon',4,
+0)
+;
+105 rows updated
+DECODE translates the ORDER_MODE column just as CASE does. If the values in the column do not match any of the values in the first of each pair of constants, DECODE returns 0.
+
+---
