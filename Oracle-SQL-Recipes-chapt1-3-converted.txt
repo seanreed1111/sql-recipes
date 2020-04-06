@@ -1,0 +1,1838 @@
+
+
+
+This chapter presents lots of basic recipes to get you started—or rekindle old memories—on the core building blocks of SQL statements. We’ll show you recipes for selecting, changing, and removing data from Oracle database tables, plus some common options you usually want to include when doing this kind of work.
+Those of you with a firm grounding in SQL should feel free to delve into this chapter in an à la carte fashion. We’ve included one or two clever recipes at this early stage to make sure you get the most from Oracle SQL Recipes from the very first chapter. To continue the menu metaphor, feel free to consume the recipes herein in any order you like, and mix and match code fragments and techniques across the chapters to derive your own recipes.
+
+
+Note We’ll move through the basics quickly, and avoid such niceties as syntax diagrams and discussing every permutation of every recipe’s options. Don’t fret if you see commands and techniques you don’t immediately understand. Try them out yourself in an Oracle test instance to get a feel for them, and remember that complementary books like Begining Oracle SQL (de Haan, Fink, Jørgensen, Morton) and Beginning SQL Queries (Churcher) help with learning SQL itself.
+
+
+1-1. Retrieving Data from a Table
+Problem
+You want to retrieve specific row and column data from a table.
+
+Solution
+Issue a SELECT statement that includes a WHERE clause. The following is a straightforward SELECT statement querying a database table for particular column values, for those rows that match defined criteria:
+
+
+select employee_id, first_name, last_name, hire_date, salary from hr.employees
+where department_id = 50 and salary < 7500;
+
+
+The SELECT statement returns 45 rows when run against an Oracle 11g database loaded with the sample HR schema. Here are the first 10 rows you will see.
+
+
+
+
+
+
+
+…
+
+How It Works
+The SELECT statement was formatted to help you understand (or refresh your understanding of) the basic elements that constitute a working query. The first line of the query explicitly states the five columns we wish to include in the results.
+select employee_id, first_name, last_name, hire_date, salary
+The next line is the FROM clause, naming the table or tables to be referenced to pull out the columns we want to see:
+from hr.employees
+In this example, we use two-part object naming, specifying both the table name, EMPLOYEES, and the schema to which employees belongs, HR. This disambiguates the EMPLOYEES table in the HR schema from any other employees table that may be present in any other schema, and more importantly avoids the implicit selection of the table in the user’s own schema or the currently set schema, which is the default where no schema is specified.
+Next we list the WHERE clause, with two criteria that must be satisfied in order for rows to be included
+in our results.
+
+where department_id = 50 and salary < 7500
+
+Rows in the EMPLOYEES table must satisfy both tests to be included in our results. Meeting one, or the other, but not both will not satisfy our query, as we've used the AND Boolean operator to combine the criteria. In non-technical terms, this means an employee must be listed in the department with an ID of 50, as well as have a salary below 7500.
+
+
+Other Boolean operators are OR and NOT, and these follow normal Boolean precedence rules and can be modified using parenthesis to alter logic explicitly. We can modify our first example to illustrate these operators in combination
+
+select employee_id, first_name, last_name, hire_date, salary from hr.employees
+where department_id = 50
+and (salary < 2500 or salary > 7500);
+his query seeks the same columns as the first, this time focusing on those members of department 50 whose salary is either less than 2500, or more than 7500.
+
+EMPLOYEE_ID FIRST_NAME LAST_NAME HIRE_DATE SALARY
+
+
+
+Only 8 rows in the sample HR schema match these criteria.
+
+1-2. Selecting All Columns from a Table
+Problem
+You want to retrieve all columns from a table, but you don’t want to take the time to type all the column names as part of your SELECT statement.
+
+Solution
+Use the asterisk (*) placeholder, to represent all columns for a table. For example:
+select *
+from hr.employees
+where department_id = 50 and salary < 7500;
+
+
+
+EMPLOYEE_ID FIRST_NAME LAST_NAME EMAIL PHONE_NUMBER HIRE_DATE JOB_ID SALARY
+COMMISSION_PCT MANAGER_ID DEPARTMENT_ID
+
+
+
+How It Works
+In SQL, the * is a shortcut that stands for all of the column names in a table. When Oracle’s parser sees SELECT * as part of a query, the parser replaces the * with a list of all the possible column names, except those that have been marked hidden. Writing SELECT * is a quick way to build ad-hoc queries, because you avoid having to look up and type out all the correct column names.
+Before you succumb to the temptation to use the asterisk for all your queries, it's important to remember that good design usually means explicitly naming only those columns in which you are interested. This results in better performance, as Oracle otherwise must read the system catalog to determine the fields to include in the query. Specifying explicit columns also protects you from problems in the future where columns may be added to a table. If you write code expecting the implicit order from using the asterisk, you could be in for a nasty surprise when that order changes unexpectedly, such as when a table is dropped and re-created in a different way, or a new column is added to a table.
+For the most part, the asterisk is best reserved for interactive querying, and ad-hoc analysis.
+
+1-3. Sorting Your Results
+Problem
+Users want to see data from a query sorted in a particular way. For example, they would like to see employees sorted alphabetically by surname, and then first name.
+
+Solution
+Oracle uses the standard ORDER BY clause to allow you to sort the results of your queries.
+select employee_id, first_name, last_name, hire_date, salary from hr.employees
+where salary > 5000
+order by last_name, first_name;
+
+
+The results are as follows.
+
+
+
+How It Works
+The ORDER BY clause in this solution instructs Oracle to sort by the LAST_NAME column, and where values for LAST_NAME match, to then sort by the FIRST_NAME column. Oracle implicitly uses ascending ordering unless instructed otherwise, so numbers sort from zero to nine, letters from A to Z, and so on. You can explicitly control sorting direction with the ASC and DESC options for ascending and descending sorting. Here is an example:
+
+select employee_id, first_name, last_name, hire_date, salary from hr.employees
+where salary > 5000 order by salary desc;
+Our explicit descending sort on salary has these results:
+EMPLOYEE_ID FIRST_NAME LAST_NAME HIRE_DATE SALARY
+
+
+1-4. Adding Rows to a Table
+Problem
+You need to add new rows of data to a table. For example, a new employee joins the company, requiring his data to be added to the HR.EMPLOYEES table.
+
+
+Solution
+Use the INSERT statement to add new rows to a table. To add a new row to a table, provide values for all mandatory columns, as well as any values for optional columns. Here’s a statement to add a new employee:
+insert into hr.employees
+(employee_id, first_name, last_name, email, phone_number, hire_date, job_id, salary, commission_pct, manager_id, department_id)
+values
+(207, 'John ', 'Doe ', 'JDOE ', '650.555.8877 ', '25-MAR-2009 ', 'SA_REP ', 3500, 0.25, 145, 80);
+
+How It Works
+The INSERT statement associates a list of values with a list of columns. It creates a row based upon that association, and inserts that row into the target table.
+Oracle will check NULL constraints, as well as primary keys, foreign keys, and other defined constraints to ensure the integrity of your inserted data. See Chapter 10 for recipes on determining the state of constraints on your tables, and how they might affect inserting new data.
+You can check which fields are mandatory, defined as not null, by examining the description of the table. You can do this from SQL Developer or SQL*Plus by issuing the DESCRIBE command, which you can abbreviate to DESC. For example:
+desc hr.employees;
+Name	Null	Type
+EMPLOYEE_ID	NOT NULL NUMBER(6) FIRST_NAME		VARCHAR2(20)
+LAST_NAME	NOT NULL VARCHAR2(25)
+EMAIL	NOT NULL VARCHAR2(25)
+PHONE_NUMBER	VARCHAR2(20)
+HIRE_DATE	NOT NULL DATE
+JOB_ID	NOT NULL VARCHAR2(10)
+SALARY	NUMBER(8,2)
+COMMISSION_PCT	NUMBER(2,2)
+MANAGER_ID	NUMBER(6)
+DEPARTMENT_ID	NUMBER(4)
+11 rows selected
+You can write a shorter INSERT statement by not enumerating the list of column names, and providing data for every column in the right order for the current table definition. Here’s an example:
+
+insert into hr.employees values
+(208, 'Jane ', 'Doe ', 'JADOE ', '650.555.8866 ', '25-MAR-2009 ', 'SA_REP ',‘ 3500, 0.25, 145, 80)
+
+
+
+
+Caution It is rarely, if ever, a good idea to omit the list of column names—and this is for some quite serious reasons. You have no idea what changes might be made to the table in future, and you make your SQL brittle to
+future schema changes by assuming an implicit column order. Perhaps the best example of what can go wrong is silent logical corruption. If someone rebuilds the underlying table with a different column order, but your INSERT statement passes data type and other checks, you could find yourself silently inserting data into the wrong
+columns, with disastrous consequences. Our strong recommendation is to always enumerate the columns in your
+INSERT statement.
+
+
+1-5. Copying Rows from One Table to Another
+Problem
+You want to copy information from one table to another.
+
+Solution
+Use the INSERT statement with the SELECT option to copy data from one table to another. Suppose you have a table of candidates applying for jobs at your company, with many of the same details as the HR.EMPLOYEES table. This INSERT statement will insert into the HR.EMPLOYEES table based on a SELECT statement on the CANDIDATES table.
+insert into hr.employees
+(employee_id, first_name, last_name, email, phone_number, hire_date, job_id, salary, ‘
+commission_pct, manager_id, department_id)
+select 210, first_name, last_name, email, phone_number, sysdate, 'IT_PROG', 3500, ‘
+NULL, 103, 60
+from hr.candidates
+where first_name = 'Susan' and last_name = 'Jones';
+
+How It Works
+This recipe seeds the values to be inserted into the HR.EMPLOYEES table with the results of a SELECT on a CANDIDATES table. The SELECT statement can be run by itself to see the data passed to the INSERT statement.
+select 210, first_name, last_name, email, phone_number, sysdate, job_id, 3500, NULL, ‘
+'IT_PROG', 103
+from hr.candidates
+where first_name = 'Susan' and last_name = 'Jones';
+
+
+210 FIRST_NAME LAST_NAME EMAIL  PHONE_NUMBER SYSDATE	'IT_PRO 3500 N 103 60
+ 	 -     210 Susan	Jones	SJONES 650.555.9876 30-MAR-09 IT_PROG 3500	103 60
+
+We use literal (hard-coded) values for EMPLOYEE_ID, SALARY, and DEPARTMENT_ID. We also use the NULL place-holder to indicate that Susan has no COMMISSION_PCT—that is, she's not a sales person and therefore isn't part of a sales commission scheme. We want the HIRE_DATE to reflect the day on which we run the INSERT statement, so we use the built-in SYSDATE function to return the current system date.
+
+1-6. Copying Data in Bulk from One Table to Another
+Problem
+You want to copy multiple rows from one table to another.
+
+Solution
+The INSERT INTO … SELECT … approach is capable of inserting multiple rows. The key is using desired criteria in the SELECT statement to return the rows you wish to insert. We can amend our previous recipe to handle multiple rows. Here’s is an example of multi-row INSERT in action.
+select candidate_id, first_name, last_name, email, phone_number, sysdate, job_id, 3500, ‘
+NULL, 'IT_PROG', 103
+from hr.candidates;
+This recipe relies on the existence of the same HR.CANDIDATES table used in the previous recipe. If you’re playing along at home, be sure you create this table first.
+
+How It Works
+This recipe also seeds the values to be inserted from the HR.CANDIDATES table. As there is no WHERE clause in the SELECT portion of the statement, all the rows in the CANDIDATES table will be selected, and thus all have equivalent rows inserted into the HR.EMPLOYEES table.
+
+1-7. Changing Values in a Row
+Problem
+You want to change some of the data in one or more rows of a table.
+
+
+Solution
+The UPDATE statement is designed to change data, as its name suggests. For this problem, let's assume we want to increase the salaries of everyone in department 50 by five percent. This UPDATE statement achieves the change:
+update hr.employees
+set salary = salary * 1.05 where department_id = 50;
+
+How It Works
+The basic design of the UPDATE statement starts with the UPDATE clause itself
+update hr.employess
+This tells Oracle what table is to have its rows updated. The SET clause then specifies which columns are to change and how they are to be updated—either by a literal value, calculation, function result, subselect, or other method.
+set salary = salary * 1.05
+In this case, we're using a self-referencing calculation. The new SALARY value will be 1.05 times the existing value, relative to each row (that is, Oracle will perform this calculation for each row affected). Finally, the WHERE clause acts to provide the normal filtering predicates you're already familiar with from the SELECT statement. Only those rows that match a DEPARTMENT_ID of 50 will be affected.
+
+1-8. Updating Multiple Fields with One Statement
+Problem
+You want to change multiple columns for one or more rows of a table.
+
+Solution
+The update statement is designed to update as many rows as you need in one statement. This means you can use multiple column = value clauses in the UPDATE statement to change as many fields as you wish in one statement. For example, to change the phone number, job role, and salary of James Marlow, EMPLOYEE_ID 131, we can use a single UPDATE statement.
+
+update hr.employees set job_id = 'ST_MAN',
+phone_number = '650.124.9876', salary = salary * 1.5
+where employee_id = 131;
+
+
+How It Works
+Oracle evaluates the predicates of the UPDATE statement normally. In this case, it targets the row with the EMPLOYEE_ID of 131. It then changes each field based on the SET criteria given. It performs this action in one pass of the row.
+Oracle also supports the grouping the columns and values for updates in parenthesis, in a similar fashion to other databases, but with one quirk.
+update hr.employees
+set (job_id,Phone_number,Salary)
+= (select 'ST_MAN','650.124.9876',salary * 1.5 from dual) where employee_id = 131;
+
+Note If the subquery returns no data, the values specified in the set clause will be set to null.
+
+
+Note that the value group has to be specified as a well-formed SELECT—other databases would let you get away in this instance with the shortened form like this.
+Set (job_id,Phone_number,Salary) = ('ST_MAN','650.124.9876',salary * 1.5)
+This style of value grouping won’t work with Oracle, so remember to use a well-formed SELECT.
+
+1-9. Removing Unwanted Rows from a Table
+Problem
+An employee has taken a job with another company and you need to remove his details from the
+HR.EMPLOYEE table.
+
+Solution
+Let’s assume that James Landry, EMPLOYEE_ID 127, has taken a job with another company. You can use the DELETE statement to remove James' details.
+delete
+from hr.employees
+where employee_id = 127;
+
+How It works
+This recipe illustrates the basic DELETE statement, targeting the table HR.EMPLOYEES in the FROM clause. A
+WHERE clause provides the predicates to use to affect only those rows that match the specified criteria.
+
+12
+
+
+
+
+
+
+It’s possible to construct the DELETE statement with no WHERE clause, in effect matching all rows of the table. In that case, all the table's rows are deleted.
+delete
+from hr.employees;
+
+Caution If you do run either of those DELETE statements, don’t forget to roll back if you want to continue using
+HR.EMPLOYEES data for the following recipes.
+
+
+1-10. Removing All Rows from a Table
+Problem
+You want to remove all of the data for a given table.
+
+Solution
+Deleting all rows from a table using the DELETE statement allows Oracle to fully log the action, so that you can roll back if you issue this statement by accident. But that same logging, and the time it takes, means that using the DELETE statement is sometimes too slow for the desired result.
+Oracle provides a complementary technique for removing all data from a table, called TRUNCATE. To truncate the HR.EMPLOYEES table, let’s use the SQL statement:
+truncate table hr.employees;
+
+How It Works
+No WHERE clause predicates or other modifiers are used when issuing the TRUNCATE statement. This statement is treated as DDL (Data Definition Language) SQL, which has other implications for transactions, such as implicitly committing other open transactions. See Chapter 9 for more details on recipes for transaction control and monitoring.
+Using the TRUNCATE command also resets the high-water mark for a table, which means when Oracle
+does optimizer calculations that include judging the effect of the used capacity in a table, it will treat the table as if it had never had data consume any space.
+
+
+1-11. Selecting from the Results of Another Query
+Problem
+You need to treat the results of a query as if they were the contents of a table. You don't want to store the intermediate results as you need them freshly generated every time you run your query.
+
+Solution
+Oracle's inline view feature allows a query to be included in the FROM clause of a statement, with the results referred to using a table alias.
+
+select d.department_name from
+(select department_id, department_name from hr.departments
+where location_id != 1700) d;
+The results will look like this.
+DEPARTMENT_NAME
+Marketing
+Human Resources Shipping
+IT
+Public Relations Sales
+6 rows selected.
+
+How It Works
+This recipe treats the results of a SELECT statement on the HR.DEPARTMENTS table as an inline view, giving it the name “d”. Though providing an alias in this case is optional, it makes for more readable, testable, and standards-compliant SQL. You can then refer to the results of that statement as if it were a normal statement in almost all ways. Here are the results of the inline view's SELECT statement.
+DEPARTMENT_ID DEPARTMENT_NAME
+20 Marketing
+40 Human Resources
+50 Shipping
+60 IT
+70 Public Relations
+80 Sales
+6 rows selected.
+
+
+The inline view now acts as if you had a table, D, defined with this structure.
+Name	Null	Type
+DEPARTMENT_ID	NOT NULL NUMBER(4) DEPARTMENT_NAME  NOT NULL VARCHAR2(30)
+
+These are the definitions from the underlying HR.DEPARTMENTS table, which are implicitly inherited by our inline view. The outer SELECT statement queries the result set, just as if there were a real table d and you’d written this statement against it.
+
+select department_name from d;
+
+1-12. Basing a Where Condition on a Query
+Problem
+You need to query the data from a table, but one of your criteria will be dependent on data from another table at the time the query runs—and you want to avoid hard-coding criteria. Specifically, you want to find all departments with offices in North America for the purposes of reporting.
+
+Solution
+In the HR schema, the DEPARTMENTS table lists departments, and the LOCATIONS table lists locations.
+select department_name from hr.departments where location_id in (select location_id
+from hr.locations
+where country_id = 'US' or country_id = 'CA');
+Our results are as follows:
+DEPARTMENT_NAME
+IT
+Shipping Administration Purchasing Executive
+…
+
+
+How It Works
+The right-hand side of our in predicate reads the results of the sub-SELECT to provide values to drive the comparison with the LOCATION_ID values from the HR.DEPARTMENTS table. You can see what values are generated by running the sub-SELECT query itself.
+
+select location_id from hr.locations
+where country_id = 'US' or country_id = 'CA';
+Here are the results:
+LOCATION_ID
+1400
+1500
+1600
+1700
+1800
+1900
+6 rows selected.
+The outer SELECT compares LOCATION_ID values against this dynamically queried list. It is similar to running this static query.
+
+select department_name from hr.departments
+where location_id in (1400,1500,1600,1700,1800,1900);
+
+The key advantage of this recipe is that, should we open new offices and change all our LOCATION_ID’s for North America, we don’t have to rewrite our query: the sub-select will output the necessary new values dynamically.
+
+1-13. Finding and Eliminating NULLs in Queries
+Problem
+You need to report how many of your employees have a commission percentage as part of their remuneration, together with the number that get only a fixed salary. You track this using the COMMISSION_PCT field of the HR.EMPLOYEES table.
+
+
+Solution
+The structure of the HR.EMPLOYEE tables allows the COMMISSION_PCT to be NULL. Two queries can be used to find those whose commission percent is NULL and those whose commission percent is non-NULL. First, here’s the query that finds employees with NULL commission percent:
+
+select first_name, last_name from hr.employees
+where commission_pct is null;
+FIRST_NAME	LAST_NAME
+Donald	OConnell
+Douglas	Grant
+Jennifer	Whalen
+Michael	Hartstein
+Pat	Fay
+…
+72 rows selected.
+Now here’s the query that finds non-NULL commission-percentage holders:
+
+select first_name, last_name from hr.employees
+where commission_pct is not null;
+FIRST_NAME	LAST_NAME
+John	Russell
+Karen	Partners
+Alberto	Errazuriz
+Gerald	Cambrault
+Eleni	Zlotkey
+…
+35 rows selected.
+
+How It Works
+Our first SELECT statement uses the COMMISSION_PCT IS NULL clause to test for NULL entries. This has only two outcomes: either the column has a NULL entry, thus possessing no value, and satisfies the test; or it has some value.
+The second statement uses the COMMISSION_PCT IS NOT NULL clause, which will find a match for any employee with an actual value for COMMISSION_PCT.
+
+
+ 	Oracle’s Non-standard Treatment of the Empty String	
+
+Oracle deviates from the SQL standard in implicitly treating an empty, or zero-length, string as a surrogate for NULL. This is for a range of historical and pragmatic reasons, but it's important to remember. Almost all other implementations of SQL treat the empty string as a separate, known value.
+Those of you with a programming background will find analogous the idea of a zero length string being well defined, with the memory for the string having a string terminator (\0) as its only component. In contrast, an uninstantiated string has no known state … not even a terminator. You wouldn’t use zero- length and uninstantiated strings interchangeably, but this is analogous to what Oracle does with NULLs.
+
+NULL Has No Equivalents
+One aspect of recipes (and indeed day-to-day work) involving NULL in SQL often stumps people. SQL expressions are tri-valued, meaning every expression can be true, false, or NULL. This affects all kinds of comparisons, operators, and logic as you've already seen. But a nuance of this kind of logic is occasionally forgotten, so we'll repeat it explicitly. NULL has no equivalents. No other value is the same as NULL, not even other NULL values. If you run the following query, can you guess your results?
+
+select first_name, last_name from hr.employees
+where commission_pct = NULL;
+
+The answer is no rows will be selected. Even though you saw from the above SELECT statement in this recipe that 72 employees have a NULL COMMISSION_PCT, no NULL value equals another, so the COMMISSION_PCT = NULL criterion will never find a match, and you will never see results from this query. Always use IS NULL and IS NOT NULL to find or exclude your NULL values.
+
+1-14. Sorting as a Person Expects
+Problem
+Your textual data has been stored in a mix of uppercase, lowercase, and sentence case. You need to sort this data alphabetically as a person normally would, in a case-insensitive fashion.
+
+Solution
+To introduce some mixed case data into our HR.EMPLOYEES table, let’s run the following UPDATE to uppercase William Smith’s last name.
+update hr.employees
+set last_name = 'SMITH' where employee_id = 171;
+
+
+This select statement shows Oracle’s default sorting of employee last names.
+
+select last_name from hr.employees order by last_name;
+LAST_NAME
+… Rogers Russell SMITH
+Sarchand Sciarra Seo Sewall Smith Stiles Sullivan
+…
+Astute readers will have anticipated these results. Oracle, by default, sorts using a binary sort order. This means that in a simple example like this one, text is sorted according to the numeric equivalent on the code page in use (US7ASCII, WEISO8859P1, and so on). In these code pages, upper- and lowercase letters have different values, with uppercase coming first. This is why the uppercase SMITH has sorted before all other names starting with a capital S.
+What most people would expect to see are the two “Smith” values sorted together, regardless of case. This NLS directive achieves that result.
+alter session set NLS_SORT='BINARY_CI'; select last_name
+from hr.employees
+order by last_name;
+LAST_NAME
+… Rogers Russell
+Sarchand Sciarra Seo Sewall Smith SMITH
+Stiles Sullivan
+…
+
+
+How It Works
+Oracle supports both case-sensitive and case-insensitive sort orders. By default, you operate in a case- sensitive sort environment called BINARY. For every such sort order, an equivalent insensitive order exists using a suffix of _CI. We changed to using the BINARY_CI sort order, and reran the query to see results in the order a normal user would expect.
+As the name suggests, the NLS_SORT option affects sorting only. It doesn't affect some other aspects of case sensitivity. With NLS_SORT='BINARY_CI', attempts to compare data in a case-insensitive fashion still exhibit Oracle's default behavior.
+
+select first_name, last_name from hr.employees
+where last_name like 's%';
+no rows selected
+Don't despair. Oracle provides a similar option to allow case-insensitive comparisons just like this.
+
+
+Tip A more traditional approach tackles this problem without changing any NLS parameters. You can cast the column name, literals, or both to upper- or lowercase for comparison using Oracle’s UPPER and LOWER functions. This has the disadvantage of preventing the optimizer from using standard indexes, but you can also create
+function-based indexes to counter this.
+
+
+1-15. Enabling Other Sorting and Comparison Options
+Problem
+You need to perform case-insensitive comparisons and other sorting operations on textual data that has been stored in an assortment of uppercase, lowercase, and sentence case.
+
+Solution
+By activating Oracle's linguistic comparison logic, you can use the same statement to retrieve the data a human would expect to see, without the burden of artificial case sensitivity.
+alter session set NLS_COMP='LINGUISTIC'; select first_name, last_name
+from hr.employees
+where last_name = 'smith';
+
+
+FIRST_NAME	LAST_NAME
+William	SMITH
+Lindsey	Smith
+This recipe relies on the same case-altering statements used in the previous recipes. Be sure to run those statements prior to testing this recipe in action.
+
+How It Works
+Historically, there were two ways to treat Oracle's normal case-sensitive handling of text when designing applications. One approach was to design the application logic to ensure data would be stored in a consistent fashion, such as the initial-caps data you see in the HR.EMPLOYEES table we've used in several recipes. The other approach allowed data to be stored as users liked, with database and application logic used to hide any case differences from users where they wouldn’t be expected.
+This once took a great deal of effort, but you can now achieve it with remarkably little fuss. The following statement will retrieve no rows, because no LAST_NAME entered in the HR.EMPLOYEES table is recorded in lowercase.
+
+Select first_name, last_name From hr.employees
+Where last_name = 'smith';
+no rows selected
+
+But our recipe manages to return the right data because it changes the session settings, instructing Oracle to perform comparisons in linguistic fashion. Neither version of Smith is stored in the lowercase form we specified in the query, but the NLS_COMP parameter controls comparison and other behaviors in Oracle, and set to LINGUISTIC induces what the typical person would consider normal comparison behavior.
+
+1-16. Conditional Inserting or Updating Based on Existence
+Problem
+You want to insert rows into a table with a key identifier that may already be present. If the identifier is not present, a new row should be created. If the identifier is present, the other columns for that row should be updated with new data, rather than a new row created.
+
+Solution
+The MERGE statement provides the ability to insert new data into a table, and if the proposed new primary key does not already exist in the table, a newly created row is inserted. If the primary key matches an existing row in a table, the statement instead updates that row with the additional details matching that key.
+
+
+For our recipe, we’ll assume the HR.COUNTRIES table is to be loaded with amended country details sourced from a NEW_COUNTRIES table.
+
+merge into hr.countries c using
+(select country_id, country_name from hr.new_countries) nc
+on (c.country_id = nc.country_id) when matched then
+update set c.country_name = nc.country_name when not matched then
+insert (c.country_id, c.country_name) values (nc.country_id, nc.country_name);
+
+How It Works
+Rather than simply inserting the source data from the HR.NEW_COUNTRIES table directly into the target HR.COUNTRIES table—and potentially failing on a primary key duplication error—the MERGE statement sets up a logic branch to handle matched and unmatched rows based on the ON clause.
+Typically, the ON clause specifies how to match primary or unique key data between the source and target. In this recipe, that’s the matching of COUNTRY_ID values like this.
+on (c.country_id = nc.country_id)
+This is followed by two additional clauses, the WHEN MATCHED THEN clause for values that match the ON clause, and the WHEN NOT MATCHED THEN clause, for unmatched new rows that need to be treated as new data to be inserted.
+The matched and not-matched clauses can also include further filtering criteria, and even criteria that when satisfied result in rows being deleted.
+
+merge into hr.countries c using
+(select country_id, country_name, region_id from hr.new_countries) nc
+on (c.country_id = nc.country_id) when matched then
+update set c.country_name = nc.country_name, c.region_id = nc.region_id
+delete where nc.region_id = 4 when not matched then
+insert (c.country_id, c.country_name, c.region_id) values (nc.country_id, nc.country_name, nc.region_id) where (nc.region_id != 4);
+
+In this modified version of the recipe, matched rows will have their COUNTRY_NAME updated unless the REGION_ID of the new data is equal to 4, in which case the row in HR.COUNTRIES will ultimately be deleted. Unmatched rows will be inserted into HR.EMPLOYEES unless their REGION_ID is 4, in which case they will be ignored.
+
+
+22
+
+
+
+
+
+
+
+
+In this chapter we’ll introduce recipes for working with your data at a higher level, where grouping, summaries, and the bigger picture are important. Many of the recipes we’ll explore cover common or tricky reporting scenarios, the kind you encounter in a business or professional setting. Most organizations ask for reports about who sold what to whom, how many people, sales, or activities happened in a given time frame, trends across regions or customer groups, and the like.
+Many people are familiar with some of the basic methods Oracle provides for performing summaries and aggregates. But often developers and DBAs will try to execute more complex calculations in their applications—and tie themselves in knots. You can spot this in your own work if you see any combination of duplicating database capabilities in code, shuffling temporary data and results around needlessly, and similar less-than-efficient tasks.
+Oracle is exploding with this kind of functionality now, especially with the introduction of On-Line Analytical Processing capabilities (OLAP) over the last few major versions. After you’ve explored these recipes for summarizing and aggregating data, you’ll realize that Oracle is the number one tool at your disposal to satisfy a huge range of reporting and other requirements.
+
+2-1. Summarizing the Values in a Column
+Problem
+You need to summarize data in a column in some way. For example, you have been asked to report on the average salary paid per employee, as well as the total salary budget, number of employees, highest and lowest earners, and more.
+
+Solution
+You don’t need to calculate a total and count the number of employees separately to determine the average salary. The AVG function calculates average salary for you, as shown in the next SELECT statement.
+
+
+select avg(salary) from hr.employees;
+AVG(SALARY)
+6473.36449
+Note there is no WHERE clause in our recipe, meaning all rows in the HR.EMPLOYEES table are assessed to calculate the overall average for the table’s rows.
+Functions such as AVG are termed aggregate functions, and there are many such functions at your disposal. For example, to calculate the total salary paid, use the SUM function, as shown here:
+
+select sum(salary) from hr.employees;
+SUM(SALARY)
+692650
+
+To tally the number of people receiving a salary, you can simply count the number of rows in the table using the COUNT function.
+
+Select count(salary) From hr.employees;
+COUNT(SALARY)
+107
+Maximum and minimum values can be calculated using the MAX and MIN functions. By now you’re probably thinking Oracle uses very simple abbreviated names for the statistical functions, and by and large you are right. The MAX and MIN functions are shown next.
+
+select min(salary), max(salary) from hr.employees;
+MIN(SALARY) MAX(SALARY)
+2100	24000
+
+How It Works
+Oracle has numerous built-in statistical and analytic functions for performing common summarizing tasks, such as average, total, and minimum and maximum value. There’s no need for you to manually perform the intermediate calculations, though you can do so if you want to confirm Oracle’s arithmetic.
+The following statement compares Oracle’s average calculation for salary with our own explicit total divided by the number of employees.
+
+
+select avg(salary), sum(salary)/count(salary) from hr.employees;
+AVG(SALARY) SUM(SALARY)/COUNT(SALARY)
+6473.36449	6473.36449
+
+It’s pleasing to know Oracle gets this right. To complete the picture on Oracle’s aggregation capabilities, we need to consider what happens when our data includes NULL data. Our current recipe aggregates employee’s salaries, and it so happens that every employee has a salary. But only sales people have a commission for their sales efforts, reflected in the HR.EMPLOYEES table by a value in the COMMISSION_PCT. Non-sales staff have no commission, reflected by a NULL value in COMMISSION_PCT. So what happens when we try to average or count the COMMISSION_PCT values? The next SQL statement shows both of these aggregates.
+
+select count(commission_pct), avg(commission_pct) from hr.employees;
+COUNT(COMMISSION_PCT) AVG(COMMISSION_PCT)
+38	.225
+Even though we saw 107 employees with a salary, the COUNT function has ignored all NULL values for COMMISSION_PCT, tallying only the 38 employees with a commission. Equally, when calculating the average for the employees’ commissions, Oracle has again only considered those rows with a real value, ignoring the NULL entries.
+There are only two special cases where Oracle considers NULL values in aggregate functions. The first is the GROUPING function, used to test if the results of an analytic function that includes NULL values generated those values directly from rows in the underlying table or as a final aggregate “NULL set” from the analytic calculation. The second special case is the COUNT(*)function. Because the asterisk implies all
+columns within the table, Oracle handles the counting of rows independently of any of the actual data values, treating NULL and normal values alike in this case.
+To illustrate, the next SQL statement shows the difference between COUNT(*) and
+COUNT(COMMISSION_PCT) side by side.
+select count(*), count(commission_pct) from hr.employees;
+COUNT(*) COUNT(COMMISSION_PCT)
+107	38
+Our use of COUNT(*) tallies all rows in the table, whereas COUNT(COMMISSION_PCT) counts only the non-NULL values for COMMISSION_PCT.
+
+
+2-2. Summarizing Data for Different Groups
+Problem
+You want to summarize data in a column, but you don’t want to summarize over all the rows in a table. You want to divide the rows into groups, and then summarize the column separately for each group. For example, you need to know the average salary paid per department.
+
+Solution
+Use SQL’s GROUP BY feature to group common subsets of data together to apply functions like COUNT, MIN, MAX, SUM, and AVG. This SQL statement shows how to use an aggregate function on subgroups of your data with GROUP BY.
+
+select department_id, avg(salary) from hr.employees
+group by department_id;
+Here are the results showing averages by DEPARTMENT_ID.
+
+
+12 rows selected.
+Note that the third result row indicates a null DEPARTMENT_ID.
+
+How It Works
+The GROUP BY clause determines what groups the target table’s rows should be put into for any subsequence aggregate functions. For performance reasons, Oracle will implicitly sort the data to match the grouping desired. From the first line of the SELECT statement, you can normally glean the columns that will be required in the GROUP BY clause.
+
+
+select department_id, avg(salary)
+
+We’ve told Oracle that we want to aggregate individual salary data into an average, but we haven’t told it what to do with the individual DEPARTMENT_ID values for each row. Should we show every DEPARTMENT_ID entry, including duplicates, with the average against each one? Obviously, this would result in wasted, duplicate output—and also leave you wondering if there was something more complex you needed to understand. By using the “unaggregated” fields in the GROUP BY clause, we instruct Oracle how to collapse, or group, the singular row values against the aggregated values it has calculated.
+group by department_id
+This means that all values in our SELECT statement are either aggregates or covered by the GROUP BY clause. The key to writing syntactically correct GROUP BY statements is to always remember, values are either grouped or aggregated—no “stragglers” are allowed. You can see this clearly in a query that groups by multiple values.
+
+2-3. Grouping Data by Multiple Fields
+Problem
+You need to report data grouped by multiple values simultaneously. For example, an HR department may need to report on minimum, average, and maximum SALARY by DEPARTMENT_ID and JOB_ID.
+
+Solution
+Oracle’s GROUP BY capabilities extend to an arbitrary number of columns and expressions, so we can extend the previous recipe to encompass our new grouping requirements. We know what we want aggregated: the SALARY value aggregated three different ways. That leaves the DEPARTMENT_ID and JOB_ID to be grouped. We also want our results ordered so we can see different JOB_ID values in the same department in context, from highest SALARY to lowest. The next SQL statement achieves this by adding the necessary criteria to the GROUP BY and ORDER BY clauses.
+
+Select department_id, job_id, min(salary), avg(salary), max(salary) From hr.employees
+Group by department_id, job_id
+Order by department_id, max(salary) desc;
+DEPARTMENT_ID JOB_ID	MIN(SALARY) AVG(SALARY) MAX(SALARY)
+
+20 rows selected.
+
+
+How It Works
+When ordering by aggregate or other functions, you can take advantage of Oracle’s shorthand notation for ordering columns. Thus you can write the statement to order by the column-based positions of your data, rather than having to write the cumbersome full text of the aggregate expression.
+
+Select department_id, job_id, min(salary), avg(salary), max(salary) From hr.employees
+Group by department_id, job_id Order by 1, 5 desc;
+
+You can mix column names, aggregate expressions, numeric positions, and even column aliases in the SELECT clause within your ordering when working with grouped results, as shown in the next SQL statement.
+
+Select department_id, job_id, min(salary), avg(salary), max(salary) Max_Sal From hr.employees
+Group by department_id, job_id Order by 1, job_id, Max_Sal desc;
+
+Flexibility is the key here, and as you create and use more complex expressions for ordering and grouping, you’ll find aliases and ordinal notation helpful. However, for readability’s sake, you should try to stay consistent.
+
+2-4. Ignoring Groups in Aggregate Data Sets
+Problem
+You want to ignore certain groups of data based on the outcome of aggregate functions or grouping actions. In effect, you’d really like another WHERE clause to work after the GROUP BY clause, providing criteria at the group or aggregate level.
+
+Solution
+SQL provides the HAVING clause to apply criteria to grouped data. For our recipe, we solve the problem of finding minimum, average, and maximum salary for people performing the same job in each of the departments in the HR.EMPLOYEES table. Importantly, we only want to see these aggregate values where more than one person performs the same job in a given department. The next SQL statement uses an expression in the HAVING clause to solve our problem.
+
+select department_id, job_id, min(salary), avg(salary), max(salary), count(*) from hr.employees
+group by department_id, job_id having count(*) > 1;
+Our recipe results in the following summary.
+
+
+
+
+9 rows selected.
+
+How It Works
+You can immediately see that we have results for only nine groups of employees. Compared with the 20 groups returned in the previous recipe, it’s obvious the HAVING clause has done something—but what?
+The HAVING clause is evaluated after all grouping and aggregation has taken place. Internally, Oracle
+will first generate results like this.
+
+DEPARTMENT_ID JOB_ID	MIN(SALARY) AVG(SALARY) MAX(SALARY)	COUNT(*)
+
+…
+This, in effect, is our recipe without the HAVING clause. Oracle then applies the HAVING criteria
+having count(*) > 1
+The bolded rows in the previous results have a count of 1 (there’s only one employee of that JOB_ID in the respective DEPARTMENT_ID), which means they fail the HAVING clause criterion and are excluded from the final results, leaving us with the solution we saw above.
+The HAVING clause criteria can be arbitrarily complex, so you can use multiple criteria of different
+sorts.
+
+select department_id, job_id, min(salary), avg(salary), max(salary), count(*) from hr.employees
+group by department_id, job_id having count(*) > 1
+and min(salary) between 2500 and 17000 and avg(salary) != 5000
+and max(salary)/min(salary) < 2
+;
+
+
+DEPARTMENT_ID JOB_ID	MIN(SALARY) AVG(SALARY) MAX(SALARY)	COUNT(*)
+
+6 rows selected.
+
+2-5. Aggregating Data at Multiple Levels
+Problem
+You want to find totals, averages, and other aggregate figures, as well as subtotals in various dimensions for a report. You want to achieve this with as few statements as possible, preferably just one, rather than having to issue separate statements to get each intermediate subtotal along the way.
+
+Solution
+You can calculate subtotals or other intermediate aggregates in Oracle using the CUBE, ROLLUP and grouping sets features. For this recipe, we’ll assume some real-world requirements. We want to find average and total (summed) salary figures by department and job category, and show meaningful higher-level averages and subtotals at the department level (regardless of job category), as well as a grand total and company-wide average for the whole organization.
+
+select department_id, job_id, avg(salary), sum(salary) from hr.employees
+group by rollup (department_id, job_id);
+
+Our results (partial output shown) include sum and average by DEPARTMENT_ID and JOB_ID, rolled-up aggregates by DEPARTMENT_ID, and grand totals across all data.
+
+
+
+
+
+
+33 rows selected.
+
+How It Works
+The ROLLUP function performs grouping at multiple levels, using a right-to-left method of rolling up through intermediate levels to any grand total or summation. In our recipe, this means that after performing normal grouping by DEPARTMENT_ID and JOB_ID, the ROLLUP function rolls up all JOB_ID values so that we see an average and sum for the DEPARTMENT_ID level across all jobs in a given department.
+ROLLUP then rolls up to the next (and highest) level in our recipe, rolling up all departments, in effect
+providing an organization-wide rollup. You can see the rolled up rows in bold in the output.
+Performing this rollup would be the equivalent of running three separate statements, such as the three that follow, and using UNION or application-level code to stitch the results together.
+
+select department_id, job_id, avg(salary), sum(salary) from hr.employees
+group by department_id, job_id;
+select department_id, avg(salary), sum(salary) from hr.employees
+group by department_id;
+select avg(salary), sum(salary) from hr.employees;
+
+Of course, in doing this, you’re responsible for your own interspersing of subtotals at the intuitive points in the output. You could try writing a three-way UNION subselect with an outer SELECT to do the ordering. If this sounds more and more complicated, be thankful the ROLLUP command, and its associated command CUBE, have displaced the need to perform such awkward computations.
+Careful observers will note that because ROLLUP works from right to left with the columns given, we
+don’t see values where departments are rolled up by job. We could achieve this using this version of the recipe.
+
+select department_id, job_id, avg(salary), sum(salary) from hr.employees
+group by rollup (job_id, department_id);
+In doing so, we get the DEPARTMENT_ID intermediate rollup we want, but lose the JOB_ID intermediate rollup, seeing only JOB_ID rolled up at the final level. To roll up in all dimensions, change the recipe to use the CUBE function.
+
+Select department_id, job_id, min(salary), avg(salary), max(salary) From hr.employees
+Group by cube (department_id, job_id);
+The results show our rollups at each level, shown in bold in the partial results that follow.
+
+
+
+
+The power of both the ROLLUP and CUBE functions extends to as many “dimensions” as you need for your query. Admittedly, the term cube is meant to allude to the idea of looking at intermediate aggregations in three dimensions, but your data can often have more dimensions than that. Extending our recipe, we could “cube” a calculation of average salary by department, job, manager, and starting year.
+Select department_id, job_id, manager_id,
+extract(year from hire_date) as "START_YEAR", avg(salary) From hr.employees
+Group by cube (department_id, job_id, manager_id, extract(year from hire_date));
+This recipe results in an examination of average salary in four dimensions!
+
+2-6. Using Aggregate Results in Other Queries
+Problem
+You want to use the output of a complex query involving aggregates and grouping as source data for another query.
+
+Solution
+Oracle allows any query to be used as a subquery or inline view, including those containing aggregates and grouping functions. This is especially useful where you’d like to specify group-level criteria compared against data from other tables or queries, and don’t have a ready-made view available.
+For our recipe, we’ll use an average salary calculation with rollups across department, job, and start year, as shown in this SELECT statement.
+select * from (
+select department_id as "dept", job_id as "job", to_char(hire_date,'YYYY') as "Start_Year", avg(salary) as "avsal"
+from hr.employees
+
+32
+
+
+
+
+
+
+group by rollup (department_id, job_id, to_char(hire_date,'YYYY'))) salcalc where salcalc.start_year > '1990'
+or salcalc.start_year is null order by 1,2,3,4;
+Our recipe results in the following (abridged) output:
+dept job	Start	avsal
+
+79 rows selected.
+
+How It Works
+Our recipe uses the aggregated and grouped results of the subquery as an inline view, which we then select from and apply further criteria. In this case, we could avoid the subquery approach by using
+a more complex HAVING clause like this.
+having to_char(hire_date,'YYYY') > '1990' or to_char(hire_date,'YYYY') is null
+
+Avoiding a subquery here works only because we’re comparing our aggregates with literals. If we wanted to find averages for jobs in departments where someone had previously held the job, we’d need to reference the HR.JOBHISTORY table. Depending on the business requirement, we might get lucky and be able to construct our join, aggregates, groups, and having criteria in one statement. By treating the results of the aggregate and grouping query as input to another query, we get better readability, and the ability to code even more complexity than the HAVING clause allows.
+
+2-7. Counting Members in Groups and Sets
+Problem
+You need to count members of a group, groups of groups, and other set-based collections. You also need to include and exclude individual members and groups dynamically based on other data at the same time. For instance, you want to count how many jobs each employee has held during their time at the organization, based on the number of promotions they’ve had within the company.
+
+
+Solution
+Oracle’s COUNT feature can be used to count materialized results as well as actual rows in tables. The next SELECT statement uses a subquery to count the instances of jobs held across tables, and then summarizes those counts. In effect, this is a count of counts against data resulting from a query, rather than anything stored directly in Oracle.
+
+select jh.JobsHeld, count(*) as StaffCount from
+(select u.employee_id, count(*) as JobsHeld from
+(select employee_id from hr.employees union all
+select employee_id from hr.job_history) u group by u.employee_id) jh
+group by jh.JobsHeld;
+From that SELECT statement, we get the following concise summary.
+JOBSHELD STAFFCOUNT
+
+
+Most staff have had only one job, five have held two positions, and three have held three positions each.
+
+How It Works
+The key to our recipe is the flexibility of the COUNT function, which can be used for far more than just physically counting the number of rows in a table. You can count anything you can represent in a result. This means you can count derived data, inferred data, and transient calculations and determinations. Our recipe uses nested subselects and counts at two levels, and is best understood starting from the inside and working out.
+We know an employee’s current position is tracked in the HR.EMPLOYEES table, and that each instance of previous positions with the organization is recorded in the HR.JOB_HISTORY table. We can’t just count the entries in HR.JOB_HISTORY and add one for the employees’ current positions, because staff who have never changed jobs don’t have an entry in HR.JOB_HISTORY.
+Instead, we perform a UNION ALL of the EMPLOYEE_ID values across both HR.EMPLOYEES and HR.JOB_HISTORY, building a basic result set that repeats an EMPLOYEE_ID for every position an employee has held. Partial results of just the inner UNION ALL statement are shown here to help you follow the logic.
+EMPLOYEE_ID
+100
+101
+101
+101
+
+
+102
+102
+103
+…
+
+ 	Union vs. Union All	
+
+It’s useful to remember the difference between UNION and UNION ALL. UNION will remove duplicate entries in result sets (and perform a sort on the data as part of deduplication), whereas UNION ALL preserves all values in all source sets, even the duplicates. In our recipe, the use of UNION would have
+resulted in a count of one job for every employee, regardless of how many promotions or jobs they’d
+actually had.
+You’ll be pleased to know UNION operators are useful ingredients for many recipes in other chapters of the book.
+
+
+The next subselect aggregates and groups the values derived in our innermost subselect, counting the occurrences of each EMPLOYEE_ID to determine how many jobs each person has held. This is the first point where we use the COUNT function on the results of another query, rather than raw data in a table. Partial output at this subselect would look like this.
+
+
+
+
+…
+
+Our outermost query also performs straightforward aggregation and grouping, once again employing the COUNT function on the results of a subselect—which itself was producing counts of derived data.
+
+2-8. Finding Duplicates and Unique Values in a Table
+Problem
+You need to test if a given data value is unique in a table—that is, it appears only once.
+
+
+Solution
+Oracle supports the standard HAVING clause for SELECT statements, and the COUNT function, which together can identify single instances of data in a table or result. The following SELECT statement solves the problem of finding if the surname Fay is unique in the HR.EMPLOYEES table.
+
+select last_name, count(*) from hr.employees
+where last_name = 'Fay' group by last_name having count(*) = 1;
+With this recipe, we receive these results:
+LAST_NAME	COUNT(*)
+Fay	1
+Because there is exactly one LAST_NAME value of Fay, we get a count of 1 and therefore see results.
+
+How It Works
+Only unique combinations of data will group to a count of 1. For instance, we can test if the surname King is unique:
+
+select last_name, count(*) from hr.employees
+where last_name = 'King' group by last_name having count(*) = 1;
+
+This statement returns no results, meaning that the count of people with a surname of King is not 1; it’s some other number like 0, 2, or more. The statement first determines which rows have a LAST_NAME value of King. It then groups by LAST_NAME and counts the hits encountered. Lastly, the HAVING clause tests to see if the count of rows with a LAST_NAME of King was equal to 1. Only those results are returned, so a surname is unique only if you see a result.
+If we remove the HAVING clause as in the next SELECT statement, we’ll see how many Kings are in the
+HR.EMPLOYEES table.
+select last_name, count(*) from hr.employees
+where last_name = 'King' group by last_name;
+LAST_NAME	COUNT(*)
+King	2
+
+
+Two people have a surname of King, thus it isn’t unique and didn’t show up in our test for uniqueness.
+The same technique can be extended to test for unique combinations of columns. We can expand our recipe to test if someone’s complete name, based on the combination of FIRST_NAME and LAST_NAME, is unique. This SELECT statement includes both columns in the criteria, testing to see if Lindsey Smith is a unique full name in the HR.EMPLOYEES table.
+
+select first_name, last_name, count(*) from hr.employees
+where first_name = 'Lindsey' and last_name = 'Smith'
+group by first_name, last_name having count(*) = 1;
+
+
+
+You can write similar recipes that use string concatenation, self-joins, and a number of other methods.
+
+2-9. Calculating Totals and Subtotals
+Problem
+You need to calculate totals and subtotals in a variety of environments, using the lowest common denominator of SQL. For instance, you need to count the number of people in each department, as well as a grand total, in a way that can run across a variety of editions of Oracle without change.
+
+Solution
+In situations where you feel you can’t use analytic functions like ROLLUP and CUBE, or are restricted by licensing or other factors, you can use traditional aggregation and grouping techniques in separate SQL statements, and combine the results with a UNION to fold all the logic into a single statement. This SELECT combines counts of employees by department in one query, with the count of all employees in
+another query.
+
+select nvl(to_char(department_id),'-') as "DEPT.", count(*) as "EMP_COUNT" from hr.employees
+group by department_id union
+select 'All Depts.', count(*) from hr.employees;
+The recipe results appear as follows, with abridged output to save space.
+
+
+
+
+How It Works
+This recipe uses separate queries to calculate different aggregates and different levels, combining the results into a report-style output using UNION. In effect, two distinct sets of results are generated. First, the count of employees by department is accomplished using this SELECT statement.
+
+select nvl(to_char(department_id),'-') as "DEPT.", count(*) as "EMP_COUNT" from hr.employees
+group by department_id;
+Note that the TO_CHAR function is used to convert the integer DEPARTMENT_ID values to character equivalents. This is to ensure the eventual UNION is not plagued by implicit casting overhead, or even casting errors. In this recipe, we know we’re going to want to use the literal phrase “All Depts.” in conjunction with the overall employee count, and have it appear in line with the DEPARTMENT_ID values. Without casting, this results in an attempt to form a union from a column defined as an integer and a literal string. We’ll receive this error if we don’t perform the casting.
+ORA-01790: expression must have same datatype as corresponding expression
+Obviously not a useful outcome. You will often see this error when dealing with unions that must handle NULL values.
+We also need the TO_CHAR conversion to work in conjunction with the NVL null-testing function, to map the employees with a null DEPARTMENT_ID to a “-” to indicate no department. This is for purely cosmetic reasons, but you can see how it can provide clarity for people reading your recipe results. This way, they don’t have to wonder what a blank or null DEPARTMENT_ID means.
+The second query in the union calculates only the total count of employees in the HR.EMPLOYEES
+table, and utilizes the flexible literal handling Oracle provides to implicitly group the full count with the value “All Depts.”
+
+select 'All Depts.', count(*) from hr.employees
+
+The UNION clause then simply stitches the two results together, giving the output you see. This is equivalent to using the ROLLUP clause covered in the recipe Aggregating Data at Multiple Levels earlier in this chapter.
+
+
+2-10. Building Your Own Aggregate Function
+Problem
+You need to implement a custom aggregation to work in conjunction with Oracle’s existing aggregate functions and grouping mechanisms. You specifically want to aggregate strings in multiple rows to one row so that the text from each row is concatenated, one after the other. You’ve seen this supported in other databases but you can’t find an equivalent Oracle function.
+
+Solution
+Oracle provides a framework for writing your own aggregate functions, either to provide an aggregation not otherwise available in Oracle or to develop your own custom version of a common aggregate function with differing behavior. Our recipe creates a new aggregate function, STRING_TO_LIST, and the supporting type definition and type body based on Oracle’s template for custom aggregates.
+The following type definition defines the mandatory four functions Oracle requires for a custom aggregate type.
+
+create or replace type t_list_of_strings as object ( string_list varchar2(4000),
+
+static function odciaggregateinitialize (agg_context in out t_list_of_strings) return number,
+
+member function odciaggregateiterate (self in out t_list_of_strings, next_string_to_add in varchar2 ) return number,
+
+member function odciaggregatemerge (self in out t_list_of_strings, para_context in t_list_of_strings) return number,
+
+member function odciaggregateterminate (self in t_list_of_strings, final_list_to_return out varchar2, flags in number)
+return number
+);
+/
+We’ve limited the STRING_LIST parameter to 4000, even though PL/SQL supports up to 32000, to ensure we don’t pass the threshold supported by plain SQL in Oracle. Each of the four required functions implements the various stages of our aggregation of a set of strings into one list.
+
+
+create or replace type body t_list_of_strings is static function odciaggregateinitialize (agg_context in out t_list_of_strings)
+return number is begin
+agg_context := t_list_of_strings(null); return odciconst.success;
+end;
+member function odciaggregateiterate (self in out t_list_of_strings, next_string_to_add in varchar2 ) return number is
+begin
+self.string_list := self.string_list || ' , ' || next_string_to_add; return odciconst.success;
+end;
+member function odciaggregatemerge (self in out t_list_of_strings, para_context in t_list_of_strings) return number is
+begin
+self.string_list := self.string_list || ' , ' || para_context.string_list; return odciconst.success;
+end;
+member function odciaggregateterminate (self in t_list_of_strings, final_list_to_return out varchar2, flags in number)
+return number is begin
+final_list_to_return := ltrim(rtrim(self.string_list, ' , '), ' , '); return odciconst.success;
+end; end;
+/
+With the type and type body in place, we build the function we’ll use in our actual SQL statements to produce custom aggregated data.
+
+create or replace function string_to_list (input_string varchar2)
+return varchar2 parallel_enable
+aggregate using t_list_of_strings;
+/
+
+
+We can now use our custom aggregate function to compose a list from any set or subset of strings that we generate in a query. In this recipe, we want to return the surnames of all the employees assigned to a given manager.
+
+select manager_id, string_to_list (last_name) as employee_list from hr.employees
+group by manager_id;
+Our new custom aggregation function does the trick, producing the surnames in a list-like output along with the manager’s ID.
+MANAGER_ID EMPLOYEE_LIST
+Hartstein , Kochhar , De Haan , Fripp , Kaufling , Weiss ...
+Whalen , Greenberg , Higgins , Baer , Mavris
+Hunold
+Ernst , Pataballa , Lorentz , Austin
+108 Faviet , Chen , Sciarra , Urman , Popp
+...
+
+How It Works
+Don’t let the jump to PL/SQL, or the length of the recipe, scare you away. In fact, the majority of the code above is boiler-plate template offered by Oracle to assist with building custom aggregates quickly and easily.
+This recipe builds the three components necessary to create a custom aggregation, and then uses it in a SQL statement to list the employee surnames by manager. First it defines a custom type defining the four prescribed functions Oracle requires for a custom aggregate. These are:
+ODCIAggregateInitialize: This function is called at the very beginning of processing and sets up the new instance of the aggregate type—in our case, T_LIST_OF_STRINGS. This new instance has its member variables (if any) and is ready for the main aggregation phase
+ODCIAggregateIterate: This holds the core functionality of your custom aggregation. The logic in this function will be called for each data value passed over in your driving query. In our case, this is the logic that takes each string value and appends it to the existing list of strings.
+ODCIAggregateMerge: This is the semi-optional function that controls Oracle’s behavior, if Oracle decides to perform the aggregation in parallel, using multiple parallel slaves working against portions of the data. While you don’t have to enable the parallel option (see below), you still need to include this function. In our case, should our list creation be split into parallel tasks, all we need to do is concatenate the sublists at the end of the parallel process.
+ODCIAggregateTerminate; This is the final function and is required to return the result to the calling SQL function. In our case, it returns the global variable STRING_LIST that has been built up in the iteration and parallel merging stages.
+We now have the mechanics of aggregation built. The next part of the recipe builds the function that you can call to actually get your great new aggregation feature working on data. We create a function that has many of the normal features you’d expect:
+
+
+create or replace function string_to_list (input_string varchar2)
+return varchar2 parallel_enable
+aggregate using t_list_of_strings;
+/
+The function gets a name, STRING_TO_LIST, and it takes a VARCHAR2 string as input and returns one as output. So far, very mundane. It’s the next two lines that are key to our recipe’s aggregation behavior.
+The PARALLEL_ENABLE clause is entirely optional, and instructs Oracle that it is safe to perform the
+underlying aggregation logic in parallel if the optimizer decides to take that path. Depending on the logic in your ODCIAGGREGATEITERATE function, you may have particular actions that must happen in a particular order and thus want to avoid parallelism. Enabling parallel processing also implies that logic is in place in the ODCIAGGREGATEMERGE member function to deal with merged subsets of results.
+The AGGREGATE USING T_LIST_OF_STRINGS clause is where all the magic happens. This line instructs
+the function that it is aggregate in nature, and an object of type T_LIST_OF_STRINGS should be instantiated with the input parameter, kicking off the actual aggregation work.
+
+
+Note Oracle only supports the creation of custom aggregate functions that take exactly one input parameter, and return exactly one output parameter. That’s why you don’t see any explicit instruction in our recipe to pass the
+INPUT_STRING parameter to the instantiated T_LIST_OF_STRINGS type, nor one mapping the return value from the
+T_LIST_OF_STRINGS.ODCIAGGREGATETERMINATE member function back to the return value of the STRING_TO_LIST
+function. They are the only things Oracle can do when it sees the aggregate clause, so they are implicit when you use the aggregate feature.
+
+
+From there, calling and use of the new STRING_TO_LIST function behaves much like any other aggregate function, like AVG, MAX, MIN, and so on.
+
+2-11. Accessing Values from Subsequent or Preceding Rows
+Problem
+You would like to query data to produce an ordered result, but you want to include calculations based on preceding and following rows in the result set. For instance, you want to perform calculations on event- style data based on events that occurred earlier and later in time.
+
+Solution
+Oracle supports the LAG and LEAD analytical functions to provide access to multiple rows in a table or expression, utilizing preceding/following logic—and you won’t need to resort to joining the source data
+
+42
+
+
+
+
+
+
+to itself. Our recipe assumes you are trying to tackle the business problem of visualizing the trend in hiring of staff over time. The LAG function can be used to see which employee’s hiring followed another, and also to calculate the elapsed time between hiring.
+select first_name, last_name, hire_date,
+lag(hire_date, 1, '01-JUN-1987') over (order by hire_date) as Prev_Hire_Date, hire_date - lag(hire_date, 1, '01-JUN-1987') over (order by hire_date)
+as Days_Between_Hires from hr.employees
+order by hire_date;
+Our query returns 107 rows, linking the employees in the order they were hired (though not necessarily preserving the implicit sort for display or other purposes), and showing the time delta between each joining the organization.
+
+
+107 rows selected.
+You can calculate for yourself the day differences to confirm the LAG function and difference arithmetic are indeed working as claimed. For instance, there really are 503 days between January 3, 1990 and May 21, 1991.
+
+How It Works
+The LAG and LEAD functions are like most other analytical and windowing functions in that they operate once the base non-analytic portion of the query is complete. Oracle performs a second pass over the intermediate result set to apply any analytical predicates. In effect, the non-analytic components are evaluated first, as if this query had been run.
+select first_name, last_name, hire_date
+-- placeholder for Prev_Hire_Date,
+-- placehodler for Days_Between_Hires from hr.employees;
+The results at this point would look like this if you could see them:
+
+
+FIRST_NAME LAST_NAME HIRE_DATE PREV_HIRE DAYS_BETWEEN
+
+
+The analytic function(s) are then processed, providing the results you’ve seen. Our recipe uses the LAG function to compare the current row of results with a preceding row. The general format is the best way to understand LAG, and has the following form.
+lag (column or expression, preceding row offset, default for first row)
+
+The column or expression is mostly self-explanatory, as this is the table data or computed result over which you want LAG to operate. The preceding row offset portion indicates the relative row prior to the current row the LAG should act against. In our case, the value ‘1’ means the row that is one row before the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We’ve chosen the arbitrary date of 01-JUN-1987 as a notional date on which the organization was founded. You could use any date, date calculation, or date-returning function here. Oracle will supply a NULL value if you don’t specify the first row’s precedent value.
+The OVER analytic clause then dictates the order of data against which to apply the analytic function,
+and any partitioning of the data into windows or subsets (not shown in this recipe). Astute readers will realize that this means our recipe could have included a general ORDER BY clause that sorted the data for presentation in a different order from the HIRE_DATE ordering used for the LAG function. This gives you the most flexibility to handle general ordering and analytic lag and lead in different ways for the same statement. We’ll show an example of this later in this chapter. And remember, you should never rely on the implicit sorting that analytic functions use. This can and will change in the future, so you are best advised to always include ORDER BY for sorting wherever explicitly required.
+The LEAD function works in a nearly identical fashion to LAG, but instead tracks following rows rather than preceding ones. We could rewrite our recipe to show hires along with the HIRE_DATE of the next employee, and a similar elapsed-time window between their employment dates, as in this SELECT statement.
+select first_name, last_name, hire_date,
+lead(hire_date, 1, sysdate) over (order by hire_date) as Next_Hire_Date, lead(hire_date, 1, sysdate) over (order by hire_date) - hire_date
+as Days_Between_Hires from hr.employees;
+
+The pattern of dates is very intuitive now that you’ve seen the LAG example. With LEAD, the key difference is the effect of the default value in the third parameter.
+FIRST_NAME  LAST_NAME  HIRE_DATE NEXT_HIRE DAYS_BETWEEN
+
+----------- ---------- --------- --------- ------------
+
+
+
+107 rows selected.
+In contrast to LAG, where the default provides a notional starting point for the first row’s comparison, LEAD uses the default value to provide a hypothetical end point for the last row in the forward-looking chain. In this recipe, we are comparing how many days have elapsed between employees being hired. It makes sense for us to compare the last employee hired (in this case, Sundita Kumar) with the current date using the SYSDATE function. This is a quick and easy finishing flourish to calculate the days that have elapsed since hiring the last employee.
+
+2-12. Assigning Ranking Values to Rows in a Query Result
+Problem
+The results from a query need to be allocated an ordinal number representing their positions in the result. You do not want to have to insert and track these numbers in the source data.
+
+Solution
+Oracle provides the RANK analytic function to generate a ranking number for rows in a result set. RANK is applied as a normal OLAP-style function to a column or derived expression. For the purposes of this recipe, we’ll assume that the business would like to rank employees by salary, from highest-paid down. The following SELECT statement uses the rank function to assign these values.
+
+select employee_id, salary, rank() over (order by salary desc) as Salary_Rank from hr.employees;
+
+Our query produces results from the highest earner at 24000 per month, right down to the employee in 107th place earning 2100 per month, as these abridged results show.
+EMPLOYEE_ID	SALARY SALARY_RANK
+
+
+
+147	12000	7
+…
+132	2100	107
+107 rows selected.
+
+How It Works
+RANK acts like any other analytic function, operating in a second pass over the result set once non- analytic processing is complete. In this recipe, the EMPLOYEE_ID and SALARY values are selected (there are no WHERE predicates to filter the table’s data, so we get everyone employed in the organization). The analytic phase then orders the results in descending order by salary, and computes the rank value on the results starting at 1.
+Note carefully how the RANK function has handled equal values. Two employees with salary of 17000
+are given equal rank of 2. The next employee, at 14000, has a rank of 4. This is known as sparse ranking, where tied values “consume” place holders. In practical terms, this means that our equal second-place holders consume both second and third place, and the next available rank to provide is 4.
+You can use an alternative to sparse ranking called dense ranking. Oracle supports this using the
+DENSE_RANK analytical function. Observe what happens to the recipe when we switch to dense ranking.
+select employee_id, salary, dense_rank() over (order by salary desc) as Salary_Rank
+from hr.employees;
+We now see the “missing” consecutive rank values.
+
+
+…
+132	2100	58
+107 rows selected.
+The classic examples of when the different kinds of ranking are used are in sporting competitions. Football and other sports typically use sparse ranking when tracking team win/loss progress on a ladder or table. The Olympic Games, on the other hand, tend to use dense ranking when competitors tie in events like swimming and others. They like to ensure that there are always gold, silver, and bronze medalists, even if there are tied entries and they have to give out more medals.
+
+
+
+
+Note The authors live in hope that, one day, writing SQL statements will be an Olympic event. We’ll be sure to use a dense ranking approach to maximize our chance of getting a medal.
+
+
+Our recipe uses a simple ranking across all employees to determine salary order. Both RANK and DENSE_RANK support normal analytic extensions, allowing us to partition our source data so we can generate a rank for each subset of data. Continuing our recipe’s theme, this means we could allocate a rank for salary earners from highest to lowest within each department. Introducing that partitioning to the query looks like this:
+Select department_id, employee_id, salary, rank() over
+(partition by department_id order by salary desc) as Salary_Rank From hr.employees
+;
+
+Our results now show per-department ranking of employees by salary.
+
+
+
+
+
+
+
+…
+As the DEPARTMENT_ID value ticks over, the PARTITION clause drives the RANK function to start its calculation again for the next subset of results.
+
+2-13. Finding First and Last Values within a Group
+Problem
+You want to calculate and display aggregate information like minimum and maximum for a group, along with detail information for each member. You want don’t want to repeat effort to display the aggregate and detail values.
+
+
+Solution
+Oracle provides the analytic functions FIRST and LAST to calculate the leading and ending values in any ordered sequence. Importantly, these do not require grouping to be used, unlike explicit aggregate functions such as MIN and MAX that work without OLAP features.
+For our recipe, we’ll assume the problem is a concrete one of displaying an employee’s salary, alongside the minimum and maximum salaries paid to the employee’s peers in their department. This SELECT statement does the work.
+
+select department_id, first_name, last_name, min(salary)
+over (partition by department_id) "MinSal", salary,
+max(salary)
+over (partition by department_id) "MaxSal" from hr.employees
+order by department_id, salary;
+
+This code outputs all employees and displays their salaries between the lowest and highest within their own department, as shown in the following partial output.
+
+
+
+
+
+
+
+…
+107 rows selected.
+
+How It Works
+The key to both the FIRST and LAST analytic functions is their ability to let you perform the grouping and ordering on one set of criteria, while leaving you free to order differently in the main body of the query, and optionally group or not as desired by other factors.
+The OLAP window is partitioned over each department with the OVER clause
+over (partition by department_id) “MinSal”
+
+
+2-14. Performing Aggregations over Moving Windows
+Problem
+You need to provide static and moving summaries or aggregates based on the same data. For example, as part of a sales report, you need to provide a monthly summary of sales order amounts, together with a moving three- month average of sales amounts for comparison.
+
+Solution
+Oracle provides moving or rolling window functions as part of the analytical function set. This gives you the ability to reference any number of preceding rows in a result set, the current row in the result set, and any number of following rows in a result set. Our initial recipe uses the current row and the three preceding rows to calculate the rolling average of order values.
+
+select to_char(order_date, 'MM') as OrderMonth, sum(order_total) as MonthTotal, avg(sum(order_total))
+over
+(order by to_char(order_date, 'MM') rows between 3 preceding and current row) as RollingQtrAverage
+from oe.orders
+where order_date between '01-JAN-1999' and '31-DEC-1999' group by to_char(order_date, 'MM')
+order by 1;
+We see the month, the associated total, and the calculated rolling three-month average in our results.
+
+
+
+You might notice January (OrderMonth 01) is missing. This isn’t a quirk of this approach: rather it’s because the OE.ORDERS table has no orders recorded for this month in 1999.
+
+
+How It Works
+Our SELECT statement for a rolling average starts by selecting some straightforward values. The month number is extracted from the ORDER_DATE field using the TO_CHAR() function with the MM format string to obtain the month’s number. We choose the month number rather than the name so that the output is sorted as a person would expect.
+Next up is a normal aggregate of the ORDER_TOTAL field using the traditional SUM function. No magic there. We then introduce an OLAP AVG function, which is where the detail of our rolling average is managed. That part of the statement looks like this.
+
+avg(sum(order_total)) over (order by to_char(order_date, 'MM') rows between 3 preceding and current row) as RollingQtrAverage
+
+All of that text is to generate our result column, the ROLLINGQTRAVERAGE. Breaking the sections down will illustrate how each part contributes to the solution. The leading functions, AVG(SUM(ORDER_TOTAL)), suggest we are going to sum the ORDER_TOTAL values and then take their average. That is correct to an extent, but Oracle isn’t just going to calculate a normal average or sum. These are OLAP AVG and SUM functions, so their scope is governed by the OVER clause.
+The OVER clause starts by instructing Oracle to perform the calculations based on the order of the formatted ORDER_DATE field—that’s what ORDER BY TO_CHAR(ORDER_DATE, 'MM') achieves—effectively ordering the calculations by the values 02 to 12 (remember, there’s no data for January 1999 in the database). Finally, and most importantly, the ROWS element tells Oracle the size of the window of rows over which it should calculate the driving OLAP aggregate functions. In our case, that means over how many months should the ORDER_TOTAL values be summed and then averaged. Our recipe instructs Oracle to use the results from the third-last row through to the current row. This is one interpretation of three-
+month rolling average, though technically it’s actually generating an average over four months. If what you want is really a three-month average —the last two months plus the current month—you’d change the ROWS BETWEEN element to read
+rows between 2 preceding and current row
+This brings up an interesting point. This recipe assumes you want a rolling average computed over historic data. But some business requirements call for a rolling window to track trends based on data not only prior to a point in time, but also after that point. For instance, we might want to use a three-month window but base it on the previous, current, and following months. The next version of the recipe
+shows exactly this ability of the windowing function, with the key changes in bold.
+
+select to_char(order_date, 'MM') as OrderMonth, sum(order_total) as MonthTotal, avg(sum(order_total)) over (order by to_char(order_date, 'MM')
+rows between 1 preceding and 1 following) as AvgTrend
+from oe.orders
+where order_date between '01-JAN-1999' and '31-DEC-1999' group by to_char(order_date, 'MM')
+order by 1
+/
+Our output changes as you’d expect, as the monthly ORDER_TOTAL values are now grouped differently for the calculation.
+
+
+
+
+11 rows selected.
+The newly designated AVGTREND value is calculated as described, using both preceding and following rows. Both our original recipe and this modified version are rounded out with a WHERE clause to select only data from the OE.ORDERS table for the year 1999. We group by the derived month number so that our traditional sum of ORDER_TOTAL in the second field of the results aggregates correctly, and finish up ordering logically by the month number.
+
+2-15. Removing Duplicate Rows Based on a Subset of Columns
+Problem
+Data needs to be cleansed from a table based on duplicate values that are present only in a subset of rows.
+
+Solution
+Historically there were Oracle-specific solutions for this problem that used the ROWNUM feature. However, this can become awkward and complex if you have multiple groups of duplicates and want to remove the excess data in one pass. Instead, you can use Oracle’s ROW_NUMBER OLAP function with a DELETE statement to efficiently remove all duplicates in one pass.
+To illustrate our recipe in action, we’ll first introduce several new staff members that have the same
+FIRST_NAME and LAST_NAME as some existing employees. These INSERT statements create our problematic duplicates.
+insert into hr.employees
+(employee_id, first_name, last_name, email, phone_number, hire_date, job_id, salary, commission_pct, manager_id, department_id)
+Values
+(210, 'Janette', 'King', 'JKING2', '650.555.8880', '25-MAR-2009', 'SA_REP', 3500, 0.25, 145, 80);
+
+
+Insert into hr.employees
+(employee_id, first_name, last_name, email, phone_number, hire_date, job_id, salary, commission_pct, manager_id, department_id)
+Values
+(211, 'Patrick', 'Sully', 'PSULLY2', '650.555.8881', '25-MAR-2009', 'SA_REP', 3500, 0.25, 145, 80);
+Insert into hr.employees
+(employee_id, first_name, last_name, email, phone_number, hire_date, job_id, salary, commission_pct, manager_id, department_id)
+Values
+(212, 'Allen', 'McEwen', 'AMCEWEN2', '650.555.8882', '25-MAR-2009', 'SA_REP', 3500, 0.25, 145, 80);
+commit;
+To show that we do indeed have some duplicates, a quick SELECT shows the rows in question.
+select employee_id, first_name, last_name from hr.employees
+where first_name in ('Janette','Patrick','Allan') and last_name in ('King','Sully','McEwen')
+order by first_name, last_name;
+EMPLOYEE_ID FIRST_NAME  LAST_NAME
+----------- ----------- ----------
+158 Allan	McEwen
+212 Allan	McEwen
+210 Janette	King
+156 Janette	King
+211 Patrick	Sully
+Patrick	Sully
+If you worked in HR, or were one of these people, you might be concerned with the unpredictable consequences and want to see the duplicates removed. With our problematic data in place, we can introduce the SQL to remove the “extra” Janette King, Patrick Sully, and Allen McEwen.
+
+delete from hr.employees where rowid in
+(select rowid from
+(select first_name, last_name, rowid, row_number() over
+(partition by first_name, last_name order by employee_id) staff_row
+from hr.employees) where staff_row > 1);
+
+When run, this code does indeed claim to remove three rows, presumably our duplicates. To check, we can repeat our quick query to see which rows match those three names. We see this set of results.
+
+
+EMPLOYEE_ID FIRST_NAME LAST_NAME
+Allan	McEwen
+Janette	King
+Patrick	Sully
+Our DELETE has succeeded, based on finding duplicates for a subset of columns only.
+
+How It Works
+Our recipe uses both the ROW_NUMBER OLAP function and Oracle’s internal ROWID value for uniquely identifying rows in a table. The query starts with exactly the kind of DELETE syntax you’d assume.
+
+delete from hr.employees where rowid in
+(… nested subqueries here …)
+As you’d expect, we’re asking Oracle to delete rows from HR.EMPLOYEES where the ROWID value matches the values we detect for duplicates, based on criteria evaluating a subset of columns. In our case, we use subqueries to precisely identify duplicates based on FIRST_NAME and LAST_NAME.
+To understand how the nested subqueries work, it’s easiest to start with the innermost subquery,
+which looks like this.
+
+select first_name, last_name, rowid, row_number() over
+(partition by first_name, last_name order by employee_id) staff_row
+from hr.employees
+We’ve intentionally added the columns FIRST_NAME and LAST_NAME to this innermost subquery to make the recipe understandable as we work through its logic. Strictly speaking, these are superfluous to the logic, and the innermost subquery could be written without them to the same effect. If we execute just this innermost query (with the extra columns selected for clarity), we see these results.
+
+
+
+
+
+
+110 rows selected.
+All 110 staff from the HR.EMPLOYEES table have their FIRST_NAME, LAST_NAME and ROWID returned. The ROW_NUMBER() function then works over sets of FIRST_NAME and LAST_NAME driven by the PARTITION BY instruction. This means that for every unique FIRST_NAME and LAST_NAME, ROW_NUMBER will start a running count of rows we’ve aliased as STAFF_ROW. When a new FIRST_NAME and LAST_NAME combination is observed, the STAFF_ROW counter resets to 1.
+In this way, the first Janette King has a STAFF_ROW value of 1, the second Janette King entry has a STAFF_ROW value of 2, and if there were a third and fourth such repeated name, they’d have STAFF_ROW values of 3 and 4 respectively. With our identically-named staff now numbered, we move to the next
+outermost subselect, which queries the results from above.
+select rowid from select
+(select first_name, last_name, rowid, row_number() over
+(partition by first_name, last_name order by first_name, last_name) staff_row
+from hr.employees) where staff_row > 1
+
+This outer query looks simple, because it is! We simply SELECT the ROWID values from the results of our innermost query, where the calculated STAFF_ROW value is greater than 1. That means that we only select the ROWID values for the second Janette King, Allan McEwen, and Patrick Sully, like this.
+ROWID
+AAARAgAAFAAAABYAA4 AAARAgAAFAAAABYAA6 AAARAgAAFAAAABYAA5
+
+Armed with those ROWID values, the DELETE statement knows exactly which rows are the duplicates, based on only a comparison and count of FIRST_NAME and LAST_NAME.
+The beauty of this recipe is the basic structure translates very easily to deleting data based on any such column-subset duplication. The format stays the same, and only the table name and a few column names need to be changed. Consider this a pseudo-SQL template for all such cases.
+delete from <your_table_here>
+where rowid in (select rowid from
+(select rowid, row_number() over
+(partition by <first_duplicate_column>, <second_duplicate_column>, <etc.>
+order by <desired ordering column>)
+
+
+duplicate_row_count from <your_table_here>)
+where duplicate_row_count > 1)
+/
+Simply plug in the value for your table in place of the marker <your_table_here>, and the columns you wish to use to determine duplication in place of equivalent column placeholders, and you’re in business!
+
+2-16. Finding Sequence Gaps in a Table
+Problem
+You want to find all gaps in the sequence of numbers or in dates and times in your data. The gaps could be in dates recorded for a given action, or in some other data with a logically consecutive nature.
+
+Solution
+Oracle’s LAG and LEAD OLAP functions let you compare the current row of results with a preceding row. The general format of LAG looks like this
+Lag (column or expression, preceding row offset, default for first row)
+
+The column or expression is the value to be compared with lagging (preceding) values. The preceding row offset indicates how many rows prior to the current row the LAG should act against. We’ve used ‘1’ in the following listing to mean the row one prior to the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We instruct Oracle to use 0 as the default anchor value, to handle the case where we look for the day prior to the first of the month.
+The WITH query alias approach can be used in almost all situations where a subquery is used, to
+relocate the subquery details ahead of the main query. This aids readability and refactoring of the code if required at a later date.
+This recipe looks for gaps in the sequence of days on which orders were made for the month of November 1999:
+with salesdays as
+(select extract(day from order_date) next_sale, lag(extract(day from order_date),1,0)
+over (order by extract(day from order_date)) prev_sale from oe.orders
+where order_date between '01-NOV-1999' and '30-NOV-1999') select prev_sale, next_sale
+from salesdays
+where next_sale - prev_sale > 1 order by prev_sale;
+Our query exposes the gaps, in days, between sales for the month of November 1999.
+
+
+PREV_SALE NEXT_SALE
+
+
+The results indicate that after an order was recorded on the first of the month, no subsequent order was recorded until the 10th. Then a four-day gap followed to the 14th, and so on. An astute sales manager might well use this data to ask what the sales team was doing on those gap days, and why no orders came in!
+
+How It Works
+The query starts by using the WITH clause to name a subquery with an alias in an out-of-order fashion. The subquery is then referenced with an alias, in this case SALESDAYS.
+The SALESDAYS subquery calculates two fields. First, it uses the EXTRACT function to return the numeric day value from the ORDER_DATE date field, and labels this data as NEXT_SALE. The lag OLAP function is then used to calculate the number for the day in the month (again using the EXTRACT method) of the ORDER_DATE of the preceding row in the results, which becomes the PREV_SALE result value. This makes more sense when you visualize the output of just the subquery select statement
+
+select extract(day from order_date) next_sale, lag(extract(day from order_date),1,0)
+over (order by extract(day from order_date)) prev_sale from oe.orders
+where order_date between '01-NOV-1999' and '30-NOV-1999'
+The results would look like this if executed independently.
+NEXT_SALE PREV_SALE
+
+
+Starting with the anchor value of 0 in the lag, we see the day of the month for a sale as NEXT_SALE, and the day of the previous sale as PREV_SALE. You can probably already visually spot the gaps, but it’s much easier to let Oracle do that for you too. This is where our outer query does its very simple arithmetic.
+The driving query over the SALESDAYS subquery selects the PREV_SALE and NEXT_SALE values from the results, based on this predicate.
+
+
+where next_sale - prev_sale > 1
+
+We know the days of sales are consecutive if they’re out by more than one day. We wrap up by ordering the results by the PREV_SALE column, so that we get a natural ordering from start of month to end of month.
+Our query could have been written the traditional way, with the subquery in the FROM clause like
+this.
+select prev_sale, next_sale
+from (select extract(day from order_date) next_sale, lag(extract(day from order_date),1,0)
+over (order by extract(day from order_date)) prev_sale from oe.orders
+where order_date between '01-NOV-1999' and '30-NOV-1999') where next_sale - prev_sale > 1
+order by prev_sale
+/
+The approach to take is largely a question of style and readability. We prefer the WITH approach on those occasions where it greatly increases the readability of your SQL statements.
+
+
+
+
+Querying data from Oracle tables is probably the most common task you will perform as a developer or data analyst, and maybe even as a DBA—though probably not as the ETL (Extraction, Transformation, and Loading) tool expert. Quite often, you may query only one table for a small subset of rows, but sooner or later you will have to join multiple tables together. That’s the beauty of a relational database, where the access paths to the data are not fixed: you can join tables that have common columns, or even tables that do not have common columns (at your own peril!).
+In this chapter we’ll cover solutions for joining two or more tables and retrieving the results based on the existence of desired rows in both tables (equi-join), rows that may exist only in one table or the other (left or right outer joins), or joining two tables together and including all rows from both tables, matching where possible (full outer joins).
+But wait, there’s more! Oracle (and the SQL language standard) contains a number of constructs that help you retrieve rows from tables based on the existence of the same rows in another table with the same column values for the selected rows in a query. These constructs include the INTERSECT, UNION, UNION ALL, and MINUS operators. The results from queries using these operators can in some cases be obtained using the standard table-join syntax, but if you’re working with more than just a couple of columns, the query becomes unwieldy, hard to read, and hard to maintain.
+You may also need to update rows in one table based on matching or non-matching values in another table, so we’ll provide a couple of recipes on correlated queries and correlated updates using the IN/EXISTS SQL constructs as well.
+Of course, no discussion of table manipulation would be complete without delving into the unruly
+child of the query world, the Cartesian join. There are cases where you want to join two or more tables without a join condition, and we’ll give you a recipe for that scenario.
+Most of the examples in this chapter are based on the schemas in the EXAMPLE tablespace created
+during an Oracle Database installation when you specify “Include Sample Schemas.” Those sample schemas aren’t required to understand the solutions in this chapter, but they give you the opportunity to try out the solutions on a pre-populated set of tables and even delve further into the intricacies of table joins.
+
+
+3-1. Joining Corresponding Rows from Two or More Tables
+Problem
+You want to return rows from two or more tables that have one or more columns in common. For example, you may want to join the EMPLOYEES and the DEPARTMENTS table on a common column, but not all common columns, and return a list of employees and their department names.
+
+Solution
+If you are using Oracle Database 9i or later, you can use the ANSI SQL 99 join syntax with the USING clause. For example, the EMPLOYEES and DEPARTMENTS table in the Oracle sample schemas have the DEPARTMENT_ID column in common, so the query looks like this:
+
+select employee_id, last_name, first_name, department_id, department_name from employees
+join departments using(department_id)
+;
+
+
+106 rows selected
+The query retrieves most of the results from the EMPLOYEES table, and the DEPARTMENT_NAME column from the DEPARTMENTS table.
+
+How It Works
+The sample schemas supplied with a default installation of Oracle Database 11g provide a good starting point for trying out some Oracle features. Oracle Database comes with several sample schemas such as HR, OE, and BI to show not only the relationships between database schemas, but also to show some of the varied features such as index-organized tables (IOTs), function-based indexes, materialized views, large objects (BLOBs and CLOBs), and XML objects.
+Here is the structure of the EMPLOYEES and DEPARTMENTS tables:
+
+
+describe employees
+Name	Null	Type
+EMPLOYEE_ID	NOT NULL NUMBER(6) FIRST_NAME		VARCHAR2(20)
+LAST_NAME	NOT NULL VARCHAR2(25)
+EMAIL	NOT NULL VARCHAR2(25) PHONE_NUMBER		VARCHAR2(20)
+HIRE_DATE	NOT NULL DATE
+JOB_ID	NOT NULL VARCHAR2(10)
+SALARY	NUMBER(8,2)
+COMMISSION_PCT	NUMBER(2,2)
+MANAGER_ID	NUMBER(6)
+DEPARTMENT_ID	NUMBER(4)
+11 rows selected describe departments
+Name	Null	Type
+DEPARTMENT_ID	NOT NULL NUMBER(4)
+DEPARTMENT_NAME	NOT NULL VARCHAR2(30) MANAGER_ID		NUMBER(6)
+LOCATION_ID	NUMBER(4)
+4 rows selected
+There are three other basic ways to join these two tables on the DEPARTMENT_ID column. One of them is pre-ANSI SQL 99, one is more suitable when the column names in the joined tables are not identical, and one is outright dangerous, as you will see.
+Using the “old style” join syntax, you include the join condition in the WHERE clause, like this:
+select employee_id, last_name, first_name, e.department_id, department_name from employees e, departments d
+where e.department_id = d.department_id
+;
+While this approach works and is as efficient from an execution plan point of view, the older syntax can be hard to read, as you are mixing the table-join conditions with any filter conditions. It also forces you to specify a qualifier for the join columns in the SELECT clause.
+Another ANSI SQL 99 method for joining tables uses the ON clause as follows:
+select employee_id, last_name, first_name, e.department_id, department_name from employees e
+join departments d
+on e.department_id = d.department_id
+;
+
+
+
+
+Note You can also use the INNER JOIN keywords instead of just JOIN in a multi-table query if you want to be more verbose or want to make it very clear that the query is an equi-join instead of an outer join or Cartesian
+product.
+
+
+The ON clause is less readable (and usually requires more typing!) compared to the USING clause when the joined columns have the same name. It has the same downside as using the pre-ANSI SQL 99 syntax in that you must qualify the join columns or any other columns with the same name with an alias.
+Finally, you can make the syntax for the EMPLOYEE/DEPARTMENTS query even simpler by using the
+NATURAL JOIN clause instead of the JOIN . . . USING clause, as in this example:
+select employee_id, last_name, first_name, department_id, department_name from employees natural join departments
+;
+When you use NATURAL JOIN, Oracle automatically joins the two tables on columns with the same name, which in this case is the DEPARTMENT_ID column. This makes the query even simpler and more readable, but has a very dark side in some circumstances. Here’s an example. The query we’ve just shown with NATURAL JOIN returns 32 rows, while the earlier queries that used USING or ON each return 106 rows. What happened? Why the difference?
+If you look closely at the table definitions, you’ll see another common column called MANAGER_ID. NATURAL JOIN includes that column in the join criteria. Thus, the preceding query is really equivalent to the following:
+
+select employee_id, last_name, first_name, department_id, department_name from employees join departments using(department_id, manager_id)
+;
+This join is almost certainly not what you want, as the MANAGER_ID in the EMPLOYEES table has a slightly different meaning than the MANAGER_ID in the DEPARTMENTS table: EMPLOYEES.MANAGER_ID is the employee’s manager, whereas DEPARTMENTS.MANAGER_ID is the manager of the entire department. As a result, the query does not return employees and their managers. Instead, it produces a list of employees whose department has the same manager as they do, which will not be the case in many organizations. Furthermore, a large number of departments in the DEPARTMENTS table do not have a manager assigned, thus the query using NATURAL JOIN will leave out employees who do have a reporting manager, but whose department does not have a manager assigned. Use NATURAL JOIN with caution!
+Later in this chapter, we’ll look at two techniques that can help you uncover these logical errors: using optional joins and dealing with NULL values in queries.
+
+3-2. Stacking Query Results Vertically
+Problem
+You want to combine the results from two SELECT statements into a single result set.
+
+
+Solution
+Use the UNION operator. UNION combines the results of two or more queries and removes duplicates from the entire result set. In Oracle’s mythical company, the employees in the EMPLOYEES_ACT table need to be merged with employees from a recent corporate acquisition. The recently acquired company’s employee table EMPLOYEES_NEW has the same exact format as the existing EMPLOYEES_ACT table, so it should be easy to use UNION to combine the two tables into a single result set as follows:
+select employee_id, first_name, last_name from employees_act;
+
+
+select employee_id, first_name, last_name from employees_new;
+
+
+
+select employee_id, first_name, last_name from employees_act union
+select employee_id, first_name, last_name from employees_new order by employee_id
+;
+
+
+
+
+Using UNION removes the duplicate rows. You can have one ORDER BY at the end of the query to order the results. In this example, the two employee tables have two rows in common (some people need to work two or three jobs to make ends meet!), so instead of returning 11 rows, the UNION query returns nine.
+
+How It Works
+Note that for the UNION operator to remove duplicate rows, all columns in a given row must be equal to the same columns in one or more other rows. When Oracle processes a UNION, it must perform a sort/merge to determine which rows are duplicates. Thus, your execution time will likely be more than running each SELECT individually. If you know there are no duplicates within and across each SELECT statement, you can use UNION ALL to combine the results without checking for duplicates.
+If there are duplicates, it will not cause an error; you will merely get duplicate rows in your result set.
+
+3-3. Writing an Optional Join
+Problem
+You are joining two tables by one or more common columns, but you want to make sure to return all rows in the first table regardless of a matching row in the second. For example, you are joining the employee and department tables, but some employees lack department assignments.
+
+Solution
+Use an outer join. In Oracle’s sample database, the HR user maintains the EMPLOYEES and DEPARTMENTS tables; assigning a department to an employee is optional. There are 107 employees in the EMPLOYEES table. Using a standard join between EMPLOYEES and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the EMPLOYEES table, you can use LEFT OUTER JOIN to include all rows in the EMPLOYEES table and matching rows in DEPARTMENTS, if any:
+
+select employee_id, last_name, first_name, department_id, department_name from employees
+left outer join departments using(department_id)
+;
+
+
+107 rows selected
+
+
+There are now 107 rows in the result set instead of 106; Kimberely Grant is included even though she does not currently have a department assigned.
+
+How It Works
+When two tables are joined using LEFT OUTER JOIN, the query returns all the rows in the table to the left of the LEFT OUTER JOIN clause, as you might expect. Rows in the table on the right side of the LEFT OUTER JOIN clause are matched when possible. If there is no match, columns from the table on the right side will contain NULL values in the results.
+As you might expect, there is a RIGHT OUTER JOIN as well (in both cases, the OUTER keyword is
+optional). You can rewrite the solution as follows:
+
+select employee_id, last_name, first_name, department_id, department_name from departments
+right outer join employees using(department_id)
+;
+The results are identical, and which format you use depends on readability and style.
+The query can be written using the ON clause as well, just as with an equi-join (inner join). And for versions of Oracle before 9i, you must use Oracle’s somewhat obtuse and proprietary outer-join syntax with the characters (+) on the side of the query that is missing rows, as in this example:
+
+select employee_id, last_name, first_name, e.department_id, department_name from employees e, departments d
+where e.department_id = d.department_id (+)
+;
+Needless to say, if you can use ANSI SQL-99 syntax, by all means do so for clarity and ease of maintenance.
+
+3-4. Making a Join Optional in Both Directions
+Problem
+All of the tables in your query have at least a few rows that don’t match rows in the other tables, but you still want to return all rows from all tables and show the mismatches in the results. For example, you want to reduce the number of reports by including mismatches from both tables instead of having one report for each scenario.
+
+Solution
+Use FULL OUTER JOIN. As you might expect, a full outer join between two or more tables will return all rows in each table of the query and match where possible. You can use FULL OUTER JOIN with the EMPLOYEES and DEPARTMENTS table as follows:
+
+
+select employee_id, last_name, first_name, department_id, department_name from employees
+full outer join departments using(department_id)
+;
+
+
+123 rows selected
+
+
+Note The OUTER keyword is optional when using a FULL, LEFT, or RIGHT join. It does add documentation value to your query, making it clear that mismatched rows from one or both tables will be in the results.
+
+
+Using FULL OUTER JOIN is a good way to view, at a glance, mismatches between two tables. In the preceding output, you can see an employee without a department as well as several departments that have no employees.
+
+How It Works
+Trying to accomplish a full outer join before Oracle9i was a bit inelegant: you had to perform a UNION of two outer joins (a left and a right outer join) using the proprietary Oracle syntax as follows:
+
+select employee_id, last_name, first_name, e.department_id, department_name from employees e, departments d
+where e.department_id = d.department_id (+) union
+select employee_id, last_name, first_name, e.department_id, department_name from employees e, departments d
+where e.department_id (+) = d.department_id
+;
+Running two separate queries, then removing duplicates, takes more time to execute than using the
+FULL OUTER JOIN syntax, where only one pass on each table is required.
+
+
+You can tweak the FULL OUTER JOIN to produce only the mismatched records as follows:
+select employee_id, last_name, first_name, department_id, department_name from employees
+full outer join departments using(department_id) where employee_id is null or department_name is null
+;
+
+3-5. Removing Rows Based on Data in Other Tables
+Problem
+You want to delete rows from a table if corresponding rows exist in a second table. For example, you want to delete rows from the EMPLOYEES_RETIRED table for any employees that exist in the EMPLOYEES table.
+
+Solution
+Use the IN or EXISTS clause with a subquery. You have a table called EMPLOYEES_RETIRED that should contain only—you guessed it—retired employees. However, the EMPLOYEES_RETIRED table erroneously includes some active employees, so you want to remove any active employees from the EMPLOYEES_RETIRED table. Here’s how you can do that:
+
+delete from employees_retired where employee_id
+in (select employee_id from employees)
+;
+
+How It Works
+When you use SELECT, you have the relative luxury of using a join condition to return results. When deleting rows, you can’t perform an explicit join unless the join conditions are in a subquery or you use an inline view as follows:
+delete (
+select employee_id
+from employees_retired join employees using(employee_id)
+);
+The SQL standard treats views much like tables, in that you can not only run a SELECT statement against a view, but also INSERT, UPDATE and DELETE under certain circumstances. If these circumstances are met (for example, you have a key-preserved table, no aggregates, and so forth), DELETE will delete only from the first table in the FROM clause. Be careful: if your DELETE looks like the following, you will not get the intended results:
+
+
+delete (
+select employee_id
+from employees join employees_retired using(employee_id)
+);
+The rows will be deleted from the EMPLOYEES table instead, and that is not the desired result! Another potential solution to the problem uses an EXISTS clause to determine which rows to delete:
+
+delete from employees_retired er where exists (
+select 1 from employees e
+where er.employee_id = e.employee_id
+)
+;
+This is not as elegant as the first solution, but might be more efficient. It appears contrived, and it is, because Oracle never uses the results of the query anywhere. It only uses the subquery to verify the existence of a match, and then deletes the corresponding row(s). You can use a “1”, an “X”, or even NULL; internally, Oracle translates the result to a zero and does not use it.
+Whether you use IN or EXISTS depends on the sizes of the driving table (the outer table referenced in the SELECT, UPDATE, or DELETE) and the size of the result set in the subquery. Using IN is most likely better if the results of the subquery are small or is a list of constants. However, using EXISTS may run a lot more efficiently since the implicit JOIN may take advantage of indexes. The bottom line is, it depends. Look at the execution plans for each method (IN versus EXISTS), and if the relative row counts remain stable whenever the query is run, you can use whichever method is faster.
+
+3-6. Finding Matched Data Across Tables
+Problem
+You want to find the rows in common between two or more tables or queries.
+
+Solution
+Use the INTERSECT operator. When you use INTERSECT, the resulting row set contains only rows that are in common between the two tables or queries:
+select count(*) from employees_act; COUNT(*)
+6
+select count(*) from employees_new; COUNT(*)
+5
+
+
+select * from employees_act intersect
+select * from employees_new
+;
+
+
+
+How It Works
+The INTERSECT operator, along with UNION, UNION ALL, and MINUS, joins two or more queries together. As of Oracle Database 11g, these operators have equal precedence, and unless you override them with parentheses, they are evaluated in left-to-right order. Or, more intuitively since you usually don’t have two queries on one line, top-to-bottom order!
+
+
+Tip Future ANSI SQL standards give the INTERSECT operator higher precedence than the other operators. Thus, to “bulletproof” your SQL code, use parentheses to explicitly specify evaluation order where you use INTERSECT with other set operators.
+
+
+To better understand how INTERSECT works, Figure 3-1 shows a Venn diagram representation of the
+INTERSECT operation on two queries.
+
+
+Figure 3-1. An Oracle INTERSECT operation
+
+
+
+Finally, for an INTERSECT operation to return the intended results, the corresponding columns in each query of the INTERSECT operation should have data types within the same class: numbers, characters, or date/time. For example, a NUMBER column and a BINARY_DOUBLE column will compare correctly if the conversion of the NUMBER column value to a BINARY_DOUBLE produces the same result. So, a NUMBER(3) column containing the value 250 will compare exactly to a BINARY_DOUBLE having the value 2.5E2.
+Using set operators is one of the rare cases where a value of NULL in one column is considered equal to another column containing a NULL. Therefore, running this query returns one row:
+
+select 'X' C1, NULL C2 from DUAL intersect
+select 'X' C1, NULL C2 from DUAL
+;
+
+3-7. Joining on Aggregates
+Problem
+You want to compare values in individual rows to aggregate values computed from the same table; you also want to filter rows that are used for the aggregate. For example: you want to find all employees whose salary is 20% less than the average salary for the company, except for employees who are in the executive department.
+
+Solution
+Use a subquery with an aggregate, and compare the employee’s salary to the average salary retrieved in the aggregate. For example, this query uses a subquery to calculate the average salary for employees outside of department 90, and compares every employee’s salary to 80% of the result from the subquery:
+
+select employee_id, last_name, first_name, salary from employees
+where salary < 0.8 * (
+select avg(salary) from employees
+where department_id != 90
+)
+;
+EMPLOYEE_ID	LAST_NAME	FIRST_NAME	SALARY
+
+----------------- ------------------- -------------------- ----------------
+
+How It Works
+The presented solution returns one row in the subquery. The Oracle optimizer calculates the average salary once, multiplies it by 0.8, and compares it to the salary of all other employees in the EMPLOYEE table other than those in department 90 (the executive group).
+If your subquery returns more than one row, the main query will return an error since you are using the < operator; operators such as <, >, =, >=, <=, and != compare a column’s or expression’s value to another single value. To compare a value in the main query to a list of one or more values in a subquery, you can use the ANY or SOME operator (they are equivalent) in the WHERE clause. For example, if you wanted to return all employees whose salary matches any of the employees in the executive department, you can do this:
+
+select employee_id, last_name, first_name, salary from employees
+where salary = any (
+select salary from employees
+where department_id = 90
+)
+;
+You can also use subqueries in the HAVING clause of a query that uses aggregates. In this example, you can retrieve all departments and average salaries whose average salary is greater than the average salary of the IT department:
+
+select department_id, avg(salary) avg_salary from employees
+group by department_id having avg(salary) > (
+select avg(salary) from employees
+where department_id = 60
+)
+;
+
+3-8. Finding Missing Rows
+Problem
+You have two tables, and you must find rows in the first table that are not in the second table. You want to compare all rows in each table, not just a subset of columns.
+
+Solution
+Use the MINUS set operator. The MINUS operator will return all rows in the first query that are not in the second query. The EMPLOYEES_BONUS table contains employees who have been given bonuses in the past,
+
+
+and you need to find employees in the EMPLOYEES table who have not yet received bonuses. Use the MINUS
+operator as follows to compare three selected columns from two tables:
+select employee_id, last_name, first_name from employees minus
+select employee_id, last_name, first_name from employees_bonus
+;
+
+
+
+How It Works
+Note that unlike the INTERSECT and UNION operators, the MINUS set operator is not commutative: the order of the operands (queries) is important! Changing the order of the queries in the solution will produce very different results.
+If you wanted to note changes for the entire row, you could use this query instead:
+select * from employees minus
+select * from employees_bonus
+;
+A Venn diagram may help to show how the MINUS operator works. Figure 3-2 shows the result of Query1 MINUS Query2. Any rows that overlap between Query1 and Query2 are removed from the result set along with any rows in Query2 that do not overlap Query1. In other words, only rows in Query1 are returned less any rows in Query1 that exist in Query2.
+
+
+Figure 3-2. An Oracle MINUS operation
+
+
+
+Rows in Query2 that do not exist in Query1 can be identified by reversing the order of the operands in the query:
+
+select * from employees_bonus minus
+select * from employees
+;
+What if Query2 is a proper subset of Query1? In other words, all the rows in Query2 are already in Query1? The query still works as advertised; MINUS only removes rows from Query1 that are in common with Query2, and never returns any rows in Query2 that are not in Query1. Figure 3-3 shows the Venn diagram for the scenario where Query2 is a proper subset of Query1.
+
+
+Figure 3-3. An Oracle MINUS operation with proper subsets
+
+You may ask why an outer join or an IN/EXISTS query might solve most problems like this. For sets of tables with a single primary key, it may be more efficient to use a join. However, for query results with a large number of columns or for comparing entire rows of data even when the primary keys match, MINUS is the more appropriate operator to use.
+
+3-9. Finding Rows that Tables Do Not Have in Common
+Problem
+You want to find rows from two queries or tables that the two queries or tables do NOT have in common. The analysts have provided you with Venn diagrams and the set notation for retrieving the required data, so you must use a combination of Oracle set operators to retrieve the desired result.
+
+
+Solution
+Use aggregate functions and the UNION ALL operator together in a compound query, parenthesizing for clarity and correctness. For example, you want to find the list of employees that are in the EMPLOYEES_ACT table but not in the EMPLOYEES_NEW table, and vice versa. Execute the following queries to show the contents of each table and the results of using Oracle set operators to find the unique rows in each table:
+
+select employee_id, first_name, last_name from employees_act order by employee_id;
+
+
+
+select employee_id, first_name, last_name from employees_new order by employee_id;
+
+
+
+select employee_id, first_name, last_name, count(act_emp_src) act_emp_row_count, count(new_emp_src) new_emp_row_count
+from
+(
+select ea.*, 1 act_emp_src, to_number(NULL) new_emp_src from employees_act ea
+union all
+select en.*, to_number(NULL) act_emp_src, 1 new_emp_src from employees_new en
+)
+group by employee_id, first_name, last_name having count(act_emp_src) != count(new_emp_src)
+;
+
+
+EMPLOYEE_ID FIRST_NAME  LAST_NAME	ACT_EMP_ROW_COUNT NEW_EMP_ROW_COUNT
+
+7 rows selected
+
+How It Works
+To get the correct result, you must first combine both result sets using UNION ALL in the subquery, assigning a “tag” column to indicate where the row came from—the first table or the second. Here, we use a “1”, but it would work fine with a “2”, or an “X”.
+The GROUP BY and HAVING clauses pick out the common rows. If a given row exists in both tables
+once, or several times, the count for that row will be the same, and thus will be excluded by the condition in the HAVING clause. If the counts are not the same, the row will show up in the result along with how many times it appears in one table but not the other, and vice versa. Because we are including primary keys in this query, you will not see more than one non-common row in each table.
+Figure 3-4 shows the Venn diagram for the result set.
+
+
+Figure 3-4. An Oracle set operation to find unique rows between component queries
+
+Using standard set notation, the result you are looking for can be more succinctly expressed as follows:
+NOT (Query1 INTERSECT Query2)
+
+
+Although Oracle syntax does have NOT and INTERSECT, NOT is not supported for use with Oracle set operators. Thus, you must write the query as shown in the solution with UNION ALL and GROUP BY to provide the result identified in Figure 3-4. Even if Oracle supported NOT with set operators, you would still have to use the solution provided to identify how many of each non-common row exists in each component query.
+
+3-10. Generating Test Data
+Problem
+You want to combine two or more tables without common columns to generate test data or a template for all possible combinations of values from two or more tables.
+For example, you are writing an embedded Oracle database application to help you count cards at the next blackjack game, and you want to generate the template table for the 52-card deck with a minimum of effort.
+
+Solution
+Use a CROSS JOIN construct between the set of four suits (hearts, clubs, diamonds, and spades) and the 13 rank values (Ace, 2-10, Jack, Queen, and King). For example:
+
+create table card_deck (suit_rank	varchar2(5),
+card_count	number)
+;
+insert into card_deck
+select rank || '-' || suit, 0 from (select 'A' rank from dual union all
+select '2' from dual union all
+select '3' from dual union all
+select '4' from dual union all
+select '5' from dual union all
+select '6' from dual union all
+select '7' from dual union all
+select '8' from dual union all
+select '9' from dual union all
+
+
+select '10' from dual union all
+select 'J' from dual union all
+select 'Q' from dual union all
+select 'K' from dual)
+cross join
+(select 'S' suit from dual union all
+select 'H' from dual union all
+select 'D' from dual union all
+select 'C' from dual)
+;
+select suit_rank from card_deck; SUIT_RANK
+A-S
+2-S
+3-S
+4-S
+5-S
+6-S
+. . . 10-C J-C
+Q-C
+K-C
+52 rows selected
+
+ 	The Dual Table	
+
+The DUAL table comes in handy in many situations. It is available in every version of Oracle from the last 20 years, and contains one row and one column. It is handy when you want to return a row when you don’t
+have to retrieve data from any particular table—you just want to return a value. You would also use the
+DUAL table to perform an ad-hoc calculation using a built-in function, as in this example:
+select sqrt(144) from dual;
+SQRT(144)
+
+
+12
+
+
+This SQL statement would work just as well if you already had the suits and ranks in two existing tables. In that case, you would reference the two tables rather than write those long subqueries involving UNION operations against the DUAL table. For example:
+
+select rank || '-' || suit, 0 from card_ranks
+cross join
+card_suits
+;
+
+How It Works
+Using a CROSS JOIN, otherwise known as a Cartesian product, is rarely intentional. If you specify no join conditions between two tables, the number of rows in the results is the product of the number of rows in each table. Usually this is not the desired result! As a general rule, for a query with n tables, you need to specify at least n-1 join conditions to avoid a Cartesian product.
+If your card games usually involve using one or two jokers in the deck, you can tack them onto the end as easily as this:
+
+select rank || '-' || suit, 0 from (select 'A' rank from dual union all
+select '2' from dual
+. . .
+select 'C' from dual)
+union (select 'J1', 0 from dual) union (select 'J2', 0 from dual)
+;
+Using the pre-Oracle9i syntax (Oracle proprietary syntax), you can rewrite the original query as follows:
+
+select rank || '-' || suit, 0 from card_ranks, card_suits
+;
+It’s odd to see a multi-table join using the proprietary Oracle syntax and no WHERE clause, but it produces the results you want!
+
+3-11. Updating Rows Based on Data in Other Tables
+Problem
+You want to update some or all rows in your table based on individual values or aggregates in the same or another table. The values used to update the query are dependent on column values in the table to be updated.
+
+
+Solution
+Use a correlated update to link the values in the subquery to the main table in the UPDATE clause. In the following example, you want to update all employee salaries to 10% more than the average salary for their department:
+update employees e
+set salary = (select avg(salary)*1.10
+from employees se
+where se.department_id = e.department_id)
+;
+107 rows updated
+
+How It Works
+For each row in the EMPLOYEES table, the current salary is updated with 10% more than the average salary for their department. The subquery will always return a single row since it has an aggregate with no GROUP BY. Note that this query shows Oracle’s read consistency feature in action: Oracle preserves the original salary value for each employee to compute the average while updating each employee’s salary in the same UPDATE statement.
+Correlated updates are much like correlated subqueries (discussed elsewhere in this chapter): you
+link one or more columns in the main part of the query with the corresponding columns in the subquery. When performing correlated updates, take special note of how many rows are updated; coding the subquery incorrectly can often update most values in the table with NULL or incorrect values!
+In fact, the solution provided will fail if an employee does not have a department assigned. The correlated subquery will return NULL in this scenario because a NULL department value will never match any other department values that are NULL, and thus the employee will be assigned a SALARY of NULL. To fix this problem, add a filter in the WHERE clause:
+update employees e
+set salary = (select avg(salary)*1.10
+from employees se
+where se.department_id = e.department_id) where department_id is not null
+;
+rows updated
+
+All employees without an assigned department will keep their existing salary. Another way to accomplish the same thing is by using the NVL function in the SET clause to check for NULL values:
+update employees e
+set salary = nvl((select avg(salary)*1.10
+from employees se
+where se.department_id = e.department_id),salary)
+;
+rows updated
+
+
+This option may not be as desirable from an I/O perspective or in terms of redo log file usage, since all rows will be updated whether they have a department assigned or not.
+
+3-12. Manipulating and Comparing NULLs in Join Conditions
+Problem
+You want to map NULL values in a join column to a default value that will match a row in the joined table, thus avoiding the use of an outer join.
+
+Solution
+Use the NVL function to convert NULL values in the foreign key column of the table to be joined to its parent table. In this example, holiday parties are scheduled for each department, but several employees do not have a department assigned. Here is one of them:
+
+select employee_id, first_name, last_name, department_id from employees
+where employee_id = 178
+;
+
+
+1 rows selected
+To ensure that each employee will attend a holiday party, convert all NULL department codes in the
+EMPLOYEES table to department 110 (Accounting) in the query as follows:
+select employee_id, first_name, last_name, d.department_id, department_name from employees e join departments d
+on nvl(e.department_id,110) = d.department_id
+;
+
+
+
+
+
+
+107 rows selected
+
+How It Works
+Mapping columns with NULLs to non-NULL values in a join condition to avoid using an OUTER JOIN might still have performance problems, since the index on EMPLOYEES.DEPARTMENT_ID will not be used during the join (primarily because NULL columns are not indexed). You can address this new problem by using a function-based index (FBI). An FBI creates an index on an expression, and may use that index if the expression appears in a join condition or a WHERE clause. Here is how to create an FBI on the DEPARTMENT_ID column:
+create index employees_dept_fbi on employees(nvl(department_id,110));
+
+
+Tip As of Oracle Database 11g, you can now use virtual columns as an alternative to FBIs. Virtual columns are derived from constants, functions, and columns from the same table. You can define indexes on the virtual columns, which the optimizer will use in any query as it would a regular column index.
+
+
+Ultimately, the key to handling NULLs in join conditions is based on knowing your data. If at all possible, avoid joining on columns that may have NULLs, or ensure that every column you will join on has a default value when it is populated. If the column must have NULLs, use functions like NVL, NVL2, and COALESCE to convert NULLs before joining; you can create function-based indexes to offset any performance issues with joining on expressions. If that is not possible, understand the business rules about what NULLs mean in your database columns: do they mean zero, unknown, or not applicable? Your SQL code must reflect the business definition of columns that can have NULLs.
