@@ -260,127 +260,122 @@ FROM driver_log;
 ## Use MIN( ) to find the smallest value, MAX( ) to find the largest.
 
 ## Discussion
-## Finding smallest or largest values is somewhat akin to sorting, except that instead of producing an entire set of sorted values, you SELECT only a single value at one end or the other of the sorted range. This kind of operation applies to questions about smallest, largest, oldest, newest, most expensive, least expensive, and so forth. One way to find such values is to use the MIN( ) and MAX( ) functions. (Another way to address these questions is to use LIMIT; see the discussions in Recipes 3.14 and 3.16.)
+## Finding smallest or largest values is somewhat akin to sorting, except that instead of producing an entire set of sorted values, you SELECT only a single value at one end or the other of the sorted range. This kind of operation applies to questions about smallest, largest, oldest, newest, most expensive, least expensive, and so forth. One way to find such values is to use the MIN( ) and MAX( ) functions.
 
 ## Because MIN( ) and MAX( ) determine the extreme values in a set, they’re useful for characterizing ranges:
-What date range is represented by the rows in the mail table? What are the smallest and largest messages sent?
-mysql> SELECT
--> MIN(t) AS earliest, MAX(t) AS latest,
--> MIN(size) AS smallest, MAX(size) AS largest
--> FROM mail;
+## What date range is represented by the rows in the mail table? What are the smallest and largest messages sent?
+```sql
+SELECT
+    MIN(time_val) AS earliest, 
+    MAX(time_val) AS latest,
+    MIN(size) AS smallest, 
+    MAX(size) AS largest
+FROM mail;
+```
+
+```
 +---------------------+---------------------+----------+---------+
-| earliest  | latest    | smallest | largest |
+| earliest            | latest              | smallest | largest |
 +---------------------+---------------------+----------+---------+
-| 2006-05-11 10:15:08 | 2006-05-19 22:21:51 |   271 | 2394482 |
+| 2006-05-11 10:15:08 | 2006-05-19 22:21:51 |   271    | 2394482 |
 +---------------------+---------------------+----------+---------+
-What are the shortest and longest trips in the driver_log table?
-mysql> SELECT MIN(miles) AS shortest, MAX(miles) AS longest
--> FROM driver_log;
+```
+
+## What are the shortest and longest trips in the driver_log table?
+
+```sql
+SELECT 
+    MIN(miles) AS shortest, 
+    MAX(miles) AS longest
+FROM driver_log;
+```
+
+
+## What are the lowest and highest U.S. state populations?
+```sql
+SELECT 
+    MIN(population) AS 'fewest people', 
+    MAX(population) AS 'most people'
+FROM states;
+```
+
+## MIN( ) and MAX( ) need not be applied directly to column values. They also work with expressions or values that are derived FROM column values. For example, to find the lengths of the shortest and longest state names, do this:
+
+```sql
+SELECT
+-> MIN(LENGTH(name)) AS shortest,
+-> MAX(LENGTH(name)) AS longest
+-> FROM states;
+```
 +----------+---------+
 | shortest | longest |
 +----------+---------+
-|   79 |    502 |
-+----------+---------+
-What are the lowest and highest U.S. state populations?
-mysql> SELECT MIN(pop) AS 'fewest people', MAX(pop) AS 'most people'
--> FROM states;
-+---------------+-------------+
-| fewest people | most people |
-+---------------+-------------+
-|   506529 |    35893799 |
-+---------------+-------------+
-What are the first and last state names, lexically speaking?
-mysql> SELECT MIN(name), MAX(name) FROM states;
-+-----------+-----------+
-| MIN(name) | MAX(name) |
-+-----------+-----------+
-| Alabama   | Wyoming   |
-+-----------+-----------+
-MIN( ) and MAX( ) need not be applied directly to column values. They also work with expressions or values that are derived FROM column values. For example, to find the lengths of the shortest and longest state names, do this:
-mysql> SELECT
--> MIN(CHAR_LENGTH(name)) AS shortest,
--> MAX(CHAR_LENGTH(name)) AS longest
--> FROM states;
-+----------+---------+
-| shortest | longest |
-+----------+---------+
-|   4 | 14 |
+|   4      | 14      |
 +----------+---------+
 
 
 ---
 
-Summarizing with SUM( ) and AVG( )
-Problem
-You need to add a set of numbers or find their average.
+# Summarizing with SUM( ) and AVG( )
+## Problem
+## You need to add a set of numbers or find their average.
 
-Solution
-Use the SUM( ) or AVG( ) functions.
+## Solution
+## Use the SUM( ) or AVG( ) functions.
 
-Discussion
-SUM( ) and AVG( ) produce the total and average (mean) of a set of values:
-What is the total amount of mail traffic and the average size of each message?
-mysql> SELECT
--> SUM(size) AS 'total traffic',
--> AVG(size) AS 'average message size'
--> FROM  mail;
+## Discussion
+## SUM( ) and AVG( ) produce the total and average (mean) of a set of values:
+## What is the total amount of mail traffic and the average size of each message?
+
+```sql
+SELECT 
+    SUM(size) AS 'total traffic',
+    AVG(size) AS 'average message size'
+FROM mail;
+```
 +---------------+----------------------+
 | total traffic | average message size |
 +---------------+----------------------+
-|   3798185 |   237386.5625 |
+|   3798185     |   237386.5625        |
 +---------------+----------------------+
-How many miles did the drivers in the driver_log table travel? What was the aver- age number of miles traveled per day?
-mysql> SELECT
--> SUM(miles) AS 'total miles',
--> AVG(miles) AS 'average miles/day'
--> FROM driver_log;
+
+## How many miles did the drivers in the driver_log table travel? What was the aver- age number of miles traveled per day?
+
+```sql
+SELECT
+    SUM(miles) AS 'total miles',
+    AVG(miles) AS 'average miles/day'
+FROM driver_log;
+```
+```
 +-------------+-------------------+
 | total miles | average miles/day |
 +-------------+-------------------+
-|   2166 |  216.6000 |
+|   2166      |  216.6000         |
 +-------------+-------------------+
-What is the total population of the United States?
-mysql> SELECT SUM(pop) FROM states;
-+-----------+
-| SUM(pop) |
-+-----------+
-| 293101881 |
-+-----------+
-The value represents the population reported for July 2004. The figure shown here differs FROM the U.S. population reported by the U.S. Census Bureau, because the states table doesn’t contain a count for Washington, D.C.
-SUM( ) and AVG( ) are strictly numeric functions, so they can’t be used with strings or temporal values. On the other hand, sometimes you can convert nonnumeric values to useful numeric forms. Suppose that a table stores TIME values that represent elapsed time:
-mysql> SELECT t1 FROM time_val;
-+----------+
-| t1    |
-+----------+
-| 15:00:00 |
-| 05:01:30 |
-| 12:30:20 |
-+----------+
-To compute the total elapsed time, use TIME_TO_SEC( ) to convert the values to seconds before summing them. The resulting sum also will be in seconds; pass it to SEC_TO_TIME( ) to convert the sum back to TIME format:
-mysql> SELECT SUM(TIME_TO_SEC(t1)) AS 'total  seconds',
--> SEC_TO_TIME(SUM(TIME_TO_SEC(t1))) AS 'total time'
--> FROM time_val;
-+---------------+------------+
-| total seconds | total time |
-+---------------+------------+
-|   117110 | 32:31:50   |
-+---------------+------------+
+```
 
-See Also
-The SUM( ) and AVG( ) functions are especially useful in applications that compute sta- tistics. They’re explored further in Chapter 13 along with STD( ), a related function that calculates standard deviations.
+## What is the total population of the United States?
+```sql
+SELECT SUM(pop) FROM states;
+```
 
 ---
 
-Using DISTINCT to Eliminate Duplicates
-Problem
-You want to know which values are present in a set of values, without displaying duplicate values multiple times. Or you want to know how many distinct values there are.
+## Using DISTINCT to Eliminate Duplicates
+## Problem
+## You want to know which values are present in a set of values, without displaying duplicate values multiple times. Or you want to know how many distinct values there are.
 
-Solution
-Use DISTINCT to SELECT unique values or COUNT(DISTINCT) to count them.
+## Solution
+## Use `DISTINCT` to SELECT unique values to count them.
 
-Discussion
-One summary operation that doesn’t use aggregate functions is to determine which values or rows are contained in a dataset by eliminating duplicates. Do this with DISTINCT (or DISTINCTROW, which is synonymous). DISTINCT is useful for boiling down a query result, and often is combined with ORDER BY to place the values in more mean- ingful order. For example, to determine the names of the drivers listed in the driver_log table, use the following statement:
-mysql> SELECT DISTINCT name FROM driver_log ORDER BY name;
+## Discussion
+## One summary operation that doesn’t use aggregate functions is to determine which values or rows are contained in a dataset by eliminating duplicates. Do this with DISTINCT. DISTINCT is useful for boiling down a query result, and often is combined with ORDER BY to place the values in more mean- ingful order. For example, to determine the names of the drivers listed in the driver_log table, use the following statement:
+
+```sql
+SELECT DISTINCT name FROM driver_log ORDER BY name;
+```
+```
 +-------+
 | name |
 +-------+
@@ -388,8 +383,13 @@ mysql> SELECT DISTINCT name FROM driver_log ORDER BY name;
 | Henry |
 | Suzi |
 +-------+
-A statement without DISTINCT produces the same names, but is not nearly as easy to understand, even with a small dataset:
-mysql> SELECT name FROM driver_log;
+```
+## A statement without `DISTINCT` produces the same names, but is not nearly as easy to understand, even with a small dataset:
+
+```sql
+SELECT name FROM driver_log;
+```
+```
 +-------+
 | name |
 +-------+
@@ -404,21 +404,30 @@ mysql> SELECT name FROM driver_log;
 | Ben   |
 | Henry |
 +-------+
-To determine how many different drivers there are, use COUNT(DISTINCT):
-mysql> SELECT COUNT(DISTINCT name) FROM driver_log;
+```
+
+## To determine how many different drivers there are, use COUNT(DISTINCT):
+```
+SELECT COUNT(DISTINCT name) FROM driver_log;
+```
 +----------------------+
 | COUNT(DISTINCT name) |
 +----------------------+
-|   3 |
+|   3                  |
 +----------------------+
-COUNT(DISTINCT) ignores NULL values. Should you wish to count NULL as one of the values in the set if it’s present, use one of the following expressions:
-COUNT(DISTINCT val) + IF(COUNT(IF(val IS NULL,1,NULL))=0,0,1) COUNT(DISTINCT val) + IF(SUM(ISNULL(val))=0,0,1) COUNT(DISTINCT val) + (SUM(ISNULL(val))!=0)
-DISTINCT queries often are useful in conjunction with aggregate functions to obtain a more complete characterization of your data. Suppose that you have a customer table that contains a state column indicating the state WHERE customers are located. Applying COUNT(*) to the customer table indicates how many customers you have, using  DISTINCT on the state values in the table tells you the number of states in which you have customers, and COUNT(DISTINCT) on the state values tells you how many states your customer base represents.
-When used with multiple columns, DISTINCT shows the different combinations of val- ues in the columns and COUNT(DISTINCT) counts the number of combinations. The following statements show the different sender/recipient pairs in the mail table and how many such pairs there are:
-mysql> SELECT DISTINCT srcuser, dstuser FROM mail
--> ORDER BY srcuser, dstuser;
+## Note: `COUNT(DISTINCT)` ignores NULL values. When used with multiple columns, `DISTINCT` shows the different combinations of values in the columns and `COUNT(DISTINCT)` counts the number of combinations. The following statements show the different sender/recipient pairs in the mail table and how many such pairs there are:
+
+```sql
+SELECT DISTINCT sender, recipient 
+FROM mail
+ORDER BY 
+    sender, recipient;
+```
+
+## Output
+```
 +---------+---------+
-| srcuser | dstuser |
+| sender | recipient |
 +---------+---------+
 | barb  | barb  |
 | barb  | tricia |
@@ -431,153 +440,180 @@ mysql> SELECT DISTINCT srcuser, dstuser FROM mail
 | tricia | gene |
 | tricia | phil |
 +---------+---------+
-mysql> SELECT COUNT(DISTINCT srcuser, dstuser) FROM mail;
+```
+
+```sql
+SELECT COUNT(DISTINCT sender, recipient) FROM mail;
+```
+
+```
 +----------------------------------+
-| COUNT(DISTINCT srcuser, dstuser) |
+| COUNT(DISTINCT sender, recipient) |
 +----------------------------------+
-|   10 |
+|   10                             |
 +----------------------------------+
+```
+
+```
 DISTINCT works with expressions, too, not just column values. To determine the num- ber of hours of the day during which messages in the mail are sent, count the distinct HOUR( ) values:
-mysql> SELECT COUNT(DISTINCT HOUR(t)) FROM mail;
+```
+
+```sql
+SELECT COUNT(DISTINCT HOUR(t)) FROM mail;
+```
+```
 +-------------------------+
 | COUNT(DISTINCT HOUR(t)) |
 +-------------------------+
-|   12 |
+|   12                    |
 +-------------------------+
-To find out which hours those were, list them:
-mysql> SELECT DISTINCT HOUR(t) AS hour FROM mail ORDER BY hour;
-+------+
-| hour |
-+------+
-
-+------+
-
+```
 
 ---
 
-Problem
-You want to know the values for other columns in the row that contains a minimum or maximum value.
+## Problem
+## You want to know the values for other columns in the row that contains a minimum or maximum value.
 
 
-Solution
-Use two statements and a user-defined variable. Or use a subquery. Or use a join.
+## Solution
+## Use two statements and a user-defined variable. Or use a subquery. Or use a join.
 
-Discussion
-MIN( ) and MAX( ) find the endpoints of a range of values, but sometimes when finding a minimum or maximum value, you’re also interested in other values FROM the row in which the value occurs. For example, you can find the largest state population like this:
-mysql> SELECT MAX(pop) FROM states;
-+----------+
-| MAX(pop) |
-+----------+
-| 35893799 |
-+----------+
-But that doesn’t show you which state has this population. The obvious attempt at getting that information looks like this:
-mysql> SELECT MAX(pop), name FROM states WHERE pop = MAX(pop);
-ERROR 1111 (HY000): Invalid use of group function
-Probably everyone tries something like that sooner or later, but it doesn’t work. Ag- gregate functions such as MIN( ) and MAX( ) cannot be used in WHERE clauses, which require expressions that apply to individual rows. The intent of the statement is to determine which row has the maximum population value, and then display the asso- ciated state name. The problem is that while you and I know perfectly well what we mean by writing such a thing, it makes no sense at all to MySQL. The statement fails because MySQL uses the WHERE clause to determine which rows to SELECT, but it knows the value of an aggregate function only after Selecting the rows FROM which the func- tion’s value is determined! So, in a sense, the statement is self-contradictory. You can solve this problem by saving the maximum population value in a user-defined variable and then comparing rows to the variable value:
-mysql> SET @max = (SELECT MAX(pop) FROM states);
-mysql> SELECT pop AS 'highest population',  name  FROM  states WHERE pop = @max;
-+--------------------+------------+
-| highest population | name |
-+--------------------+------------+
-|   35893799 | California |
-+--------------------+------------+
-For a siSELECT MAX(pop) FROM states);
-+--------------------+------------+
-| highest population | name |
-+--------------------+------------+
-|   35893799 | California |
-+--------------------+------------+
-This technique also works even if the minimum or maximum value itself isn’t actually contained in the row, but is only derived FROM it. If you want to know the length of the shortest verse in the King James Version, that’s easy to find:
-mysql> SELECT MIN(CHAR_LENGTH(vtext)) FROM kjv;
-+-------------------------+
-| MIN(CHAR_LENGTH(vtext)) |
-+-------------------------+
-|   11 |
-+-------------------------+
-If you want to know, “What verse is that?” do this instead:
-mysql> SELECT bname, cnum, vnum, vtext FROM kjv
--> WHERE CHAR_LENGTH(vtext) = (SELECT MIN(CHAR_LENGTH(vtext)) FROM kjv);
-+-------+------+------+-------------+
-| bname | cnum | vnum | vtext   |
-+-------+------+------+-------------+
-| John |    11 |    35 | Jesus wept. |
-+-------+------+------+-------------+
-Yet another way to SELECT other columns FROM rows containing a minimum or maximum value is to use a join. SELECT the value into another table, and then join it to the original table to SELECT the row that matches the value. To find the row for the state with the highest population, use a join like this:
-mysql> CREATE TABLE t SELECT MAX(pop) as maxpop FROM states;
-mysql> SELECT states.* FROM states INNER JOIN t ON states.pop = t.maxpop;
-+------------+--------+------------+----------+
-| name  | abbrev | statehood | pop  |
-+------------+--------+------------+----------+
-| California | CA   | 1850-09-09 | 35893799 |
-+------------+--------+------------+----------+
+## Discussion
+## MIN( ) and MAX( ) find the endpoints of a range of values, but sometimes when finding a minimum or maximum value, you’re also interested in other values FROM the row in which the value occurs. For example, you can find the largest state population like this:
 
-See Also
-For more information about joins, see Chapter 12, in particular, Recipe 12.6, which further discusses the problem of finding rows that contain groupwise minimum or maximum values.
+```sql
+SELECT MAX(population) FROM states;
+```
+```
++-----------------+
+| MAX(population) |
++-----------------+
+| 35893799        |
++-----------------+
+```
 
+## But that doesn’t show you which state has this population. The obvious attempt at getting that information looks like this:
+
+## Note: This does NOT work
+```sql
+SELECT 
+    MAX(population), name 
+FROM states 
+WHERE pop = MAX(population);
+```
+
+## Aggregate functions such as MIN( ) and MAX( ) CANNOT BE USED in WHERE clauses. Instead, do this:
+```sql
+SELECT 
+    MAX(population), name 
+FROM states 
+WHERE pop = (SELECT MAX(population) FROM states);
+```
 
 ---
 
-Dividing a Summary into Subgroups
-Problem
-You want to calculate a summary for each subgroup of a set of rows, not an overall summary value.
+## Problem
+## You want to calculate a summary for each subgroup of a set of rows, not an overall summary value.
 
-Solution
-Use a GROUP BY clause to arrange rows into groups.
+## Solution
+## Use a GROUP BY clause to arrange rows into groups.
 
-Discussion
-The summary statements shown so far calculate summary values over all rows in the result set. For example, the following statement determines the number of records in the mail table, and thus the total number of mail messages that have been sent:
-mysql> SELECT COUNT(*) FROM mail;
+## Discussion
+## The summary statements shown so far calculate summary values over all rows in the result set. For example, the following statement determines the number of records in the mail table, and thus the total number of mail messages that have been sent:
+```sql
+SELECT COUNT(*) FROM mail;
+```
+
+```
 +----------+
 | COUNT(*) |
 +----------+
-|   16 |
+|   16     |
 +----------+
-Sometimes it’s desirable to break a set of rows into subgroups and summarize each group. Do this by using aggregate functions in conjunction with a GROUP BY clause. To determine the number of messages per sender, group the rows by sender name, count how many times each name occurs, and display the names with the counts:
-mysql> SELECT srcuser, COUNT(*) FROM mail
--> GROUP BY srcuser;
+```
+
+## Sometimes it’s desirable to break a set of rows into subgroups and summarize each group. Do this by using aggregate functions in conjunction with a GROUP BY clause. To determine the number of messages per sender, group the rows by sender name, count how many times each name occurs, and display the names with the counts:
+```sql
+SELECT sender, COUNT(*) FROM mail
+-> GROUP BY sender;
+```
 +---------+----------+
-| srcuser | COUNT(*) |
+| sender  | COUNT(*) |
 +---------+----------+
-| barb  |   3 |
-| gene  |   6 |
-| phil  |   5 |
-| tricia |  2 |
+| barb    |   3      |
+| gene    |   6      |
+| phil    |   5      |
+| tricia  |   2      |
 +---------+----------+
-That query summarizes the same column that is used for grouping (srcuser), but that’s not always necessary. Suppose that you want a quick characterization of the mail table, showing for each sender listed in it the total amount of traffic sent (in bytes) and the average number of bytes per message. In this case, you still use the srcuser column to place the rows in groups, but the summary functions operate on the size values:
-mysql> SELECT srcuser,
--> SUM(size) AS 'total bytes',
--> AVG(size) AS 'bytes per message'
--> FROM mail GROUP BY srcuser;
+That query summarizes the same column that is used for grouping (`sender`), but that’s not always necessary. Suppose that you want a quick characterization of the mail table, showing for each `sender` listed in it the total amount of traffic sent (in bytes) and the average number of bytes per message. In this case, you still use the `sender` column to place the rows in groups, but the summary functions operate on the size values:
+
+```sql
+SELECT sender,
+SUM(size) AS 'total bytes',
+AVG(size) AS 'bytes per message'
+FROM mail GROUP BY sender;
+```
+
+```
+Output
 +---------+-------------+-------------------+
-| srcuser | total bytes | bytes per message |
+| sender | total bytes | bytes per message |
 +---------+-------------+-------------------+
-| barb  |   156696 |    52232.0000 |
-| gene  |   1033108 |   172184.6667 |
-| phil  |   18974 | 3794.8000 |
-| tricia |  2589407 |   1294703.5000 |
+| barb    |   156696    |    52232.0000     |
+| gene    |  1033108    |   172184.6667     |
+| phil    |    18974    |     3794.8000     |
+| tricia  |  2589407    |  1294703.5000     |
 +---------+-------------+-------------------+
-Use as many grouping columns as necessary to achieve as fine-grained a summary as you require. The earlier query that shows the number of messages per sender is a coarse summary. To be more specific and find out how many messages each sender sent FROM each host, use two grouping columns. This produces a result with nested groups (groups within groups):
-mysql> SELECT srcuser, srchost, COUNT(srcuser) FROM mail
--> GROUP BY srcuser, srchost;
+```
+## Use as many grouping columns as necessary to achieve as fine-grained a summary as you require. The earlier query that shows the number of messages per sender is a coarse summary. To be more specific and find out how many messages each sender sent from each host, use two grouping columns. This produces a result with nested groups (groups within groups):
+
+mysql> SELECT sender, srchost, COUNT(sender) FROM mail
+-> GROUP BY sender, srchost;
 +---------+---------+----------------+
-| srcuser | srchost | COUNT(srcuser) |
+| sender  | srchost | COUNT(sender) |
 +---------+---------+----------------+
 
 +---------+---------+----------------+
-The preceding examples in this section have used COUNT( ), SUM( ), and AVG( ) for per- group summaries. You can use MIN( ) or MAX( ), too. With a GROUP BY clause, they will tell you the smallest or largest value per group. The following query groups mail table rows by message sender, displaying for each the size of the largest message sent and the date of the most recent message:
-mysql> SELECT srcuser, MAX(size), MAX(t) FROM mail GROUP BY srcuser;
+
++---------+----------+
+| sender  | COUNT(*) |
++---------+----------+
+| barb    |   3      |
+| gene    |   6      |
+| phil    |   5      |
+| tricia  |   2      |
++---------+----------+
+
+## The preceding examples in this section have used COUNT( ), SUM( ), and AVG( ) for per- group summaries. You can use MIN( ) or MAX( ), too. With a GROUP BY clause, they will tell you the smallest or largest value per group. The following query groups mail table rows by message sender, displaying for each the size of the largest message sent and the date of the most recent message:
+
+```sql
+SELECT sender, MAX(size), MAX(t) FROM mail GROUP BY sender;
+```
+```
+Output
 +---------+-----------+---------------------+
-| srcuser | MAX(size) | MAX(t)  |
+| sender | MAX(size) | MAX(t)  |
 +---------+-----------+---------------------+
 | barb  |   98151 | 2006-05-14 14:42:21 |
 | gene  |   998532 | 2006-05-19 22:21:51 |
 | phil  |   10294 | 2006-05-17 12:49:23 |
 | tricia |  2394482 | 2006-05-14 17:03:01 |
 +---------+-----------+---------------------+
-You can group by multiple columns and display a maximum for each combination of values in those columns. This query finds the size of the largest message sent between each pair of sender and recipient values listed in the mail table:
-mysql> SELECT srcuser, dstuser, MAX(size) FROM mail GROUP BY srcuser, dstuser;
+```
+## You can group by multiple columns and display a maximum for each combination of values in those columns. This query finds the size of the largest message sent between each pair of sender and recipient values listed in the mail table:
+
+```sql
+SELECT 
+    sender, 
+    recipient, 
+    MAX(size) 
+FROM mail 
+GROUP BY 
+    sender, recipient;
+```
+
 +---------+---------+-----------+
-| srcuser | dstuser | MAX(size) |
+| sender | recipient | MAX(size) |
 +---------+---------+-----------+
 
 +---------+---------+-----------+
@@ -793,12 +829,12 @@ mysql> SELECT trav_date, COUNT(trav_date)
 | 2006-09-02 |  2 |
 +------------+------------------+
 This technique works for combinations of values, too. For example, to find message sender/recipient pairs between whom only one message was sent, look for combina- tions that occur only once in the mail table:
-mysql> SELECT srcuser, dstuser
+mysql> SELECT sender, recipient
 -> FROM mail
--> GROUP BY srcuser, dstuser
+-> GROUP BY sender, recipient
 -> HAVING COUNT(*) = 1;
 +---------+---------+
-| srcuser | dstuser |
+| sender | recipient |
 +---------+---------+
 | barb  | barb  |
 | gene  | tricia |
@@ -1290,7 +1326,7 @@ Discussion
 One of the columns in the mail table shows how large each mail message is, in bytes:
 mysql> SELECT * FROM mail;
 +---------------------+---------+---------+---------+---------+---------+
-| t | srcuser | srchost | dstuser | dsthost | size  |
+| t | sender | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
 | 2006-05-11 10:15:08 | barb    | saturn  | tricia | mars   |   58274 |
 | 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
@@ -1301,11 +1337,11 @@ Suppose that you want to retrieve rows for “big” mail messages (defined as t
 FLOOR((size+1023)/1024)
 Wondering about the +1023 in the FLOOR( ) expression? That’s there so that size values group to the nearest upper boundary of the 1024-byte categories. Without it, the values group by lower boundaries (for example, a 2047-byte message would be reported as having a size of 1 kilobyte rather than 2). This technique is discussed in more detail in Recipe 8.12.
 There are two ways to use an expression for sorting query results. First, you can put the expression directly in the ORDER BY clause:
-mysql> SELECT t, srcuser, FLOOR((size+1023)/1024)
+mysql> SELECT t, sender, FLOOR((size+1023)/1024)
 -> FROM mail WHERE size > 50000
 -> ORDER BY FLOOR((size+1023)/1024);
 +---------------------+---------+-------------------------+
-| t | srcuser | FLOOR((size+1023)/1024) |
+| t | sender | FLOOR((size+1023)/1024) |
 +---------------------+---------+-------------------------+
 | 2006-05-11 10:15:08 | barb    |   57 |
 | 2006-05-14 14:42:21 | barb    |   96 |
@@ -1314,11 +1350,11 @@ mysql> SELECT t, srcuser, FLOOR((size+1023)/1024)
 | 2006-05-14 17:03:01 | tricia |    2339 |
 +---------------------+---------+-------------------------+
 Second, if you are sorting by an expression named in the output column list, you can give it an alias and refer to the alias in the ORDER BY clause:
-mysql> SELECT t, srcuser, FLOOR((size+1023)/1024) AS kilobytes
+mysql> SELECT t, sender, FLOOR((size+1023)/1024) AS kilobytes
 -> FROM mail WHERE size > 50000
 -> ORDER BY kilobytes;
 +---------------------+---------+-----------+
-| t | srcuser | kilobytes |
+| t | sender | kilobytes |
 +---------------------+---------+-----------+
 
 | 2006-05-14 17:03:01 | tricia |    2339 |
@@ -1338,12 +1374,12 @@ Discussion
 ORDER BY is not limited to sorting only those columns named in the output column list. It can sort using values that are “hidden” (that is, not displayed in the query output). This technique is commonly used when you have values that can be represented dif- ferent ways and you want to display one type of value but sort by another. For example, you may want to display mail message sizes not in terms of bytes, but as strings such as 103K for 103 kilobytes. You can convert a byte count to that kind of value using this expression:
 CONCAT(FLOOR((size+1023)/1024),'K')
 However, such values are strings, so they sort lexically, not numerically. If you use them for sorting, a value such as 96K sorts after 2339K, even though it represents a smaller number:
-mysql> SELECT t, srcuser,
+mysql> SELECT t, sender,
 -> CONCAT(FLOOR((size+1023)/1024),'K') AS size_in_K
 -> FROM mail WHERE size > 50000
 -> ORDER BY size_in_K;
 +---------------------+---------+-----------+
-| t | srcuser | size_in_K |
+| t | sender | size_in_K |
 +---------------------+---------+-----------+
 | 2006-05-12 12:48:13 | tricia | 191K   |
 | 2006-05-14 17:03:01 | tricia | 2339K  |
@@ -1352,12 +1388,12 @@ mysql> SELECT t, srcuser,
 | 2006-05-15 10:25:52 | gene    | 976K  |
 +---------------------+---------+-----------+
 To achieve the desired output order, display the string, but use the actual numeric size for sorting:
-mysql> SELECT t, srcuser,
+mysql> SELECT t, sender,
 -> CONCAT(FLOOR((size+1023)/1024),'K') AS size_in_K
 -> FROM mail WHERE size > 50000
 -> ORDER BY size;
 +---------------------+---------+-----------+
-| t | srcuser | size_in_K |
+| t | sender | size_in_K |
 +---------------------+---------+-----------+
 | 2006-05-11 10:15:08 | barb    | 57K   |
 | 2006-05-14 14:42:21 | barb    | 96K   |
@@ -1405,12 +1441,12 @@ mysql> SELECT name, jersey_num FROM roster ORDER BY jersey_num+0;
 | Sherry    | 47    |
 | Elizabeth | 100   |
 +-----------+------------+
-The technique of displaying one value but sorting by another is also useful when you want to display composite values that are formed FROM multiple columns but that don’t sort the way you want. For example, the mail table lists message senders using separate srcuser and srchost values. If you want to display message senders FROM the mail table as email addresses in srcuser@srchost format with the username first, you can construct those values using the following expression:
-CONCAT(srcuser,'@',srchost)
+The technique of displaying one value but sorting by another is also useful when you want to display composite values that are formed FROM multiple columns but that don’t sort the way you want. For example, the mail table lists message senders using separate sender and srchost values. If you want to display message senders FROM the mail table as email addresses in sender@srchost format with the username first, you can construct those values using the following expression:
+CONCAT(sender,'@',srchost)
 However, those values are no good for sorting if you want to treat the hostname as more significant than the username. Instead, sort the results using the underlying col- umn values rather than the displayed composite values:
-mysql> SELECT t, CONCAT(srcuser,'@',srchost) AS sender, size
+mysql> SELECT t, CONCAT(sender,'@',srchost) AS sender, size
 -> FROM mail WHERE size > 50000
--> ORDER BY srchost, srcuser;
+-> ORDER BY srchost, sender;
 +---------------------+---------------+---------+
 | t | sender    | size  |
 +---------------------+---------------+---------+
@@ -1577,7 +1613,7 @@ Discussion
 Time-of-day sorting can be done different ways, depending on your column type. If the values are stored in a TIME column named timecol, just sort them directly using ORDER BY timecol. To put DATETIME or TIMESTAMP values in time-of-day order, extract the time parts and sort them. For example, the mail table contains DATETIME values, which can be sorted by time of day like this:
 mysql> SELECT * FROM mail ORDER BY HOUR(t), MINUTE(t), SECOND(t);
 +---------------------+---------+---------+---------+---------+---------+
-| t | srcuser | srchost | dstuser | dsthost | size  |
+| t | sender | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
 | 2006-05-15 07:17:48 | gene    | mars  | gene  | saturn |  3824 |
 | 2006-05-15 08:50:57 | phil    | venus | phil  | venus |   978 |
@@ -1591,7 +1627,7 @@ mysql> SELECT * FROM mail ORDER BY HOUR(t), MINUTE(t), SECOND(t);
 You can also use TIME_TO_SEC( ), which strips off the date part and returns the time part as the corresponding number of seconds:
 mysql> SELECT * FROM mail ORDER BY TIME_TO_SEC(t);
 +---------------------+---------+---------+---------+---------+---------+
-| t | srcuser | srchost | dstuser | dsthost | size  |
+| t | sender | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
 | 2006-05-15 07:17:48 | gene    | mars  | gene  | saturn |  3824 |
 | 2006-05-15 08:50:57 | phil    | venus | phil  | venus |   978 |
@@ -1805,19 +1841,19 @@ mysql> SELECT name, AVG(miles) AS driver_avg FROM driver_log
 +-------+------------+
 In each case, the output row with NULL in the name column represents the overall sum or average calculated over all drivers.
 WITH ROLLUP can present multiple levels of summary, if you group by more than one column. The following statement shows the number of mail messages sent between each pair of users:
-mysql> SELECT srcuser, dstuser, COUNT(*)
--> FROM mail GROUP BY srcuser, dstuser;
+mysql> SELECT sender, recipient, COUNT(*)
+-> FROM mail GROUP BY sender, recipient;
 +---------+---------+----------+
-| srcuser | dstuser | COUNT(*) |
+| sender | recipient | COUNT(*) |
 +---------+---------+----------+
 
 
 +---------+---------+----------+
-Adding WITH ROLLUP causes the output to include an intermediate count for each srcuser value (these are the lines with NULL in the dstuser column), plus an overall count at the end:
-mysql> SELECT srcuser, dstuser, COUNT(*)
--> FROM mail GROUP BY srcuser, dstuser WITH ROLLUP;
+Adding WITH ROLLUP causes the output to include an intermediate count for each sender value (these are the lines with NULL in the recipient column), plus an overall count at the end:
+mysql> SELECT sender, recipient, COUNT(*)
+-> FROM mail GROUP BY sender, recipient WITH ROLLUP;
 +---------+---------+----------+
-| srcuser | dstuser | COUNT(*) |
+| sender | recipient | COUNT(*) |
 +---------+---------+----------+
 
 +---------+---------+----------+
@@ -3350,7 +3386,7 @@ Discussion
 When you run a summary query, normally it produces entries only for the values that are actually present in the data. Let’s say you want to produce a time-of-day summary for the rows in the mail table. That table looks like this:
 mysql> SELECT * FROM mail;
 +---------------------+---------+---------+---------+---------+---------+
-| t | srcuser | srchost | dstuser | dsthost | size  |
+| t | sender | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
 | 2006-05-11 10:15:08 | barb    | saturn  | tricia | mars   |   58274 |
 | 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
