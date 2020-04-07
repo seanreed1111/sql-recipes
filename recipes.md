@@ -567,7 +567,7 @@ Output
 ```
 ## Use as many grouping columns as necessary to achieve as fine-grained a summary as you require. The earlier query that shows the number of messages per sender is a coarse summary. To be more specific and find out how many messages each sender sent from each host, use two grouping columns. This produces a result with nested groups (groups within groups):
 
-mysql> SELECT sender, srchost, COUNT(sender) FROM mail
+SELECT sender, srchost, COUNT(sender) FROM mail
 GROUP BY sender, srchost;
 +---------+---------+----------------+
 | sender  | srchost | COUNT(sender) |
@@ -922,7 +922,7 @@ HAVING COUNT(trav_date) = 1;
 +------------+------------------+
 ```
 ```sql
-mysql> SELECT trav_date, COUNT(trav_date)
+SELECT trav_date, COUNT(trav_date)
 FROM driver_log
 GROUP BY trav_date
 HAVING COUNT(trav_date) > 1;
@@ -954,78 +954,102 @@ HAVING COUNT(*) = 1;
 | tricia | phil     |
 +---------+---------+
 ```
-## Note that this query doesn’t print the count. The first two examples did so, to show that the counts were being used properly, but you can refer to an aggregate value in a HAVING clause without including it in the output column list.
+##  Note that this query doesn’t print the count. The first two examples did so, to show that the counts were being used properly, but you can refer to an aggregate value in a HAVING clause without including it in the output column list.
 
 
 ---
 
-Grouping by Expression Results
-Problem
-You want to group rows into subgroups based on values calculated FROM an expression.
+# Grouping by Expression Results
+## Problem
+## You want to group rows into subgroups based on values calculated FROM an expression.
 
-Solution
-Put the expression in the GROUP BY clause.
-Discussion
-GROUP BY, like ORDER BY, can refer to expressions. This means you can use calculations as the basis for grouping. For example, to find the distribution of the lengths of state names, use those lengths as the grouping characteristic:
-mysql> SELECT CHAR_LENGTH(name), COUNT(*)
-FROM states GROUP BY CHAR_LENGTH(name);
-+-------------------+----------+
-| CHAR_LENGTH(name) | COUNT(*) |
-+-------------------+----------+
+## Solution
+## Put the expression in the GROUP BY clause.
+## Discussion
+## GROUP BY, like ORDER BY, can refer to expressions. This means you can use calculations as the basis for grouping. For example, to find the distribution of the lengths of state names, use those lengths as the grouping characteristic:
+```sql
+SELECT 
+    CHAR_LENGTH(name), 
+    COUNT(*)
+FROM states 
+GROUP BY CHAR_LENGTH(name);
+```
 
-+-------------------+----------+
-As with ORDER BY, you can write the grouping expression directly in the GROUP BY clause, or use an alias for the expression (if it appears in the output column list), and refer to the alias in the GROUP BY.
-You can group by multiple expressions if you like. To find days of the year on which more than one state joined the Union, group by statehood month and day, and then use HAVING and COUNT( ) to find the nonunique combinations:
-mysql> SELECT
-MONTHNAME(statehood) AS month,
-DAYOFMONTH(statehood) AS day,
-COUNT(*) AS count
-FROM states GROUP BY month, day HAVING count > 1;
+### As with ORDER BY, you can write the grouping expression directly in the GROUP BY clause, or use an alias for the expression (if it appears in the output column list), and refer to the alias in the GROUP BY.
+### You can group by multiple expressions if you like. To find days of the year on which more than one state joined the Union, group by statehood month and day, and then use HAVING and COUNT( ) to find the nonunique combinations:
+```sql
+SELECT
+    date_part('month', statehood) AS month,
+    date_part('day', statehood) AS day,
+    COUNT(*) AS count
+FROM states 
+GROUP BY 
+    month, day 
+HAVING count > 1;
+```
+```
 +----------+------+-------+
-| month | day  | count |
+| month    | day  | count |
 +----------+------+-------+
-| February |    14 |    2 |
-| June  |   1 | 2 |
-| March |   1 | 2 |
-| May   |   29 |    2 |
-| November |    2 | 2 |
+| February |  14  |     2 |
+| June     |   1  |     2 |
+| March    |   1  |     2 |
+| May      |  29  |     2 |
+| November |   2  |     2 |
 +----------+------+-------+
-
+```
 
 ---
 
-Categorizing Noncategorical Data
-Problem
-You need to summarize a set of values that are not naturally categorical.
-Solution
-Use an expression to group the values into categories.
+# Categorizing Noncategorical Data
+## Problem
+## You need to summarize a set of values that are not naturally categorical.
+## Solution
+## Use an expression to group the values into categories.
 
-Discussion
-Recipe 8.11 showed how to group rows by expression results. One important applica- tion for doing so is to provide categories for values that are not particularly categorical. This is useful because GROUP BY works best for columns with repetitive values. For ex- ample, you might attempt to perform a population analysis by grouping rows in the states table using values in the pop column. As it happens, that does not work very well due to the high number of distinct values in the column. In fact, they’re all distinct, as the following query shows:
-mysql> SELECT COUNT(pop), COUNT(DISTINCT pop) FROM states;
-+------------+---------------------+
-| COUNT(pop) | COUNT(DISTINCT pop) |
-+------------+---------------------+
-|   50 |    50 |
-+------------+---------------------+
-In situations like this, WHERE values do not group nicely into a small number of sets, you can use a transformation that forces them into categories. Begin by determining the range of population values:
-mysql> SELECT MIN(pop), MAX(pop) FROM states;
+## Discussion
+## One important application for group rows by expression results is to provide categories for values that are not particularly categorical. This is useful because `GROUP BY` works best for columns with repetitive values. For ex- ample, you might attempt to perform a population analysis by grouping rows in the states table using values in the pop column. As it happens, that does not work very well due to the high number of distinct values in the column. In fact, they’re all distinct, as the following query shows:
+
+```sql
+SELECT 
+    COUNT(population), 
+    COUNT(DISTINCT population) 
+FROM states;
+```
++------------+------------------------------------+
+| COUNT(population) | COUNT(DISTINCT population)  |
++------------+------------------------------------+
+|   50              |           50                |
++------------+------------------------------------+
+## In situations like this, WHERE values do not group nicely into a small number of sets, you can use a transformation that forces them into categories. Begin by determining the range of population values:
+```sql
+SELECT 
+    MIN(population), 
+    MAX(population) 
+FROM states;
+```
 +----------+----------+
 | MIN(pop) | MAX(pop) |
 +----------+----------+
 |   506529 | 35893799 |
 +----------+----------+
-You can see FROM that result that if you divide the pop values by five million, they’ll group into six categories—a reasonable number. (The category ranges will be 1 to 5,000,000, 5,000,001 to 10,000,000, and so forth.) To put each population value in the proper category, divide by five million, and use the integer result:
-mysql> SELECT FLOOR(pop/5000000) AS 'max population (millions)',
-COUNT(*) AS 'number of states'
-FROM states GROUP BY 'max population (millions)';
+You can see from that result that if you divide the pop values by five million, they’ll group into six categories—a reasonable number. (The category ranges will be 1 to 5,000,000, 5,000,001 to 10,000,000, and so forth.) To put each population value in the proper category, divide by five million, and use the integer result:
+```sql
+SELECT 
+    FLOOR(pop/5000000) AS 'max population (millions)',
+    COUNT(*) AS 'number of states'
+FROM 
+    states 
+GROUP BY 
+    'max population (millions)';
+```
 +---------------------------+------------------+
 | max population (millions) | number of states |
 +---------------------------+------------------+
 
 +---------------------------+------------------+
 Hmm. That’s not quite right. The expression groups the population values into a small number of categories, all right, but doesn’t report the category values properly. Let’s try multiplying the FLOOR( ) results by five:
-mysql> SELECT FLOOR(pop/5000000)*5 AS 'max population (millions)',
+SELECT FLOOR(pop/5000000)*5 AS 'max population (millions)',
 COUNT(*) AS 'number of states'
 FROM states GROUP BY 'max population (millions)';
 +---------------------------+------------------+
@@ -1036,7 +1060,7 @@ FROM states GROUP BY 'max population (millions)';
 That still isn’t correct. The maximum state population was 35,893,799, which should go into a category for 40 million, not one for 35 million. The problem here is that the category-generating expression groups values toward the lower bound of each category. To group values toward the upper bound instead, use the following technique. For categories of size n, you can place a value x into the proper category using this expression:
 FLOOR((x+(n-1))/n)
 So the final form of our query looks like this:
-mysql> SELECT FLOOR((pop+4999999)/5000000)*5 AS 'max population (millions)',
+SELECT FLOOR((pop+4999999)/5000000)*5 AS 'max population (millions)',
 COUNT(*) AS 'number of states'
 FROM states GROUP BY 'max population (millions)';
 +---------------------------+------------------+
@@ -1047,7 +1071,7 @@ FROM states GROUP BY 'max population (millions)';
 The result shows clearly that the majority of U.S. states have a population of five million or less.
 This technique works for all kinds of numeric values. For example, you can group
 mail table rows into categories of 100,000 bytes as follows:
-mysql> SELECT FLOOR((size+99999)/100000) AS 'size (100KB)',
+SELECT FLOOR((size+99999)/100000) AS 'size (100KB)',
 COUNT(*) AS 'number of messages'
 FROM mail GROUP BY 'size (100KB)';
 +--------------+--------------------+
@@ -1059,7 +1083,7 @@ FROM mail GROUP BY 'size (100KB)';
 |   24 |    1 |
 +--------------+--------------------+
 In some instances, it may be more appropriate to categorize groups on a logarithmic scale. For example, the state population values can be treated that way as follows:
-mysql> SELECT FLOOR(LOG10(pop)) AS 'log10(population)',
+SELECT FLOOR(LOG10(pop)) AS 'log10(population)',
 COUNT(*) AS 'number of states'
 FROM states GROUP BY 'log10(population)';
 +-------------------+------------------+
@@ -1073,20 +1097,20 @@ The query shows the number of states that have populations measured in hundreds 
 
 How Repetitive Is a Set of Values?
 To assess how much repetition is present in a set of values, use the ratio of COUNT(DISTINCT) and COUNT( ). If all values are unique, both counts will be the same and the ratio will be 1. This is the case for the t values in the mail table and the pop values in the states table:
-mysql> SELECT COUNT(DISTINCT t) / COUNT(t) FROM mail;
+SELECT COUNT(DISTINCT t) / COUNT(t) FROM mail;
 +------------------------------+
 | COUNT(DISTINCT t) / COUNT(t) |
 +------------------------------+
 |   1.0000 |
 +------------------------------+
-mysql> SELECT COUNT(DISTINCT pop) / COUNT(pop) FROM states;
+SELECT COUNT(DISTINCT pop) / COUNT(pop) FROM states;
 +----------------------------------+
 | COUNT(DISTINCT pop) / COUNT(pop) |
 +----------------------------------+
 |   1.0000 |
 +----------------------------------+
 For a more repetitive set of values, COUNT(DISTINCT) will be less than COUNT( ), and the ratio will be smaller:
-mysql> SELECT COUNT(DISTINCT name) / COUNT(name) FROM driver_log;
+SELECT COUNT(DISTINCT name) / COUNT(name) FROM driver_log;
 +------------------------------------+
 | COUNT(DISTINCT name) / COUNT(name) |
 +------------------------------------+
@@ -1106,7 +1130,7 @@ Use an ORDER BY clause—if GROUP BY doesn’t produce the desired sort order.
 
 Discussion
 In MySQL, GROUP BY not only groups, it sorts. Thus, there is often no need for an ORDER BY clause in a summary statement. But you can still use ORDER BY if you want a sort order other than the one that GROUP BY produces by default. For example, to de- termine the number of days driven and total miles for each person in the driver_log table, use this statement:
-mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
 FROM driver_log GROUP BY name;
 +-------+------+---------+
 | name  | days | mileage |
@@ -1116,7 +1140,7 @@ FROM driver_log GROUP BY name;
 | Suzi |    2 | 893 |
 +-------+------+---------+
 But that sorts by the names. If you want to sort drivers according to who drove the most days or miles, add the appropriate ORDER BY clause:
-mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
 FROM driver_log GROUP BY name ORDER BY days DESC;
 +-------+------+---------+
 | name  | days | mileage |
@@ -1125,7 +1149,7 @@ FROM driver_log GROUP BY name ORDER BY days DESC;
 | Ben   |   3 | 362 |
 | Suzi |    2 | 893 |
 +-------+------+---------+
-mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
 FROM driver_log GROUP BY name ORDER BY mileage DESC;
 +-------+------+---------+
 | name  | days | mileage |
@@ -1134,7 +1158,7 @@ FROM driver_log GROUP BY name ORDER BY mileage DESC;
 +-------+------+---------+
 The ORDER BY clause in these statements refers to an aggregate value by using an alias. In MySQL 5.0 and up, that is not necessary and you can refer directly to aggregate values in ORDER BY clauses. Before MySQL 5.0, you must alias them and use the alias in the ORDER BY.
 Sometimes you can reorder a summary without an ORDER BY clause by choosing an appropriate GROUP BY expression. For example, if you count how many states joined the Union on each day of the week, grouped by day name, the results are sorted in lexical order:
-mysql> SELECT DAYNAME(statehood), COUNT(*) FROM states
+SELECT DAYNAME(statehood), COUNT(*) FROM states
 GROUP BY DAYNAME(statehood);
 +--------------------+----------+
 | DAYNAME(statehood) | COUNT(*) |
@@ -1142,7 +1166,7 @@ GROUP BY DAYNAME(statehood);
 
 +--------------------+----------+
 FROM this you can see that no state entered the Union on a Sunday, but that becomes apparent only after you stare at the query result for a while. The output would be more easily understood were it sorted into day-of-week order. It’s possible to do that by adding an explicit ORDER BY to sort on the numeric day-of-week value, but another way to achieve the same result without ORDER BY is to group by DAYOFWEEK( ) rather than by DAYNAME( ):
-mysql> SELECT DAYNAME(statehood), COUNT(*)
+SELECT DAYNAME(statehood), COUNT(*)
 FROM states GROUP BY DAYOFWEEK(statehood);
 +--------------------+----------+
 | DAYNAME(statehood) | COUNT(*) |
@@ -1150,7 +1174,7 @@ FROM states GROUP BY DAYOFWEEK(statehood);
 
 +--------------------+----------+
 The implicit ordering done by GROUP BY can add overhead to query processing. If you don’t care whether output rows are sorted, add an ORDER BY NULL clause to suppress this sorting and eliminate its overhead:
-mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
 FROM driver_log GROUP BY name;
 +-------+------+---------+
 | name  | days | mileage |
@@ -1159,7 +1183,7 @@ FROM driver_log GROUP BY name;
 | Henry |   5 | 911 |
 | Suzi |    2 | 893 |
 +-------+------+---------+
-mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
 FROM driver_log GROUP BY name ORDER BY NULL;
 +-------+------+---------+
 | name  | days | mileage |
@@ -1182,7 +1206,7 @@ Add a LIMIT clause to the statement.
 
 Discussion
 MIN( ) and MAX( ) find the values at the endpoints of a range of values, but if you want to know the extremes of a set of summary values, those functions won’t work. The arguments to MIN( ) and MAX( ) cannot be other aggregate functions. For example, you can easily find per-driver mileage totals:
-mysql> SELECT name, SUM(miles)
+SELECT name, SUM(miles)
 FROM driver_log
 GROUP BY name;
 +-------+------------+
@@ -1193,13 +1217,13 @@ GROUP BY name;
 | Suzi |    893 |
 +-------+------------+
 But this doesn’t work if you want to SELECT only the row for the driver with the most miles:
-mysql> SELECT name, SUM(miles)
+SELECT name, SUM(miles)
 FROM driver_log
 GROUP BY name
 HAVING SUM(miles) = MAX(SUM(miles));
 ERROR 1111 (HY000): Invalid use of group function
 Instead, order the rows with the largest SUM( ) values first, and use LIMIT to SELECT the first row:
-mysql> SELECT name, SUM(miles) AS 'total miles'
+SELECT name, SUM(miles) AS 'total miles'
 FROM driver_log
 GROUP BY name
 ORDER BY 'total miles' DESC LIMIT 1;
@@ -1209,7 +1233,7 @@ ORDER BY 'total miles' DESC LIMIT 1;
 | Henry |   911 |
 +-------+-------------+
 Note that if there is more than one row with the given summary value, a LIMIT 1 query won’t tell you that. For example, you might attempt to ascertain the most common initial letter for state names like this:
-mysql> SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
+SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
 GROUP BY letter ORDER BY count DESC LIMIT 1;
 +--------+-------+
 | letter | count |
@@ -1217,9 +1241,9 @@ GROUP BY letter ORDER BY count DESC LIMIT 1;
 | M |   8 |
 +--------+-------+
 But eight state names also begin with N. If you need to know all most-frequent values when there may be more than one of them, find the maximum count first, and then SELECT those values with a count that matches the maximum:
-mysql> SET @max = (SELECT COUNT(*) FROM states
+SET @max = (SELECT COUNT(*) FROM states
 GROUP BY LEFT(name,1) ORDER BY COUNT(*) DESC LIMIT 1);
-mysql> SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
+SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
 GROUP BY letter HAVING count = @max;
 +--------+-------+
 | letter | count |
@@ -1228,7 +1252,7 @@ GROUP BY letter HAVING count = @max;
 | N | 8 |
 +--------+-------+
 Alternatively, put the maximum-count calculation in a subquery and combine the statements into one:
-mysql> SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
+SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
 GROUP  BY  letter  HAVING  count =
  (SELECT  COUNT(*)  FROM   states
  GROUP BY LEFT(name,1) ORDER BY COUNT(*) DESC LIMIT 1);
@@ -1251,7 +1275,7 @@ Use GROUP BY to place temporal values into categories of the appropriate duratio
 Discussion
 To put rows in time order, use an ORDER BY clause to sort a column that has a temporal type. If instead you want to summarize rows based on groupings into time intervals, you need to determine how to categorize each row into the proper interval and use GROUP BY to group them accordingly.
 For example, to determine how many drivers were on the road and how many miles were driven each day, group the rows in the driver_log table by date:
-mysql> SELECT trav_date,
+SELECT trav_date,
 COUNT(*) AS 'number of drivers', SUM(miles) As 'miles logged'
 FROM driver_log GROUP BY trav_date;
 +------------+-------------------+--------------+
@@ -1262,7 +1286,7 @@ FROM driver_log GROUP BY trav_date;
 However, this summary will grow lengthier as you add more rows to the table. At some point, the number of distinct dates likely will become so large that the summary fails to be useful, and you’d probably decide to change the category size FROM daily to weekly or monthly.
 When a temporal column contains so many distinct values that it fails to categorize well, it’s typical for a summary to group rows using expressions that map the relevant
 parts of the date or time values onto a smaller set of categories. For example, to produce a time-of-day summary for rows in the mail table, do this:*
-mysql> SELECT HOUR(t) AS hour,
+SELECT HOUR(t) AS hour,
 COUNT(*) AS 'number of messages',
 SUM(size) AS 'number of bytes sent'
 FROM mail
@@ -1273,7 +1297,7 @@ GROUP BY hour;
 
 +------+--------------------+----------------------+
 To produce a day-of-week summary instead, use the DAYOFWEEK( ) function:
-mysql> SELECT DAYOFWEEK(t) AS weekday,
+SELECT DAYOFWEEK(t) AS weekday,
 COUNT(*) AS 'number of messages',
 SUM(size) AS 'number of bytes sent'
 FROM mail
@@ -1284,7 +1308,7 @@ GROUP BY weekday;
 
 +---------+--------------------+----------------------+
 To make the output more meaningful, you might want to use DAYNAME( ) to display weekday names instead. However, because day names sort lexically (for example, “Tuesday” sorts after “Friday”), use DAYNAME( ) only for display purposes. Continue to group based on the numeric day values so that output rows sort that way:
-mysql> SELECT DAYNAME(t) AS weekday,
+SELECT DAYNAME(t) AS weekday,
 COUNT(*) AS 'number of messages',
 SUM(size) AS 'number of bytes sent'
 
@@ -1348,7 +1372,7 @@ You can refer to sort columns by name or by using an alias.
 This section shows some basic sorting techniques, such as how to name the sort col- umns and specify the sort direction. The following sections illustrate how to perform more complex sorts. Paradoxically, you can even use ORDER BY to disorder a result set, which is useful for randomizing the rows or (in conjunction with LIMIT) for picking a row at random FROM a result set. Those uses for ORDER BY are described in Chapter 13.
 The following set of examples demonstrates how to sort on a single column or multiple columns and how to sort in ascending or descending order. The examples SELECT the rows in the driver_log table but sort them in different orders so that you can compare the effect of the different ORDER BY clauses.
 This query produces a single-column sort using the driver name:
-mysql> SELECT * FROM driver_log ORDER BY name;
+SELECT * FROM driver_log ORDER BY name;
 +--------+-------+------------+-------+
 | rec_id | name  | trav_date  | miles |
 +--------+-------+------------+-------+
@@ -1367,7 +1391,7 @@ The default sort direction is ascending. You can make the direction for an ascen
 SELECT * FROM driver_log ORDER BY name ASC;
 The opposite (or reverse) of ascending order is descending order, specified by adding
 DESC after the sorted column’s name:
-mysql> SELECT * FROM driver_log ORDER BY name DESC;
+SELECT * FROM driver_log ORDER BY name DESC;
 +--------+-------+------------+-------+
 | rec_id | name  | trav_date  | miles |
 +--------+-------+------------+-------+
@@ -1377,7 +1401,7 @@ If you closely examine the output FROM the queries just shown, you’ll notice t
 The overall order of rows returned by a query is indeterminate unless you specify an ORDER BY clause.
 Within a group of rows that sort together based on the values in a given column, the order of values in other columns also is indeterminate unless you name them in the ORDER BY clause.
 To more fully control output order, specify a multiple-column sort by listing each col- umn to use for sorting, separated by commas. The following query sorts in ascending ORDER BY name and by trav_date within the rows for each name:
-mysql> SELECT * FROM driver_log ORDER BY name, trav_date;
+SELECT * FROM driver_log ORDER BY name, trav_date;
 +--------+-------+------------+-------+
 | rec_id | name  | trav_date  | miles |
 +--------+-------+------------+-------+
@@ -1393,21 +1417,21 @@ mysql> SELECT * FROM driver_log ORDER BY name, trav_date;
 |   7 | Suzi  | 2006-09-02 |    502 |
 +--------+-------+------------+-------+
 Multiple-column sorts can be descending as well, but DESC must be specified after each column name to perform a fully descending sort:
-mysql> SELECT * FROM driver_log ORDER BY name DESC, trav_date DESC;
+SELECT * FROM driver_log ORDER BY name DESC, trav_date DESC;
 +--------+-------+------------+-------+
 | rec_id | name  | trav_date  | miles |
 +--------+-------+------------+-------+
 
 +--------+-------+------------+-------+
 Multiple-column ORDER BY clauses can perform mixed-order sorting WHERE some col- umns are sorted in ascending order and others in descending order. The following query sorts by name in descending order and then by trav_date in ascending order for each name:
-mysql> SELECT * FROM driver_log ORDER BY name DESC, trav_date;
+SELECT * FROM driver_log ORDER BY name DESC, trav_date;
 +--------+-------+------------+-------+
 | rec_id | name  | trav_date  | miles |
 +--------+-------+------------+-------+
 
 +--------+-------+------------+-------+
 The ORDER BY clauses in the queries shown thus far refer to the sorted columns by name. You can also name the columns by using aliases. That is, if an output column has an alias, you can refer to the alias in the ORDER BY clause:
-mysql> SELECT name, trav_date, miles AS distance FROM driver_log
+SELECT name, trav_date, miles AS distance FROM driver_log
 ORDER BY distance;
 +-------+------------+----------+
 | name  | trav_date  | distance |
@@ -1419,7 +1443,7 @@ ORDER BY distance;
 | Suzi  | 2006-09-02 |  502 |
 +-------+------------+----------+
 Columns specified by aliases can be sorted in either ascending or descending order, just like named columns:
-mysql> SELECT name, trav_date, miles AS distance FROM driver_log
+SELECT name, trav_date, miles AS distance FROM driver_log
 ORDER BY distance DESC;
 +-------+------------+----------+
 | name  | trav_date  | distance |
@@ -1436,7 +1460,7 @@ Solution
 Put the expression that calculates the values in the ORDER BY clause.
 Discussion
 One of the columns in the mail table shows how large each mail message is, in bytes:
-mysql> SELECT * FROM mail;
+SELECT * FROM mail;
 +---------------------+---------+---------+---------+---------+---------+
 | t | sender | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
@@ -1449,7 +1473,7 @@ Suppose that you want to retrieve rows for “big” mail messages (defined as t
 FLOOR((size+1023)/1024)
 Wondering about the +1023 in the FLOOR( ) expression? That’s there so that size values group to the nearest upper boundary of the 1024-byte categories. Without it, the values group by lower boundaries (for example, a 2047-byte message would be reported as having a size of 1 kilobyte rather than 2). This technique is discussed in more detail in Recipe 8.12.
 There are two ways to use an expression for sorting query results. First, you can put the expression directly in the ORDER BY clause:
-mysql> SELECT t, sender, FLOOR((size+1023)/1024)
+SELECT t, sender, FLOOR((size+1023)/1024)
 FROM mail WHERE size > 50000
 ORDER BY FLOOR((size+1023)/1024);
 +---------------------+---------+-------------------------+
@@ -1462,7 +1486,7 @@ ORDER BY FLOOR((size+1023)/1024);
 | 2006-05-14 17:03:01 | tricia |    2339 |
 +---------------------+---------+-------------------------+
 Second, if you are sorting by an expression named in the output column list, you can give it an alias and refer to the alias in the ORDER BY clause:
-mysql> SELECT t, sender, FLOOR((size+1023)/1024) AS kilobytes
+SELECT t, sender, FLOOR((size+1023)/1024) AS kilobytes
 FROM mail WHERE size > 50000
 ORDER BY kilobytes;
 +---------------------+---------+-----------+
@@ -1486,7 +1510,7 @@ Discussion
 ORDER BY is not limited to sorting only those columns named in the output column list. It can sort using values that are “hidden” (that is, not displayed in the query output). This technique is commonly used when you have values that can be represented dif- ferent ways and you want to display one type of value but sort by another. For example, you may want to display mail message sizes not in terms of bytes, but as strings such as 103K for 103 kilobytes. You can convert a byte count to that kind of value using this expression:
 CONCAT(FLOOR((size+1023)/1024),'K')
 However, such values are strings, so they sort lexically, not numerically. If you use them for sorting, a value such as 96K sorts after 2339K, even though it represents a smaller number:
-mysql> SELECT t, sender,
+SELECT t, sender,
 CONCAT(FLOOR((size+1023)/1024),'K') AS size_in_K
 FROM mail WHERE size > 50000
 ORDER BY size_in_K;
@@ -1500,7 +1524,7 @@ ORDER BY size_in_K;
 | 2006-05-15 10:25:52 | gene    | 976K  |
 +---------------------+---------+-----------+
 To achieve the desired output order, display the string, but use the actual numeric size for sorting:
-mysql> SELECT t, sender,
+SELECT t, sender,
 CONCAT(FLOOR((size+1023)/1024),'K') AS size_in_K
 FROM mail WHERE size > 50000
 ORDER BY size;
@@ -1518,7 +1542,7 @@ CREATE TABLE roster (
 name    CHAR(30),   # player name jersey_num CHAR(3)    # jersey number
 );
 Then the jersey numbers will display the same way you enter them, and 0 and 00 will be treated as distinct values. Unfortunately, although representing numbers as strings solves the problem of distinguishing 0 and 00, it introduces a different problem. Suppose that a team has the following players:
-mysql> SELECT name, jersey_num FROM roster;
+SELECT name, jersey_num FROM roster;
 +-----------+------------+
 | name  | jersey_num |
 +-----------+------------+
@@ -1530,7 +1554,7 @@ mysql> SELECT name, jersey_num FROM roster;
 | Sherry    | 47    |
 +-----------+------------+
 The problem occurs when you try to sort the team members by jersey number. If those numbers are stored as strings, they’ll sort lexically, and lexical order often differs FROM numeric order. That’s certainly true for the team in question:
-mysql> SELECT name, jersey_num FROM roster ORDER BY jersey_num;
+SELECT name, jersey_num FROM roster ORDER BY jersey_num;
 +-----------+------------+
 | name  | jersey_num |
 +-----------+------------+
@@ -1542,7 +1566,7 @@ mysql> SELECT name, jersey_num FROM roster ORDER BY jersey_num;
 | Jean  | 8 |
 +-----------+------------+
 The values 100 and 8 are out of place. But that’s easily solved. Display the string values, but use the numeric values for sorting. To accomplish this, add zero to the jer sey_num values to force a string-to-number conversion:
-mysql> SELECT name, jersey_num FROM roster ORDER BY jersey_num+0;
+SELECT name, jersey_num FROM roster ORDER BY jersey_num+0;
 +-----------+------------+
 | name  | jersey_num |
 +-----------+------------+
@@ -1556,7 +1580,7 @@ mysql> SELECT name, jersey_num FROM roster ORDER BY jersey_num+0;
 The technique of displaying one value but sorting by another is also useful when you want to display composite values that are formed FROM multiple columns but that don’t sort the way you want. For example, the mail table lists message senders using separate sender and srchost values. If you want to display message senders FROM the mail table as email addresses in sender@srchost format with the username first, you can construct those values using the following expression:
 CONCAT(sender,'@',srchost)
 However, those values are no good for sorting if you want to treat the hostname as more significant than the username. Instead, sort the results using the underlying col- umn values rather than the displayed composite values:
-mysql> SELECT t, CONCAT(sender,'@',srchost) AS sender, size
+SELECT t, CONCAT(sender,'@',srchost) AS sender, size
 FROM mail WHERE size > 50000
 ORDER BY srchost, sender;
 +---------------------+---------------+---------+
@@ -1569,7 +1593,7 @@ ORDER BY srchost, sender;
 | 2006-05-14 14:42:21 | barb@venus  |   98151 |
 +---------------------+---------------+---------+
 The same idea commonly is applied to sorting people’s names. Suppose that you have a table names that contains last and first names. To display rows sorted by last name first, the query is straightforward when the columns are displayed separately:
-mysql> SELECT last_name, first_name FROM name
+SELECT last_name, first_name FROM name
 ORDER BY last_name, first_name;
 +-----------+------------+
 | last_name | first_name |
@@ -1583,7 +1607,7 @@ ORDER BY last_name, first_name;
 If instead you want to display each name as a single string composed of the first name, a space, and the last name, you can begin the query like this:
 SELECT CONCAT(first_name,' ',last_name) AS full_name FROM name ...
 But then how do you sort the names so they come out in the last name order? The answer is to display the composite names, but refer to the constituent values in the ORDER BY clause:
-mysql> SELECT CONCAT(first_name,' ',last_name) AS full_name
+SELECT CONCAT(first_name,' ',last_name) AS full_name
 FROM name
 ORDER BY last_name, first_name;
 +---------------+
@@ -1607,7 +1631,7 @@ Sort using the month and day of date values, ignoring the year.
 
 Discussion
 Sorting in calendar order differs FROM sorting by date. You need to ignore the year part of the dates and sort using only the month and day to order rows in terms of WHERE they fall during the calendar year. Suppose that you have an event table that looks like this when values are ordered by actual date of occurrence:
-mysql> SELECT  date,  description  FROM  event  ORDER  BY date;
+SELECT  date,  description  FROM  event  ORDER  BY date;
 +------------+-------------------------------------+
 | date  | description   |
 +------------+-------------------------------------+
@@ -1623,7 +1647,7 @@ mysql> SELECT  date,  description  FROM  event  ORDER  BY date;
 | 1989-11-09 | Opening of the Berlin Wall   |
 +------------+-------------------------------------+
 To put these items in calendar order, sort them by month, and then by day within month:
-mysql> SELECT date, description FROM event
+SELECT date, description FROM event
 ORDER BY MONTH(date), DAYOFMONTH(date);
 +------------+-------------------------------------+
 | date  | description   |
@@ -1640,7 +1664,7 @@ ORDER BY MONTH(date), DAYOFMONTH(date);
 | 1989-11-09 | Opening of the Berlin Wall   |
 +------------+-------------------------------------+
 MySQL also has a DAYOFYEAR( ) function that you might suspect would be useful for calendar day sorting:
-mysql> SELECT date, description FROM event ORDER BY DAYOFYEAR(date);
+SELECT date, description FROM event ORDER BY DAYOFYEAR(date);
 +------------+-------------------------------------+
 | date  | description   |
 +------------+-------------------------------------+
@@ -1656,7 +1680,7 @@ mysql> SELECT date, description FROM event ORDER BY DAYOFYEAR(date);
 | 1989-11-09 | Opening of the Berlin Wall   |
 +------------+-------------------------------------+
 That appears to work, but only because the table doesn’t have rows in it that expose a problem with using DAYOFYEAR( ) for sorting: it can generate the same value for different calendar days. For example, February 29 of leap years and March 1 of nonleap years have the same day-of-year value:
-mysql> SELECT DAYOFYEAR('1996-02-29'), DAYOFYEAR('1997-03-01');
+SELECT DAYOFYEAR('1996-02-29'), DAYOFYEAR('1997-03-01');
 +-------------------------+-------------------------+
 | DAYOFYEAR('1996-02-29') | DAYOFYEAR('1997-03-01') |
 +-------------------------+-------------------------+
@@ -1674,7 +1698,7 @@ Use DAYOFWEEK( ) to convert a date column to its numeric day-of-week value.
 Discussion
 Day-of-week sorting is similar to calendar-day sorting, except that you use different functions to get at the relevant ordering values.
 You can get the day of the week using DAYNAME( ), but that produces strings that sort lexically rather than in day-of-week order (Sunday, Monday, Tuesday, and so forth). Here the technique of displaying one value but sorting by another is useful (see Rec- ipe 7.3). Display day names using DAYNAME( ), but sort in day-of-week order using DAYOFWEEK( ), which returns numeric values FROM 1 to 7 for Sunday through Saturday:
-mysql> SELECT DAYNAME(date) AS day, date, description
+SELECT DAYNAME(date) AS day, date, description
 FROM event
 ORDER BY DAYOFWEEK(date);
 +----------+------------+-------------------------------------+
@@ -1692,7 +1716,7 @@ ORDER BY DAYOFWEEK(date);
 | Saturday | 1789-07-04 | US Independence Day   |
 +----------+------------+-------------------------------------+
 If you want to sort rows in day-of-week order but treat Monday as the first day of the week and Sunday as the last, you can use a the MOD( ) function to map Monday to 0, Tuesday to 1, ..., Sunday to 6:
-mysql> SELECT DAYNAME(date), date, description
+SELECT DAYNAME(date), date, description
 FROM event
 ORDER BY MOD(DAYOFWEEK(date)+5, 7);
 +---------------+------------+-------------------------------------+
@@ -1723,7 +1747,7 @@ Pull out the hour, minute, and second FROM the column that contains the time, an
 
 Discussion
 Time-of-day sorting can be done different ways, depending on your column type. If the values are stored in a TIME column named timecol, just sort them directly using ORDER BY timecol. To put DATETIME or TIMESTAMP values in time-of-day order, extract the time parts and sort them. For example, the mail table contains DATETIME values, which can be sorted by time of day like this:
-mysql> SELECT * FROM mail ORDER BY HOUR(t), MINUTE(t), SECOND(t);
+SELECT * FROM mail ORDER BY HOUR(t), MINUTE(t), SECOND(t);
 +---------------------+---------+---------+---------+---------+---------+
 | t | sender | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
@@ -1737,7 +1761,7 @@ mysql> SELECT * FROM mail ORDER BY HOUR(t), MINUTE(t), SECOND(t);
 | 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
 ...
 You can also use TIME_TO_SEC( ), which strips off the date part and returns the time part as the corresponding number of seconds:
-mysql> SELECT * FROM mail ORDER BY TIME_TO_SEC(t);
+SELECT * FROM mail ORDER BY TIME_TO_SEC(t);
 +---------------------+---------+---------+---------+---------+---------+
 | t | sender | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
@@ -1762,7 +1786,7 @@ Pull out the parts you need with LEFT( ), MID( ), or RIGHT( ), and sort them.
 
 Discussion
 Suppose that you have a housewares table that acts as a catalog for houseware furnish- ings, and that items are identified by 10-character ID values consisting of three subparts: a three-character category abbreviation (such as DIN for “dining room” or KIT for “kitchen”), a five-digit serial number, and a two-character country code indicating WHERE the part is manufactured:
-mysql> SELECT * FROM housewares;
+SELECT * FROM housewares;
 +------------+------------------+
 | id    | description   |
 +------------+------------------+
@@ -1775,7 +1799,7 @@ mysql> SELECT * FROM housewares;
 +------------+------------------+
 This is not necessarily a good way to store complex ID values, and later we’ll consider how to represent them using separate columns (see Recipe 11.11). But for now, assume that the values must be stored as just shown.
 If you want to sort rows FROM this table based on the id values, just use the entire column value:
-mysql> SELECT * FROM housewares ORDER BY id;
+SELECT * FROM housewares ORDER BY id;
 +------------+------------------+
 | id    | description   |
 +------------+------------------+
@@ -1787,7 +1811,7 @@ mysql> SELECT * FROM housewares ORDER BY id;
 | KIT01729JP | microwave oven   |
 +------------+------------------+
 But you might also have a need to sort on any of the three subparts (for example, to sort by country of manufacture). For that kind of operation, it’s helpful to use functions that pull out pieces of a column, such as LEFT( ), MID( ), and RIGHT( ). These functions can be used to break apart the id values into their three components:
-mysql> SELECT id,
+SELECT id,
 LEFT(id,3) AS category,
 MID(id,4,5)  AS serial,
 RIGHT(id,2)   AS  country
@@ -1798,7 +1822,7 @@ FROM housewares;
 
 +------------+----------+--------+---------+
 Any of those fixed-length substrings of the id values can be used for sorting, either alone or in combination. To sort by product category, extract the category value and use it in the ORDER BY clause:
-mysql> SELECT * FROM housewares ORDER BY LEFT(id,3);
+SELECT * FROM housewares ORDER BY LEFT(id,3);
 +------------+------------------+
 | id    | description   |
 +------------+------------------+
@@ -1810,7 +1834,7 @@ mysql> SELECT * FROM housewares ORDER BY LEFT(id,3);
 | KIT01729JP | microwave oven   |
 +------------+------------------+
 To sort rows by product serial number, use MID( ) to extract the middle five characters FROM the id values, beginning with the fourth:
-mysql> SELECT * FROM housewares ORDER BY MID(id,4,5);
+SELECT * FROM housewares ORDER BY MID(id,4,5);
 +------------+------------------+
 | id    | description   |
 +------------+------------------+
@@ -1823,7 +1847,7 @@ mysql> SELECT * FROM housewares ORDER BY MID(id,4,5);
 +------------+------------------+
 This appears to be a numeric sort, but it’s actually a string sort, because MID( ) returns strings. It just so happens that the lexical and numeric sort order are the same in this case because the “numbers” have leading zeros to make them all the same length.
 To sort by country code, use the rightmost two characters of the id values:
-mysql> SELECT * FROM housewares ORDER BY RIGHT(id,2);
+SELECT * FROM housewares ORDER BY RIGHT(id,2);
 +------------+------------------+
 | id    | description   |
 +------------+------------------+
@@ -1835,7 +1859,7 @@ mysql> SELECT * FROM housewares ORDER BY RIGHT(id,2);
 | BTH00485US | shower stall |
 +------------+------------------+
 You can also sort using combinations of substrings. For example, to sort by country code and serial number, the query looks like this:
-mysql> SELECT * FROM housewares ORDER BY RIGHT(id,2), MID(id,4,5);
+SELECT * FROM housewares ORDER BY RIGHT(id,2), MID(id,4,5);
 +------------+------------------+
 | id    | description   |
 +------------+------------------+
@@ -1889,14 +1913,14 @@ Sometimes a report involves different levels of summary information. For example
 | Suzi |    893 |   41.2281 |
 +-------+--------------+------------------------+
 The percentages represent the ratio of each driver’s miles to the total miles for all drivers. To perform the percentage calculation, you need a per-group summary to get each driver’s miles and also an overall summary to get the total miles. First, run a query to get the overall mileage total:
-mysql> SELECT @total := SUM(miles) AS 'total miles' FROM driver_log;
+SELECT @total := SUM(miles) AS 'total miles' FROM driver_log;
 +-------------+
 | total miles |
 +-------------+
 |   2166 |
 +-------------+
 Now, calculate the per-group values and use the overall total to compute the percen- tages:
-mysql> SELECT name,
+SELECT name,
 SUM(miles) AS 'miles/driver',
 (SUM(miles)*100)/@total AS 'percent of total miles'
 FROM driver_log GROUP BY name;
@@ -1908,7 +1932,7 @@ FROM driver_log GROUP BY name;
 | Suzi |    893 |   41.2281 |
 +-------+--------------+------------------------+
 To combine the two statements into one, use a subquery that computes the total miles:
-mysql> SELECT name,
+SELECT name,
 SUM(miles) AS 'miles/driver',
 (SUM(miles)*100)/(SELECT SUM(miles) FROM driver_log)
  AS 'percent of total miles'
@@ -1921,7 +1945,7 @@ FROM driver_log GROUP BY name;
 | Suzi |    893 |   41.2281 |
 +-------+--------------+------------------------+
 Another type of problem that uses different levels of summary information occurs when you want to compare per-group summary values with the corresponding overall sum- mary value. Suppose that you want to determine which drivers had a lower average miles per day than the group average. Calculate the overall average in a subquery, and then compare each driver’s average to the overall average using a HAVING clause:
-mysql> SELECT name, AVG(miles) AS driver_avg FROM driver_log
+SELECT name, AVG(miles) AS driver_avg FROM driver_log
 GROUP BY name
 HAVING driver_avg < (SELECT AVG(miles) FROM driver_log);
 +-------+------------+
@@ -1931,7 +1955,7 @@ HAVING driver_avg < (SELECT AVG(miles) FROM driver_log);
 | Henry |   182.2000 |
 +-------+------------+
 If you just want to display different summary values (and not perform calculations involving one summary level against another), add WITH ROLLUP to the GROUP BY clause:
-mysql> SELECT name, SUM(miles) AS 'miles/driver'
+SELECT name, SUM(miles) AS 'miles/driver'
 FROM driver_log GROUP BY name WITH ROLLUP;
 +-------+--------------+
 | name  | miles/driver |
@@ -1941,7 +1965,7 @@ FROM driver_log GROUP BY name WITH ROLLUP;
 | Suzi |    893 |
 | NULL |    2166 |
 +-------+--------------+
-mysql> SELECT name, AVG(miles) AS driver_avg FROM driver_log
+SELECT name, AVG(miles) AS driver_avg FROM driver_log
 GROUP BY name WITH ROLLUP;
 +-------+------------+
 | name  | driver_avg |
@@ -1953,7 +1977,7 @@ GROUP BY name WITH ROLLUP;
 +-------+------------+
 In each case, the output row with NULL in the name column represents the overall sum or average calculated over all drivers.
 WITH ROLLUP can present multiple levels of summary, if you group by more than one column. The following statement shows the number of mail messages sent between each pair of users:
-mysql> SELECT sender, recipient, COUNT(*)
+SELECT sender, recipient, COUNT(*)
 FROM mail GROUP BY sender, recipient;
 +---------+---------+----------+
 | sender | recipient | COUNT(*) |
@@ -1962,7 +1986,7 @@ FROM mail GROUP BY sender, recipient;
 
 +---------+---------+----------+
 Adding WITH ROLLUP causes the output to include an intermediate count for each sender value (these are the lines with NULL in the recipient column), plus an overall count at the end:
-mysql> SELECT sender, recipient, COUNT(*)
+SELECT sender, recipient, COUNT(*)
 FROM mail GROUP BY sender, recipient WITH ROLLUP;
 +---------+---------+----------+
 | sender | recipient | COUNT(*) |
@@ -2519,7 +2543,7 @@ price INT UNSIGNED, # purchase price (dollars) INDEX (a_id),
 PRIMARY KEY (p_id)
 );
 You’ve just begun the collection, so the tables contain only the following rows:
-mysql> SELECT * FROM artist ORDER BY a_id;
+SELECT * FROM artist ORDER BY a_id;
 +------+----------+
 | a_id | name   |
 +------+----------+
@@ -2529,7 +2553,7 @@ mysql> SELECT * FROM artist ORDER BY a_id;
 |   4 | Picasso |
 |   5 | Renoir  |
 +------+----------+
-mysql> SELECT * FROM painting ORDER BY a_id, p_id;
+SELECT * FROM painting ORDER BY a_id, p_id;
 +------+------+-------------------+-------+-------+
 | a_id | p_id | title   | state | price |
 +------+------+-------------------+-------+-------+
@@ -2538,7 +2562,7 @@ mysql> SELECT * FROM painting ORDER BY a_id, p_id;
 The low values in the price column of the painting table betray the fact that your collection actually contains only cheap facsimiles, not the originals. Well, that’s all right: who can afford the originals?
 Each table contains partial information about your collection. For example, the artist table doesn’t tell you which paintings each artist produced, and the painting table lists artist IDs but not their names. To use the information in both tables, you can ask MySQL to show you various combinations of artists and paintings by writing a query that performs a join. A join names two or more tables after the FROM keyword. In the output column list, you can name columns FROM any or all the joined tables, or use expressions that are based on those columns, tbl_name .* to SELECT all columns FROM a given table, or * to SELECT all columns FROM all tables.
 The simplest join involves two tables and SELECTs all columns FROM each. With no re- strictions, the join generates output for all combinations of rows (that is, the Cartesian product). The following complete join between the artist and painting tables shows this:
-mysql> SELECT * FROM artist, painting;
+SELECT * FROM artist, painting;
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
 +------+----------+------+------+-------------------+-------+-------+
@@ -2546,7 +2570,7 @@ mysql> SELECT * FROM artist, painting;
 +------+----------+------+------+-------------------+-------+-------+
 The statement output illustrates why a complete join generally is not useful: it produces a lot of output, and the result is not meaningful. Clearly, you’re not maintaining these tables to match every artist with every painting, which is what the preceding statement does. An unrestricted join in this case produces nothing of value.
 To answer questions meaningfully, you must combine the two tables in a way that produces only the relevant matches. Doing so is a matter of including appropriate join conditions. For example, to produce a list of paintings together with the artist names, you can associate rows FROM the two tables using a simple WHERE clause that matches up values in the artist ID column that is common to both tables and that serves as the link between them:
-mysql> SELECT * FROM artist, painting
+SELECT * FROM artist, painting
 WHERE artist.a_id = painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
@@ -2555,7 +2579,7 @@ WHERE artist.a_id = painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 The column names in the WHERE clause include table qualifiers to make it clear which a_id values to compare. The output indicates who painted each painting, and, con- versely, which paintings by each artist are in your collection.
 Another way to write the same join is to use INNER JOIN rather than the comma operator and indicate the matching conditions with an ON clause:
-mysql> SELECT * FROM artist INNER JOIN painting
+SELECT * FROM artist INNER JOIN painting
 ON artist.a_id = painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
@@ -2563,7 +2587,7 @@ ON artist.a_id = painting.a_id;
 
 +------+----------+------+------+-------------------+-------+-------+
 In the special case that the matched columns have the same name in both tables and are compared using the = operator, you can use an INNER JOIN with a USING clause instead. This requires no table qualifiers, and each join column is named only once:
-mysql> SELECT * FROM artist INNER JOIN painting
+SELECT * FROM artist INNER JOIN painting
 USING(a_id);
 +------+----------+------+-------------------+-------+-------+
 | a_id | name   | p_id | title  | state | price |
@@ -2572,7 +2596,7 @@ USING(a_id);
 +------+----------+------+-------------------+-------+-------+
 Note that when you write a query with a USING clause, SELECT * returns only one instance of each join column (a_id).
 Any of ON, USING, or WHERE can include comparisons, so how do you know which join conditions to put in each clause? As a rule of thumb, it’s conventional to use ON or USING to specify how to join the tables, and the WHERE clause to restrict which of the joined rows to SELECT. For example, to join tables based on the a_id column, but SELECT only rows for paintings obtained in Kentucky, use an ON (or USING) clause to match the rows in the two tables, and a WHERE clause to test the state column:
-mysql> SELECT * FROM artist INNER JOIN painting
+SELECT * FROM artist INNER JOIN painting
 ON artist.a_id = painting.a_id
 WHERE painting.state = 'KY';
 +------+----------+------+------+-------------------+-------+-------+
@@ -2581,7 +2605,7 @@ WHERE painting.state = 'KY';
 
 +------+----------+------+------+-------------------+-------+-------+
 The preceding queries use SELECT * to SELECT all columns. To be more SELECTive about which columns a statement should display, provide a list that names only those columns in which you’re interested:
-mysql> SELECT artist.name, painting.title, painting.state, painting.price
+SELECT artist.name, painting.title, painting.state, painting.price
 FROM artist INNER JOIN painting
 ON artist.a_id = painting.a_id
 WHERE painting.state = 'KY';
@@ -2592,7 +2616,7 @@ WHERE painting.state = 'KY';
 | Van Gogh | The Potato Eaters | KY |   67 |
 +----------+-------------------+-------+-------+
 You’re not limited to two tables when writing joins. Suppose that you prefer to see complete state names rather than abbreviations in the preceding query result. The states table used in earlier chapters maps state abbreviations to names, so you can add it to the previous query to display names:
-mysql> SELECT artist.name, painting.title, states.name, painting.price
+SELECT artist.name, painting.title, states.name, painting.price
 FROM artist INNER JOIN painting INNER JOIN states
 ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
 +----------+-------------------+----------+-------+
@@ -2603,7 +2627,7 @@ ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
 Another common use of three-way joins is for enumerating many-to-many relation- ships. See Recipe 12.5 for an example.
 By including appropriate conditions in your joins, you can answer very specific ques- tions, such as the following:
 Which paintings did Van Gogh paint? To answer this question, use the a_id value to find matching rows, add a WHERE clause to restrict output to those rows that contain the artist name, and SELECT the title FROM those rows:
-mysql> SELECT painting.title
+SELECT painting.title
 FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
 WHERE artist.name = 'Van Gogh';
 +-------------------+
@@ -2614,7 +2638,7 @@ WHERE artist.name = 'Van Gogh';
 | The Rocks |
 +-------------------+
 Who painted the Mona Lisa? Again you use the a_id column to join the rows, but this time the WHERE clause restricts output to those rows that contain the title, and you SELECT the artist name FROM those rows:
-mysql> SELECT artist.name
+SELECT artist.name
 FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
 WHERE painting.title = 'The Mona Lisa';
 +----------+
@@ -2623,7 +2647,7 @@ WHERE painting.title = 'The Mona Lisa';
 | Da Vinci |
 +----------+
 Which artists’ paintings did you purchase in Kentucky or Indiana? This is some- what similar to the previous statement, but it tests a different column (a_id) in the painting table to determine which rows to join with the artist table:
-mysql> SELECT DISTINCT artist.name
+SELECT DISTINCT artist.name
 FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
 WHERE painting.state IN ('KY','IN');
 +----------+
@@ -2634,7 +2658,7 @@ WHERE painting.state IN ('KY','IN');
 +----------+
 The statement also uses DISTINCT to display each artist name just once. Try it with- out DISTINCT and you’ll see that Van Gogh is listed twice; that’s because you obtained two Van Goghs in Kentucky.
 Joins can also be used with aggregate functions to produce summaries. For exam- ple, to find out how many paintings you have per artist, use this statement:
-mysql> SELECT artist.name, COUNT(*) AS 'number of paintings'
+SELECT artist.name, COUNT(*) AS 'number of paintings'
 FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
 GROUP BY artist.name;
 +----------+---------------------+
@@ -2645,7 +2669,7 @@ GROUP BY artist.name;
 | Van Gogh |    3 |
 +----------+---------------------+
 A more elaborate statement might also show how much you paid for each artist’s paintings, in total and on average:
-mysql> SELECT artist.name,
+SELECT artist.name,
 COUNT(*) AS 'number of paintings',
 SUM(painting.price) AS 'total price',
 AVG(painting.price) AS 'average price'
@@ -2664,10 +2688,10 @@ An outer join can produce those matches as well, but also can show you which val
 
 
 The tbl_name.col_name notation that qualifies a column name with a table name is always allowable in a join but can be shortened to just col_name if the name appears in only one of the joined tables. In that case, MySQL can determine without ambiguity which table the column comes FROM, and no table name qualifier is necessary. We can’t do that for the following join. Both tables have an a_id column, so the column reference is ambiguous:
-mysql> SELECT * FROM artist INNER JOIN painting ON a_id = a_id;
+SELECT * FROM artist INNER JOIN painting ON a_id = a_id;
 ERROR 1052 (23000): Column 'a_id' in on clause is ambiguous
 By contrast, the following query is unambiguous. Each instance of a_id is qualified with the appropriate table name, only artist has a name column, and only painting has title and state columns:
-mysql> SELECT name, title, state FROM artist INNER JOIN painting
+SELECT name, title, state FROM artist INNER JOIN painting
 ON artist.a_id = painting.a_id;
 +----------+-------------------+-------+
 | name  | title | state |
@@ -2704,7 +2728,7 @@ You’re working in sales. You have a list of potential customers, and another l
 You have one list of baseball players, and another list of players who have hit home runs, and you want to know which players in the first list have not hit a home run. The answer is determined by finding those players in the first list who are not in the second.
 For these types of questions, it’s necessary to use an outer join. Like an inner join, an outer join can find matches between tables. But unlike an inner join, an outer join can also determine which rows in one table have no match in another. Two types of outer join are LEFT JOIN and RIGHT JOIN.
 To see why outer joins are useful, let’s consider the problem of determining which artists in the artist table are missing FROM the painting table. At present, the tables are small, so it’s easy to examine them visually:
-mysql> SELECT * FROM artist ORDER BY a_id;
+SELECT * FROM artist ORDER BY a_id;
 +------+----------+
 | a_id | name   |
 +------+----------+
@@ -2714,14 +2738,14 @@ mysql> SELECT * FROM artist ORDER BY a_id;
 |   4 | Picasso |
 |   5 | Renoir  |
 +------+----------+
-mysql> SELECT * FROM painting ORDER BY a_id, p_id;
+SELECT * FROM painting ORDER BY a_id, p_id;
 +------+------+-------------------+-------+-------+
 | a_id | p_id | title   | state | price |
 +------+------+-------------------+-------+-------+
 
 +------+------+-------------------+-------+-------+
 By looking at the tables, you can see that you have no paintings by Monet or Picasso (there are no painting rows with an a_id value of 2 or 4). But as you acquire more paintings and the tables get larger, it won’t be so easy to eyeball them and answer the question by inspection. Can you answer it using SQL? Sure, although first attempts at a solution generally look something like the following statement, which uses a not- equal condition to look for mismatches between the two tables:
-mysql> SELECT * FROM artist INNER JOIN painting
+SELECT * FROM artist INNER JOIN painting
 ON artist.a_id != painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
@@ -2731,7 +2755,7 @@ ON artist.a_id != painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 That output obviously is not correct. (For example, it falsely indicates that each painting was painted by several different artists.) The problem is that the statement produces a list of all combinations of values FROM the two tables in which the artist ID values aren’t the same, WHEREas what you really need is a list of values in artist that aren’t present at all in painting. The trouble here is that an inner join can only produce results based on combinations of values that are present in both tables. It can’t tell you anything about values that are missing FROM one of them.
 When faced with the problem of finding values in one table that have no match in (or that are missing FROM) another table, you should get in the habit of thinking, “Aha, that’s a LEFT JOIN problem.” A LEFT JOIN is one type of outer join: it’s similar to an inner join in that it attempts to match rows in the first (left) table with the rows in the second (right) table. But in addition, if a left table row has no match in the right table, a LEFT JOIN still produces a row—one in which all the columns FROM the right table are set to NULL. This means you can find values that are missing FROM the right table by looking for NULL. It’s easier to understand how this happens by working in stages. Begin with an inner join that displays matching rows:
-mysql> SELECT * FROM artist INNER JOIN painting
+SELECT * FROM artist INNER JOIN painting
 ON artist.a_id = painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
@@ -2740,7 +2764,7 @@ ON artist.a_id = painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 In this output, the first a_id column comes FROM the artist table and the second one comes FROM the painting table.
 Now compare that result with the output you get FROM a LEFT JOIN. A LEFT JOIN is written much like an INNER JOIN:
-mysql> SELECT * FROM artist LEFT JOIN painting
+SELECT * FROM artist LEFT JOIN painting
 ON artist.a_id = painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
@@ -2750,7 +2774,7 @@ ON artist.a_id = painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
 The output is similar to that FROM the inner join, except that the LEFT JOIN also produces at least one output row for every artist row, including those that have no painting table match. For those output rows, all the columns FROM painting are set to NULL. These are rows that the inner join does not produce.
 Next, to restrict the output only to the nonmatched artist rows, add a WHERE clause that looks for NULL values in any painting column that cannot otherwise contain NULL. This filters out the rows that the inner join produces, leaving those produced only by the outer join:
-mysql> SELECT * FROM artist LEFT JOIN painting
+SELECT * FROM artist LEFT JOIN painting
 ON artist.a_id = painting.a_id
 WHERE painting.a_id IS NULL;
 +------+---------+------+------+-------+-------+-------+
@@ -2760,7 +2784,7 @@ WHERE painting.a_id IS NULL;
 |   4 | Picasso | NULL | NULL | NULL  | NULL  |  NULL |
 +------+---------+------+------+-------+-------+-------+
 Finally, to show only the artist table values that are missing FROM the painting table, shorten the output column list to include only columns FROM the artist table. The result is that the LEFT JOIN lists those left-table rows containing a_id values that are not present in the right table:
-mysql> SELECT artist.* FROM artist LEFT JOIN painting
+SELECT artist.* FROM artist LEFT JOIN painting
 ON artist.a_id = painting.a_id
 WHERE painting.a_id IS NULL;
 +------+---------+
@@ -2770,7 +2794,7 @@ WHERE painting.a_id IS NULL;
 |   4 | Picasso |
 +------+---------+
 A similar kind of operation can be used to report each left-table value along with an indicator as to whether it’s present in the right table. To do this, perform a LEFT JOIN that counts the number of times each left-table value occurs in the right table. A count of zero indicates that the value is not present. The following statement lists each artist FROM the artist table and shows whether you have any paintings by the artist:
-mysql> SELECT artist.name,
+SELECT artist.name,
 IF(COUNT(painting.a_id)>0,'yes','no') AS 'in collection'
 FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
 GROUP   BY  artist.name;
@@ -2784,7 +2808,7 @@ GROUP   BY  artist.name;
 | Van Gogh | yes    |
 +----------+---------------+
 A RIGHT JOIN is another kind of outer join. It is like LEFT JOIN but reverses the roles of the left and right tables. Semantically, RIGHT JOIN forces the matching process to pro- duce a row FROM each table in the right table, even in the absence of a corresponding row in the left table. Syntactically, tbl1 LEFT JOIN tbl2 is equivalent to tbl2 RIGHT JOIN tbl1. This means that you would rewrite the preceding LEFT JOIN as follows to convert it to a RIGHT JOIN that produces the same results:
-mysql> SELECT artist.name,
+SELECT artist.name,
 IF(COUNT(painting.a_id)>0,'yes','no') AS 'in collection'
 FROM painting RIGHT JOIN artist ON artist.a_id = painting.a_id
 GROUP   BY  artist.name;
@@ -2821,7 +2845,7 @@ Identify the row in the painting table that contains the title The Potato Eaters
 Use the a_id value to match other rows in the table that have the same a_id value.
 Display the titles FROM those matching rows.
 The artist ID and painting titles that we begin with look like this:
-mysql> SELECT a_id, title FROM painting ORDER BY a_id;
+SELECT a_id, title FROM painting ORDER BY a_id;
 +------+-------------------+
 | a_id | title  |
 +------+-------------------+
@@ -2833,13 +2857,13 @@ mysql> SELECT a_id, title FROM painting ORDER BY a_id;
 |   5 | Les Deux Soeurs |
 +------+-------------------+
 A two-step method for picking out the right titles without a join is to look up the artist’s ID with one statement and then use the ID in a second statement to SELECT rows that match it:
-mysql> SELECT @id := a_id FROM painting WHERE title = 'The Potato Eaters';
+SELECT @id := a_id FROM painting WHERE title = 'The Potato Eaters';
 +-------------+
 | @id := a_id |
 +-------------+
 |   3 |
 +-------------+
-mysql> SELECT title FROM painting WHERE a_id = @id;
+SELECT title FROM painting WHERE a_id = @id;
 +-------------------+
 | title |
 +-------------------+
@@ -2848,13 +2872,13 @@ mysql> SELECT title FROM painting WHERE a_id = @id;
 | The Rocks |
 +-------------------+
 A different solution that requires only a single statement is to use a self-join. The trick to this lies in figuring out the proper notation to use. First attempts at writing a state- ment that joins a table to itself often look something like this:
-mysql> SELECT title
+SELECT title
 FROM painting INNER JOIN painting
 ON a_id = a_id;
 WHERE title = 'The Potato Eaters';
 ERROR 1066 (42000): Not unique table/alias: 'painting'
 The problem with that statement is that the column references are ambiguous. MySQL can’t tell which instance of the painting table any given column name refers to. The solution is to give at least one instance of the table an alias so that you can distinguish column references by using different table qualifiers. The following statement shows how to do this, using the aliases p1 and p2 to refer to the painting table different ways:
-mysql> SELECT p2.title
+SELECT p2.title
 FROM painting AS p1 INNER JOIN painting AS p2
 ON p1.a_id = p2.a_id
 WHERE p1.title = 'The Potato Eaters';
@@ -2866,7 +2890,7 @@ WHERE p1.title = 'The Potato Eaters';
 | The Rocks |
 +-------------------+
 The statement output illustrates something typical of self-joins: when you begin with a reference value in one table instance (The Potato Eaters) to find matching rows in a second table instance (paintings by the same artist), the output includes the reference value. That makes sense: after all, the reference matches itself. If you want to find only other paintings by the same artist, explicitly exclude the reference value FROM the output:
-mysql> SELECT p2.title
+SELECT p2.title
 FROM painting AS p1 INNER JOIN painting AS p2
 ON p1.a_id = p2.a_id
 WHERE p1.title = 'The Potato Eaters' AND p2.title != 'The Potato Eaters';
@@ -2877,7 +2901,7 @@ WHERE p1.title = 'The Potato Eaters' AND p2.title != 'The Potato Eaters';
 | The Rocks |
 +--------------+
 A more general way to exclude the reference value without naming it literally is to specify that you don’t want output rows to have the same title as the reference, whatever that title happens to be:
-mysql> SELECT p2.title
+SELECT p2.title
 FROM painting AS p1 INNER JOIN painting AS p2
 ON p1.a_id = p2.a_id
 WHERE p1.title = 'The Potato Eaters' AND p2.title != p1.title
@@ -2888,7 +2912,7 @@ WHERE p1.title = 'The Potato Eaters' AND p2.title != p1.title
 | The Rocks |
 +--------------+
 The preceding statements use comparisons of ID values to match rows in the two table instances, but any kind of value can be used. For example, to use the states table to answer the question “Which states joined the Union in the same year as New York?,” perform a temporal pairwise comparison based on the year part of the dates in the table’s statehood column:
-mysql> SELECT s2.name, s2.statehood
+SELECT s2.name, s2.statehood
 FROM states AS s1 INNER JOIN states AS s2
 ON YEAR(s1.statehood) = YEAR(s2.statehood)
 WHERE s1.name = 'New York'
@@ -2906,7 +2930,7 @@ ORDER BY s2.name;
 | Virginia  | 1788-06-25 |
 +----------------+------------+
 Here again, the reference value (New York) appears in the output. If you want to prevent that, add to the ON expression a term that explicitly excludes the reference:
-mysql> SELECT s2.name, s2.statehood
+SELECT s2.name, s2.statehood
 FROM states AS s1 INNER JOIN states AS s2
 ON YEAR(s1.statehood) = YEAR(s2.statehood) AND s1.name != s2.name
 WHERE s1.name = 'New York'
@@ -2923,7 +2947,7 @@ ORDER BY s2.name;
 | Virginia  | 1788-06-25 |
 +----------------+------------+
 Like the problem of finding other paintings by the painter of The Potato Eaters, the statehood problem can be solved by using a user-defined variable and two statements. That will always be true when you’re seeking matches for just one particular row in your table. Other problems require finding matches for several rows, in which case the two-statement method will not work. Suppose that you want to find each pair of states that joined the Union in the same year. In this case, the output potentially can include any pair of rows FROM the states table. There is no fixed reference value, so you cannot store the reference in a variable. A self-join is perfect for this problem:
-mysql> SELECT YEAR(s1.statehood) AS year,
+SELECT YEAR(s1.statehood) AS year,
 s1.name AS name1, s1.statehood AS statehood1,
 s2.name AS name2, s2.statehood AS statehood2
 FROM states AS s1 INNER JOIN states AS s2
@@ -2937,7 +2961,7 @@ ORDER BY year, s1.name, s2.name;
 +------+----------------+------------+----------------+------------+
 The condition in the ON clause that requires state pair names not to be identical elimi- nates the trivially duplicate rows showing that each state joined the Union in the same year as itself. But you’ll notice that each remaining pair of states still appears twice. For example, there is one row that lists Delaware and New Jersey, and another that lists New Jersey and Delaware. This is often the case with self-joins: they produce pairs of rows that contain the same values, but for which the values are not in the same order. For techniques that eliminate these “near duplicates” FROM the query result, see Rec- ipe 14.5.
 Some self-join problems are of the “Which values are not matched by other rows in the table?” variety. An instance of this is the question “Which states did not join the Union in the same year as any other state?” Finding these states is a “nonmatch” problem, which is the type of problem that typically involves a LEFT JOIN. In this case, the solution uses a LEFT JOIN of the states table to itself:
-mysql> SELECT s1.name, s1.statehood
+SELECT s1.name, s1.statehood
 FROM states AS s1 LEFT JOIN states AS s2
 ON YEAR(s1.statehood) = YEAR(s2.statehood) AND s1.name != s2.name
 WHERE s2.name IS NULL
@@ -2970,7 +2994,7 @@ This is a one-to-many relationship. The solution to this problem involves a join
 Discussion
 It’s often useful to produce a list FROM two related tables. For tables that have a master- detail or parent-child relationship, a given row in one table might be matched by several rows in the other. This recipe suggests some questions of this type that you can ask (and answer), using the artist and painting tables FROM earlier in the chapter.
 One form of master-detail question for these tables is, “Which artist painted each painting?” This is a simple inner join that matches each painting row to its corre- sponding artist row based on the artist ID values:
-mysql> SELECT artist.name, painting.title
+SELECT artist.name, painting.title
 FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
 ORDER BY name, title;
 +----------+-------------------+
@@ -2984,7 +3008,7 @@ ORDER BY name, title;
 | Van Gogh | The Rocks  |
 +----------+-------------------+
 An inner join suffices as long as you want to list only master rows that have detail rows. However, another form of master-detail question you can ask is, “Which paintings did each artist paint?” That question is similar but not quite identical. It will have a different answer if there are artists listed in the artist table that are not represented in the painting table, and the question requires a different statement to produce the proper answer. In that case, the join output should include rows in one table that have no match in the other. That’s a form of “find the nonmatching rows” problem that requires an outer join (Recipe 12.2). Thus, to list each artist row, whether there are any paint ing rows for it, use a LEFT JOIN:
-mysql> SELECT artist.name, painting.title
+SELECT artist.name, painting.title
 FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
 ORDER BY name, title;
 +----------+-------------------+
@@ -3001,7 +3025,7 @@ ORDER BY name, title;
 +----------+-------------------+
 The rows in the result that have NULL in the title column correspond to artists that are listed in the artist table for whom you have no paintings.
 The same principles apply when producing summaries using master and detail tables. For example, to summarize your art collection by number of paintings per painter, you might ask, “How many paintings are there per artist in the painting table?” To find the answer based on artist ID, you can count up the paintings easily with this statement:
-mysql> SELECT a_id, COUNT(a_id) AS count FROM painting GROUP BY a_id;
+SELECT a_id, COUNT(a_id) AS count FROM painting GROUP BY a_id;
 +------+-------+
 | a_id | count |
 +------+-------+
@@ -3010,7 +3034,7 @@ mysql> SELECT a_id, COUNT(a_id) AS count FROM painting GROUP BY a_id;
 |   5 | 1 |
 +------+-------+
 Of course, that output is essentially meaningless unless you have all the artist ID num- bers memorized. To display the artists by name rather than ID, join the painting table to the artist table:
-mysql> SELECT artist.name AS painter, COUNT(painting.a_id) AS count
+SELECT artist.name AS painter, COUNT(painting.a_id) AS count
 FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
 GROUP BY artist.name;
 +----------+-------+
@@ -3021,7 +3045,7 @@ GROUP BY artist.name;
 | Van Gogh |    3 |
 +----------+-------+
 On the other hand, you might ask, “How many paintings did each artist paint?” This is the same question as the previous one (and the same statement answers it), as long as every artist in the artist table has at least one corresponding painting table row. But if you have artists in the artist table that are not yet represented by any paintings in your collection, they will not appear in the statement output. To produce a count- per-artist summary that includes even artists with no paintings in the painting table, use a LEFT JOIN:
-mysql> SELECT artist.name AS painter, COUNT(painting.a_id) AS count
+SELECT artist.name AS painter, COUNT(painting.a_id) AS count
 FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
 GROUP BY artist.name;
 +----------+-------+
@@ -3034,7 +3058,7 @@ GROUP BY artist.name;
 | Van Gogh |    3 |
 +----------+-------+
 Beware of a subtle error that is easy to make when writing that kind of statement. Suppose that you write the COUNT( ) function slightly differently, like so:
-mysql> SELECT artist.name AS painter, COUNT(*) AS count
+SELECT artist.name AS painter, COUNT(*) AS count
 FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
 GROUP BY artist.name;
 +----------+-------+
@@ -3049,7 +3073,7 @@ GROUP BY artist.name;
 Now every artist appears to have at least one painting. Why the difference? The cause of the problem is that the statement uses COUNT(*) rather than COUNT(painting.a_id). The way LEFT JOIN works for unmatched rows in the left table is that it generates a row with all the columns FROM the right table set to NULL. In the example, the right table is painting. The statement that uses COUNT(painting.a_id) works correctly, because COUNT
 ( expr ) counts only non-NULL values. The statement that uses COUNT(*) works incor- rectly because it counts rows, even those containing NULL that correspond to missing artists.
 LEFT JOIN is suitable for other types of summaries as well. To produce additional col- umns showing the total and average values of the paintings for each artist in the artist table, use this statement:
-mysql> SELECT artist.name AS painter,
+SELECT artist.name AS painter,
 COUNT(painting.a_id) AS 'number of paintings',
 SUM(painting.price) AS 'total price',
 AVG(painting.price) AS 'average price'
@@ -3061,7 +3085,7 @@ GROUP BY artist.name;
 
 +----------+---------------------+-------------+---------------+
 Note that COUNT( ) is zero for artists that are not represented, but SUM( ) and AVG( ) are NULL. The latter two functions return NULL when applied to a set of values with no non- NULL values. To display a sum or average value of zero in that case, modify the statement to test the value of SUM( ) or AVG( ) with COALESCE( ):
-mysql> SELECT artist.name AS painter,
+SELECT artist.name AS painter,
 COUNT(painting.a_id) AS 'number of paintings',
 COALESCE(SUM(painting.price),0) AS 'total price',
 COALESCE(AVG(painting.price),0) AS 'average price'
@@ -3073,6 +3097,14 @@ GROUP BY artist.name;
 
 +----------+---------------------+-------------+---------------+
 
+
+```sql
+SELECT 
+    CASE WHEN expression IS NULL 
+            THEN replacement 
+            ELSE expression 
+    END AS column_alias;
+```
 ---
 
 Enumerating a Many-to-Many Relationship
@@ -3084,13 +3116,13 @@ This is a many-to-many relationship. It requires a third table for associating y
 Discussion
 The artist and painting tables used in earlier sections are related in a one-to-many relationship: a given artist may have produced many paintings, but each painting was created by only one artist. One-to-many relationships are relatively simple and the two tables in the relationship can be joined with a key that is common to both tables.
 Even simpler is the one-to-one relationship, which often is used to perform lookups that map one set of values to another. For example, the states table contains name and abbrev columns that list full state names and their corresponding abbreviations:
-mysql> SELECT name, abbrev FROM states;
+SELECT name, abbrev FROM states;
 +----------------+--------+
 | name  | abbrev |
 +----------------+--------+
 
 This one-to-one relationship can be used to map state name abbreviations in the painting table, which contains a state column indicating the state in which each paint- ing was purchased. With no mapping, painting entries can be displayed like this:
-mysql> SELECT title, state FROM painting ORDER BY state;
+SELECT title, state FROM painting ORDER BY state;
 +-------------------+-------+
 | title | state |
 +-------------------+-------+
@@ -3102,7 +3134,7 @@ mysql> SELECT title, state FROM painting ORDER BY state;
 | Les Deux Soeurs   | NE    |
 +-------------------+-------+
 If you want to see the full state names rather than abbreviations, exploit the one-to-one relationship that exists between the two that is enumerated in the states table. Join that table to the painting table as follows, using the abbreviation values that are com- mon to the two tables:
-mysql> SELECT painting.title, states.name AS state
+SELECT painting.title, states.name AS state
 FROM painting INNER JOIN states ON painting.state = states.abbrev
 ORDER BY state;
 +-------------------+----------+
@@ -3116,7 +3148,7 @@ ORDER BY state;
 | Les Deux Soeurs   | Nebraska |
 +-------------------+----------+
 A more complex relationship between tables is the many-to-many relationship, which occurs when a row in one table may have many matches in the other, and vice versa. To illustrate such a relationship, this is the point at which database books typically devolve into the “parts and suppliers” problem. (A given part may be available through several suppliers; how can you produce a list showing which parts are available FROM which suppliers?) However, having seen that example far too many times, I prefer to use a different illustration. So, even though conceptually it’s really the same idea, let’s use the following scenario: you and a bunch of your friends are avid enthusiasts of euchre, a four-handed card game played with two teams of partners. Each year, you all get together, pair off, and run a friendly tournament. Naturally, to avoid controversy about how different players might remember the results of each tournament, you record the pairings and outcomes in a database. One way to store the results is with a table that is set up as follows, WHERE for each tournament year, you record the team names, win-loss records, players, and player cities of residence:
-mysql> SELECT * FROM euchre ORDER BY year, wins DESC, player;
+SELECT * FROM euchre ORDER BY year, wins DESC, player;
 +----------+------+------+--------+----------+-------------+
 | team  | year | wins | losses | player | player_city |
 +----------+------+------+--------+----------+-------------+
@@ -3128,7 +3160,7 @@ Store each player name and city of residence once in a table named
 euchre_player.
 Create a third table, euchre_link, that stores team-player associations and serves as a link, or bridge, between the two primary tables. To minimize the information stored in this table, assign unique IDs to each team and player within their respec- tive tables, and store only those IDs in the euchre_link table.
 The resulting team and player tables look like this:
-mysql> SELECT * FROM euchre_team;
+SELECT * FROM euchre_team;
 +----+----------+------+------+--------+
 | id | name | year | wins | losses |
 +----+----------+------+------+--------+
@@ -3141,7 +3173,7 @@ mysql> SELECT * FROM euchre_team;
 |  7 | Stars    | 2006 |    5 | 7 |
 |  8 | Sceptres | 2006 |    2 | 10 |
 +----+----------+------+------+--------+
-mysql> SELECT * FROM euchre_player;
+SELECT * FROM euchre_player;
 +----+----------+---------+
 | id | name | city  |
 +----+----------+---------+
@@ -3155,7 +3187,7 @@ mysql> SELECT * FROM euchre_player;
 |  8 | Maurice | Leeds  |
 +----+----------+---------+
 The euchre_link table associates teams and players as follows:
-mysql> SELECT * FROM euchre_link;
+SELECT * FROM euchre_link;
 +---------+-----------+
 | team_id | player_id |
 +---------+-----------+
@@ -3164,7 +3196,7 @@ mysql> SELECT * FROM euchre_link;
 +---------+-----------+
 To answer questions about the teams or players using these tables, you need to perform a three-way join, using the link table to relate the two primary tables to each other. Here are some examples:
 List all the pairings that show the teams and who played on them. This statement enumerates all the correspondences between the euchre_team and euchre_player tables and reproduces the information that was originally in the nonnormal euchre table:
-mysql> SELECT t.name, t.year, t.wins, t.losses, p.name, p.city
+SELECT t.name, t.year, t.wins, t.losses, p.name, p.city
 FROM euchre_team AS t INNER JOIN euchre_link AS l
 INNER JOIN euchre_player AS p
 ON t.id = l.team_id AND p.id = l.player_id
@@ -3175,7 +3207,7 @@ ORDER BY t.year, t.wins DESC, p.name;
 
 +----------+------+------+--------+----------+---------+
 List the members for a particular team (the 2005 Crowns):
-mysql> SELECT p.name, p.city
+SELECT p.name, p.city
 FROM euchre_team AS t INNER JOIN euchre_link AS l
 INNER JOIN euchre_player AS p
 ON t.id = l.team_id AND p.id = l.player_id
@@ -3187,7 +3219,7 @@ AND t.name = 'Crowns' AND t.year = 2005;
 | Melvin | Dublin |
 +--------+--------+
 List the teams that a given player (Billy) has been a member of:
-mysql> SELECT t.name, t.year, t.wins, t.losses
+SELECT t.name, t.year, t.wins, t.losses
 FROM euchre_team AS t INNER JOIN euchre_link AS l
 INNER JOIN euchre_player AS p
 ON t.id = l.team_id AND p.id = l.player_id
@@ -3210,8 +3242,8 @@ Create a temporary table to hold the per-group maximum or minimum values, and th
 
 Discussion
 Many questions involve finding largest or smallest values in a particular table column, but it’s also common to want to know what the other values are in the row that contains the value. For example, when you are using the artist and painting tables, it’s possible to answer questions like “What is the most expensive painting in the collection, and who painted it?” One way to do this is to store the highest price in a user-defined variable and then use the variable to identify the row containing the price so that you can retrieve other columns FROM it:
-mysql> SET @max_price = (SELECT MAX(price) FROM painting);
-mysql> SELECT artist.name, painting.title, painting.price
+SET @max_price = (SELECT MAX(price) FROM painting);
+SELECT artist.name, painting.title, painting.price
 FROM artist INNER JOIN painting
 ON painting.a_id = artist.a_id
 WHERE painting.price = @max_price;
@@ -3221,8 +3253,8 @@ WHERE painting.price = @max_price;
 | Da Vinci | The Mona Lisa |    87 |
 +----------+---------------+-------+
 The same thing can be done by creating a temporary table to hold the maximum price and then joining it with the other tables:
-mysql> CREATE TABLE tmp SELECT MAX(price) AS max_price FROM painting;
-mysql> SELECT artist.name, painting.title, painting.price
+CREATE TABLE tmp SELECT MAX(price) AS max_price FROM painting;
+SELECT artist.name, painting.title, painting.price
 FROM artist INNER JOIN painting INNER JOIN tmp
 ON painting.a_id = artist.a_id
 AND painting.price = tmp.max_price;
@@ -3234,9 +3266,9 @@ AND painting.price = tmp.max_price;
 The techniques of using a user-defined variable or a temporary table as just shown were illustrated originally in Recipe 8.5. Their use here is similar except that now we are applying them to multiple tables.
 On the face of it, using a temporary table and a join is just a more complicated way of answering the question than with a user-defined variable. Does this technique have any practical value? Yes, it does, because it leads to a more general technique for answering more difficult questions. The previous statements show information only for the single most expensive painting in the entire painting table. What if your question is, “What is the most expensive painting for each artist?” You can’t use a user-defined variable to answer that question, because the answer requires finding one price per artist, and a variable can hold only a single value at a time. But the technique of using a temporary table works well, because the table can hold multiple rows, and a join can find matches for all of them.
 To answer the question, SELECT each artist ID and the corresponding maximum painting price into a temporary table. The table will contain not just the maximum painting price but the maximum within each group, WHERE “group” is defined as “paintings by a given artist.” Then use the artist IDs and prices stored in the tmp table to match rows in the painting table, and join the result with the artist table to get the artist names:
-mysql> CREATE TABLE tmp
+CREATE TABLE tmp
 SELECT a_id, MAX(price) AS max_price FROM painting GROUP BY a_id;
-mysql> SELECT artist.name, painting.title, painting.price
+SELECT artist.name, painting.title, painting.price
 FROM artist INNER JOIN painting INNER JOIN tmp
 ON painting.a_id = artist.a_id
 AND painting.a_id = tmp.a_id
@@ -3249,7 +3281,7 @@ AND painting.price = tmp.max_price;
 | Renoir    | Les Deux Soeurs   |   64 |
 +----------+-------------------+-------+
 To obtain the same result with a single statement, use a subquery in the FROM clause that retrieves the same rows contained in the temporary table:
-mysql> SELECT artist.name, painting.title, painting.price
+SELECT artist.name, painting.title, painting.price
 FROM artist INNER JOIN painting INNER JOIN
 (SELECT a_id, MAX(price) AS max_price FROM painting GROUP BY a_id)
  AS tmp
@@ -3264,7 +3296,7 @@ AND painting.price = tmp.max_price;
 | Renoir    | Les Deux Soeurs   |   64 |
 +----------+-------------------+-------+
 Yet another way to answer maximum-per-group questions is to use a LEFT JOIN that joins a table to itself. The following statement identifies the highest-priced painting per artist ID (we are using IS NULL to SELECT all the rows FROM p1 for which there is no row in p2 with a higher price):
-mysql> SELECT p1.a_id, p1.title, p1.price
+SELECT p1.a_id, p1.title, p1.price
 FROM  painting  AS  p1  LEFT  JOIN  painting  AS p2
 ON  p1.a_id  =  p2.a_id  AND   p1.price  <  p2.price
 WHERE p2.a_id IS NULL;
@@ -3277,7 +3309,7 @@ WHERE p2.a_id IS NULL;
 +------+-------------------+-------+
 To display artist names rather than ID values, join the result of the LEFT JOIN to the
 artist table:
-mysql> SELECT artist.name, p1.title, p1.price
+SELECT artist.name, p1.title, p1.price
 FROM  painting  AS  p1  LEFT  JOIN  painting  AS p2
 ON  p1.a_id  =  p2.a_id  AND   p1.price  <  p2.price
 INNER JOIN artist ON p1.a_id = artist.a_id
@@ -3291,7 +3323,7 @@ WHERE p2.a_id IS NULL;
 +----------+-------------------+-------+
 The self–LEFT JOIN method is perhaps somewhat less intuitive than using a temporary table or a subquery.
 The techniques just shown work for other kinds of values, such as temporal values. Consider the driver_log table that lists drivers and trips that they’ve taken:
-mysql> SELECT name, trav_date, miles
+SELECT name, trav_date, miles
 FROM driver_log
 ORDER BY name, trav_date;
 +-------+------------+-------+
@@ -3309,10 +3341,10 @@ ORDER BY name, trav_date;
 | Suzi  | 2006-09-02 |  502 |
 +-------+------------+-------+
 One type of maximum-per-group problem for this table is “show the most recent trip for each driver.” It can be solved with a temporary table like this:
-mysql> CREATE TABLE tmp
+CREATE TABLE tmp
 SELECT name, MAX(trav_date) AS trav_date
 FROM driver_log GROUP BY name;
-mysql> SELECT driver_log.name, driver_log.trav_date, driver_log.miles
+SELECT driver_log.name, driver_log.trav_date, driver_log.miles
 FROM driver_log INNER JOIN tmp
 ON driver_log.name = tmp.name AND driver_log.trav_date = tmp.trav_date
 ORDER BY driver_log.name;
@@ -3324,7 +3356,7 @@ ORDER BY driver_log.name;
 | Suzi  | 2006-09-02 |  502 |
 +-------+------------+-------+
 You can also use a subquery in the FROM clause like this:
-mysql> SELECT driver_log.name, driver_log.trav_date, driver_log.miles
+SELECT driver_log.name, driver_log.trav_date, driver_log.miles
 FROM driver_log INNER JOIN
 (SELECT name, MAX(trav_date) AS trav_date
 FROM driver_log GROUP BY name) AS tmp
@@ -3355,7 +3387,7 @@ Determine which team is in first place, and then join that result to the origina
 Discussion
 Standings for sports teams that compete against each other typically are ranked ac- cording to who has the best win-loss record, and the teams not in first place are assigned a “games-behind” value indicating how many games out of first place they are. This section shows how to calculate those values. The first example uses a table containing a single set of team records to illustrate the logic of the calculations. The second example uses a table containing several sets of records (that is, the records for all teams in both divisions of a league, for both halves of the season). In this case, it’s necessary to use a join to perform the calculations independently for each group of teams.
 Consider the following table, standings1, which contains a single set of baseball team records (they represent the final standings for the Northern League in the year 1902):
-mysql> SELECT team, wins, losses FROM standings1
+SELECT team, wins, losses FROM standings1
 ORDER BY wins-losses DESC;
 +-------------+------+--------+
 | team  | wins | losses |
@@ -3388,10 +3420,10 @@ With a little rearrangement of terms, the expression becomes:
 The second expression is equivalent to the first, but it has each factor written as a single team’s win-loss differential, rather than as a comparison between teams. This makes it easier to work with, because each factor can be determined independently FROM a single
 team record. The first factor represents the first-place team’s win-loss differential, so if we calculate that value first, all the other teams GB values can be determined in relation to it.
 The first-place team is the one with the largest win-loss differential. To find that value and save it in a variable, use this statement:
-mysql> SET @wl_diff = (SELECT MAX(wins-losses) FROM standings1);
+SET @wl_diff = (SELECT MAX(wins-losses) FROM standings1);
 
 Then use the differential as follows to produce team standings that include winning percentage and GB values:
-mysql> SELECT team, wins AS W, losses AS L,
+SELECT team, wins AS W, losses AS L,
 wins/(wins+losses) AS PCT,
 (@wl_diff - (wins-losses)) / 2 AS GB
 FROM standings1
@@ -3407,7 +3439,7 @@ ORDER BY wins-losses DESC, PCT DESC;
 | Cavalier  |   15 |    32 | 0.3191 | 17.0000 |
 +-------------+------+------+--------+---------+
 There are a couple of minor formatting issues that can be addressed at this point. Typ- ically, standings listings display percentages to three decimal places, and the GB value to one decimal place (with the exception that the GB value for the first-place team is displayed as -). To display n decimal places, TRUNCATE( expr , n ) can be used. To display the GB value for the first-place team appropriately, put the expression that calculates the GB column within a call to IF( ) that maps 0 to a dash:
-mysql> SELECT team, wins AS W, losses AS L,
+SELECT team, wins AS W, losses AS L,
 TRUNCATE(wins/(wins+losses),3) AS PCT,
 IF(@wl_diff = wins-losses,
  '-',TRUNCATE((@wl_diff - (wins-losses))/2,1)) AS GB
@@ -3438,7 +3470,7 @@ Applying the GB and percentage calculations to these team records yields the fol
 | B |   2 | 0 | 1.000 | 0.5 |
 +------+------+------+-------+------+
 The standings calculations shown thus far can be done without a join. They involve only a single set of team records, so the first-place team’s win-loss differential can be stored in a variable. A more complex situation occurs when a dataset includes several sets of team records. For example, the 1997 Northern League had two divisions (Eastern and Western). In addition, separate standings were maintained for the first and second halves of the season, because season-half winners in each division played each other for the right to compete in the league championship. The following table, standings2, shows what these rows look like, ordered by season half, division, and win-loss differential:
-mysql> SELECT half, division, team, wins, losses FROM standings2
+SELECT half, division, team, wins, losses FROM standings2
 ORDER BY half, division, wins-losses DESC;
 +------+----------+-----------------+------+--------+
 | half | division | team    | wins | losses |
@@ -3447,13 +3479,13 @@ ORDER BY half, division, wins-losses DESC;
 
 +------+----------+-----------------+------+--------+
 Generating the standings for these rows requires computing the GB values separately for each of the four combinations of season half and division. Begin by calculating the win-loss differential for the first-place team in each group and saving the values into a separate firstplace table:
-mysql> CREATE TABLE firstplace
+CREATE TABLE firstplace
 SELECT half, division, MAX(wins-losses) AS wl_diff
 FROM standings2
 GROUP BY half, division;
 
 Then join the firstplace table to the original standings, associating each team record with the proper win-loss differential to compute its GB value:
-mysql> SELECT wl.half, wl.division, wl.team, wl.wins AS W, wl.losses AS L,
+SELECT wl.half, wl.division, wl.team, wl.wins AS W, wl.losses AS L,
 TRUNCATE(wl.wins/(wl.wins+wl.losses),3) AS PCT,
 IF(fp.wl_diff = wl.wins-wl.losses,
  '-',TRUNCATE((fp.wl_diff - (wl.wins-wl.losses)) / 2,1)) AS GB
@@ -3496,7 +3528,7 @@ Create a reference table that lists each category and produce the summary based 
 
 Discussion
 When you run a summary query, normally it produces entries only for the values that are actually present in the data. Let’s say you want to produce a time-of-day summary for the rows in the mail table. That table looks like this:
-mysql> SELECT * FROM mail;
+SELECT * FROM mail;
 +---------------------+---------+---------+---------+---------+---------+
 | t | sender | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
@@ -3508,7 +3540,7 @@ mysql> SELECT * FROM mail;
 | 2006-05-14 11:52:17 | phil    | mars  | tricia | saturn | 5781 |
 ...
 To determine how many messages were sent for each hour of the day, use the following statement:
-mysql> SELECT HOUR(t) AS hour, COUNT(HOUR(t)) AS count
+SELECT HOUR(t) AS hour, COUNT(HOUR(t)) AS count
 FROM mail GROUP BY hour;
 +------+-------+
 | hour | count |
@@ -3518,13 +3550,13 @@ FROM mail GROUP BY hour;
 |   23 |    1 |
 +------+-------+
 Here, the summary category is hour of the day. However, the summary is “incomplete” in the sense that it includes entries only for those hours of the day represented in the mail table. To produce a summary that includes all hours of the day, even those during which no messages were sent, create a reference table that lists each category (that is, each hour):
-mysql> CREATE TABLE ref (h INT);
-mysql> INSERT INTO ref (h)
+CREATE TABLE ref (h INT);
+INSERT INTO ref (h)
 VALUES(0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),
 (12),(13),(14),(15),(16),(17),(18),(19),(20),(21),(22),(23);
 
 Then join the reference table to the mail table using a LEFT JOIN:
-mysql> SELECT ref.h AS hour, COUNT(mail.t) AS count
+SELECT ref.h AS hour, COUNT(mail.t) AS count
 FROM ref LEFT JOIN mail ON ref.h = HOUR(mail.t)
 GROUP BY hour;
 +------+-------+
@@ -3534,7 +3566,7 @@ GROUP BY hour;
 +------+-------+
 Now the summary includes an entry for every hour of the day because the LEFT JOIN forces the output to include a row for every row in the reference table, regardless of the contents of the mail table.
 The example just shown uses the reference table with a LEFT JOIN to fill in holes in the category list. It’s also possible to use the reference table to detect holes in the dataset— that is, to determine which categories are not present in the data to be summarized. The following statement shows those hours of the day during which no messages were sent by looking for reference rows for which no mail table rows have a matching cate- gory value:
-mysql> SELECT ref.h AS hour
+SELECT ref.h AS hour
 FROM ref LEFT JOIN mail ON ref.h = HOUR(mail.t)
 WHERE mail.t IS NULL;
 +------+
@@ -3577,14 +3609,14 @@ foreach my $i (0 .. $days-1)
 $sth->execute ($min_date, $i);
 }
 Reference tables generated by make_date_list.pl can be used for per-date summaries or to find dates not represented in the table. Suppose that you want to summarize the driver_log table to determine how many drivers were on the road each day. The table has these rows:
-mysql> SELECT * FROM driver_log ORDER BY rec_id;
+SELECT * FROM driver_log ORDER BY rec_id;
 +--------+-------+------------+-------+
 | rec_id | name  | trav_date  | miles |
 +--------+-------+------------+-------+
 
 +--------+-------+------------+-------+
 A simple summary looks like this:
-mysql> SELECT trav_date, COUNT(trav_date) AS drivers
+SELECT trav_date, COUNT(trav_date) AS drivers
 FROM driver_log GROUP BY trav_date;
 +------------+---------+
 | trav_date  | drivers |
@@ -3597,7 +3629,7 @@ Minimum date: 2006-08-26
 Maximum date: 2006-09-02
 Number of days spanned by range: 8
 After creating the reference table, use it in the following statement to generate the complete summary:
-mysql> SELECT ref.d, COUNT(driver_log.trav_date) AS drivers
+SELECT ref.d, COUNT(driver_log.trav_date) AS drivers
 FROM ref LEFT JOIN driver_log ON ref.d = driver_log.trav_date
 GROUP BY d;
 +------------+---------+
@@ -3606,7 +3638,7 @@ GROUP BY d;
 
 +------------+---------+
 This second summary includes additional rows that show those dates when no drivers were active. To list only those no-driver dates, use this statement:
-mysql> SELECT ref.d
+SELECT ref.d
 FROM ref LEFT JOIN driver_log ON ref.d = driver_log.trav_date
 WHERE driver_log.trav_date IS NULL
 ORDER BY d;
@@ -3628,14 +3660,14 @@ Use a self-join that matches up pairs of adjacent rows and calculates the differ
 
 Discussion
 Self-joins are useful when you have a set of absolute (or cumulative) values that you want to convert to relative values representing the differences between successive pairs of rows. For example, if you take an automobile trip and write down the total miles traveled at each stopping point, you can compute the difference between successive points to determine the distance FROM one stop to the next. Here is such a table that shows the stops for a trip FROM San Antonio, Texas to Madison, Wisconsin. Each row shows the total miles driven as of each stop:
-mysql> SELECT seq, city, miles FROM trip_log ORDER BY seq;
+SELECT seq, city, miles FROM trip_log ORDER BY seq;
 +-----+------------------+-------+
 | seq | city    | miles |
 +-----+------------------+-------+
 
 +-----+------------------+-------+
 A self-join can convert these cumulative values to successive differences that represent the distances FROM each city to the next. The following statement shows how to use the sequence numbers in the rows to match pairs of successive rows and compute the differences between each pair of mileage values:
-mysql> SELECT t1.seq AS seq1, t2.seq AS seq2,
+SELECT t1.seq AS seq1, t2.seq AS seq2,
 t1.city AS city1, t2.city AS city2,
 t1.miles AS miles1, t2.miles AS miles2,
 t2.miles-t1.miles AS dist
@@ -3651,7 +3683,7 @@ ORDER BY t1.seq;
 The presence of the seq column in the trip_log table is important for calculating suc- cessive difference values. It’s needed for establishing which row precedes another and matching each row n with row n +1. The implication is that a table should include a sequence column that has no gaps if you want to perform relative-difference calcula- tions FROM absolute or cumulative values. If the table contains a sequence column but there are gaps, renumber it. If the table contains no such column, add one. Recipes
 11.5 and 11.10 describe how to perform these operations.
 A somewhat more complex situation occurs when you compute successive differences for more than one column and use the results in a calculation. The following table, player_stats, shows some cumulative numbers for a baseball player at the end of each month of his season. ab indicates the total at-bats, and h the total hits the player has had as of a given date. (The first row indicates the starting point of the player’s season, which is why the ab and h values are zero.)
-mysql> SELECT id, date, ab, h, TRUNCATE(COALESCE(h/ab,0),3) AS ba
+SELECT id, date, ab, h, TRUNCATE(COALESCE(h/ab,0),3) AS ba
 FROM player_stats ORDER BY id;
 +----+------------+-----+----+-------+
 | id | date | ab | h | ba   |
@@ -3663,7 +3695,7 @@ FROM player_stats ORDER BY id;
 |  5 | 2006-08-31 | 304 | 98 | 0.322 |
 +----+------------+-----+----+-------+
 The last column of the query result also shows the player’s batting average as of each date. This column is not stored in the table but is easily computed as the ratio of hits to at-bats. The result provides a general idea of how the player’s hitting performance changed over the course of the season, but it doesn’t give a very informative picture of how the player did during each individual month. To determine that, it’s necessary to calculate relative differences between pairs of rows. This is easily done with a self-join that matches each row n with row n +1 to calculate differences between pairs of at-bats and hits values. These differences enable computation of batting average during each month:
-mysql> SELECT
+SELECT
 t1.id AS id1, t2.id AS id2,
 t2.date,
 t1.ab AS ab1, t2.ab AS ab2,
@@ -3693,7 +3725,7 @@ Use a self-join to produce the sets of successive observations at each measureme
 
 Discussion
 Recipe 12.9 illustrates how a self-join can produce relative values FROM absolute values. A self-join can do the opposite as well, producing cumulative values at each successive stage of a set of observations. The following table shows a set of rainfall measurements taken over a series of days. The values in each row show the observation date and the amount of precipitation in inches:
-mysql> SELECT date, precip FROM rainfall ORDER BY date;
+SELECT date, precip FROM rainfall ORDER BY date;
 +------------+--------+
 | date  | precip |
 +------------+--------+
@@ -3704,14 +3736,14 @@ mysql> SELECT date, precip FROM rainfall ORDER BY date;
 | 2006-06-05 |  1.00 |
 +------------+--------+
 To calculate cumulative rainfall for a given day, add that day’s precipitation value with the values for all the previous days. For example, determine the cumulative rainfall as of 2006-06-03 like this:
-mysql> SELECT SUM(precip) FROM rainfall WHERE date <= '2006-06-03';
+SELECT SUM(precip) FROM rainfall WHERE date <= '2006-06-03';
 +-------------+
 | SUM(precip) |
 +-------------+
 |   2.00 |
 +-------------+
 If you want the cumulative figures for all days that are represented in the table, it would be tedious to compute the value for each of them separately. A self-join can do this for all days with a single statement. Use one instance of the rainfall table as a reference, and determine for the date in each row the sum of the precip values in all rows occurring up through that date in another instance of the table. The following statement shows the daily and cumulative precipitation for each day:
-mysql> SELECT t1.date, t1.precip AS 'daily precip',
+SELECT t1.date, t1.precip AS 'daily precip',
 SUM(t2.precip) AS 'cum. precip'
 FROM rainfall AS t1 INNER JOIN rainfall AS t2
 ON t1.date >= t2.date
@@ -3722,7 +3754,7 @@ GROUP BY t1.date;
 
 +------------+--------------+-------------+
 The self-join can be extended to display the number of days elapsed at each date, as well as the running averages for amount of precipitation each day:
-mysql> SELECT t1.date, t1.precip AS 'daily precip',
+SELECT t1.date, t1.precip AS 'daily precip',
 SUM(t2.precip) AS 'cum. precip',
 COUNT(t2.precip) AS 'days elapsed',
 AVG(t2.precip) AS 'avg. precip'
@@ -3735,8 +3767,8 @@ GROUP BY t1.date;
 
 +------------+--------------+-------------+--------------+-------------+
 In the preceding statement, the number of days elapsed and the precipitation running averages can be computed easily using COUNT( ) and AVG( ) because there are no missing days in the table. If missing days are allowed, the calculation becomes more compli- cated, because the number of days elapsed for each calculation no longer will be the same as the number of rows. You can see this by deleting the rows for the days that had no precipitation to produce a couple of “holes” in the table:
-mysql> DELETE FROM rainfall WHERE precip = 0;
-mysql> SELECT date, precip FROM rainfall ORDER BY date;
+DELETE FROM rainfall WHERE precip = 0;
+SELECT date, precip FROM rainfall ORDER BY date;
 +------------+--------+
 | date  | precip |
 +------------+--------+
@@ -3745,7 +3777,7 @@ mysql> SELECT date, precip FROM rainfall ORDER BY date;
 | 2006-06-05 |  1.00 |
 +------------+--------+
 Deleting those rows doesn’t change the cumulative sum or running average for the dates that remain, but it does change how they must be calculated. If you try the self-join again, it yields incorrect results for the days-elapsed and average precipitation columns:
-mysql> SELECT t1.date, t1.precip AS 'daily precip',
+SELECT t1.date, t1.precip AS 'daily precip',
 SUM(t2.precip) AS 'cum. precip',
 COUNT(t2.precip) AS 'days elapsed',
 AVG(t2.precip) AS 'avg. precip'
@@ -3762,7 +3794,7 @@ GROUP BY t1.date;
 To fix the problem, it’s necessary to determine the number of days elapsed a different way. Take the minimum and maximum date involved in each sum and calculate a days- elapsed value FROM them using the following expression:
 DATEDIFF(MAX(t2.date),MIN(t2.date)) + 1
 That value must be used for the days-elapsed column and for computing the running averages. The resulting statement is as follows:
-mysql> SELECT t1.date, t1.precip AS 'daily precip',
+SELECT t1.date, t1.precip AS 'daily precip',
 SUM(t2.precip) AS 'cum. precip',
  DATEDIFF(MAX(t2.date),MIN(t2.date))   +   1   AS   'days elapsed',
 SUM(t2.precip)  /  (DATEDIFF(MAX(t2.date),MIN(t2.date))  +  1)
@@ -3780,7 +3812,7 @@ GROUP BY t1.date;
 As this example illustrates, calculation of cumulative values FROM relative values re- quires only a column that enables rows to be placed into the proper order. (For the rainfall table, that’s the date column.) Values in the column need not be sequential, or even numeric. This differs FROM calculations that produce difference values FROM cumulative values (Recipe 12.9), which require that a table have a column that contains an unbroken sequence.
 The running averages in the rainfall examples are based on dividing cumulative pre- cipitation sums by number of days elapsed as of each day. When the table has no gaps, the number of days is the same as the number of values summed, making it easy to find successive averages. When rows are missing, the calculations become more complex. What this demonstrates is that it’s necessary to consider the nature of your data and calculate averages appropriately. The next example is conceptually similar to the pre- vious ones in that it calculates cumulative sums and running averages, but it performs the computations yet another way.
 The following table shows a marathon runner’s performance at each stage of a 26- kilometer run. The values in each row show the length of each stage in kilometers and how long the runner took to complete the stage. In other words, the values pertain to intervals within the marathon and thus are relative to the whole:
-mysql> SELECT stage, km, t FROM marathon ORDER BY stage;
+SELECT stage, km, t FROM marathon ORDER BY stage;
 +-------+----+----------+
 | stage | km | t    |
 +-------+----+----------+
@@ -3790,7 +3822,7 @@ mysql> SELECT stage, km, t FROM marathon ORDER BY stage;
 |   4 |  5 | 00:17:50 |
 +-------+----+----------+
 To calculate cumulative distance in kilometers at each stage, use a self-join that looks like this:
-mysql> SELECT t1.stage, t1.km, SUM(t2.km) AS 'cum. km'
+SELECT t1.stage, t1.km, SUM(t2.km) AS 'cum. km'
 FROM marathon AS t1 INNER JOIN marathon AS t2
 ON t1.stage >= t2.stage
 GROUP BY t1.stage;
@@ -3803,7 +3835,7 @@ GROUP BY t1.stage;
 |   4 | 5 | 26 |
 +-------+----+---------+
 Cumulative distances are easy to compute because they can be summed directly. The calculation for accumulating time values is a little more involved. It’s necessary to con- vert times to seconds, total the resulting values, and convert the sum back to a time value. To compute the runner’s average speed at the end of each stage, take the ratio of cumulative distance over cumulative time. Putting all this together yields the fol- lowing statement:
-mysql> SELECT t1.stage, t1.km, t1.t,
+SELECT t1.stage, t1.km, t1.t,
 SUM(t2.km) AS 'cum. km',
 SEC_TO_TIME(SUM(TIME_TO_SEC(t2.t))) AS 'cum. t',
 SUM(t2.km)/(SUM(TIME_TO_SEC(t2.t))/(60*60)) AS 'avg. km/hour'
@@ -3829,7 +3861,7 @@ Derive the ordering information and store it in an auxiliary table. Then join th
 
 Discussion
 Most of the time when you sort a query result, you use an ORDER BY clause that names which column or columns to use for sorting. But sometimes the values you want to sort by aren’t present in the rows to be sorted. This is the case when you want to use group characteristics to order the rows. The following example uses the rows in the driver_log table to illustrate this. The table contains these rows:
-mysql> SELECT * FROM driver_log ORDER BY rec_id;
+SELECT * FROM driver_log ORDER BY rec_id;
 +--------+-------+------------+-------+
 | rec_id | name  | trav_date  | miles |
 +--------+-------+------------+-------+
@@ -3837,11 +3869,11 @@ mysql> SELECT * FROM driver_log ORDER BY rec_id;
 +--------+-------+------------+-------+
 The preceding statement sorts the rows using the ID column, which is present in the rows. But what if you want to display a list and sort it on the basis of a summary value not present in the rows? That’s a little trickier. Suppose that you want to show each driver’s rows by date, but place those drivers who drive the most miles first. You can’t do this with a summary query, because then you wouldn’t get back the individual driver rows. But you can’t do it without a summary query, either, because the summary values are required for sorting. The way out of the dilemma is to create another table con- taining the summary value per driver and then join it to the original table. That way you can produce the individual rows and also sort them by the summary values.
 To summarize the driver totals into another table, do this:
-mysql> CREATE TABLE tmp
+CREATE TABLE tmp
 SELECT name, SUM(miles) AS driver_miles FROM driver_log GROUP BY name;
 
 This produces the values we need to put the names in the proper total-miles order:
-mysql> SELECT * FROM tmp ORDER BY driver_miles DESC;
+SELECT * FROM tmp ORDER BY driver_miles DESC;
 +-------+--------------+
 | name  | driver_miles |
 +-------+--------------+
@@ -3850,7 +3882,7 @@ mysql> SELECT * FROM tmp ORDER BY driver_miles DESC;
 | Ben   |   362 |
 +-------+--------------+
 Then use the name values to join the summary table to the driver_log table, and use the driver_miles values to sort the result. The following statement shows the mileage totals in the result. That’s only to clarify how the values are being sorted. It’s not actually necessary to display them; they’re needed only for the ORDER BY clause.
-mysql> SELECT tmp.driver_miles, driver_log.*
+SELECT tmp.driver_miles, driver_log.*
 FROM driver_log INNER JOIN tmp
 ON driver_log.name = tmp.name
 ORDER BY tmp.driver_miles DESC, driver_log.trav_date;
@@ -3861,7 +3893,7 @@ ORDER BY tmp.driver_miles DESC, driver_log.trav_date;
 +--------------+--------+-------+------------+-------+
 To avoid using the temporary table, SELECT the same rows using a subquery in the
 FROM clause:
-mysql> SELECT tmp.driver_miles, driver_log.*
+SELECT tmp.driver_miles, driver_log.*
 FROM driver_log INNER JOIN
 (SELECT name, SUM(miles) AS driver_miles
 FROM driver_log GROUP BY name) AS tmp
@@ -3888,14 +3920,14 @@ Discussion
 A join is useful for combining columns FROM different tables side by side. It’s not so useful when you want a result set that includes a set of rows FROM several tables, or
 multiple sets of rows FROM the same table. These are instances of the type of operation for which a UNION is useful. A UNION enables you to run several SELECT statements and combine their results. That is, rather than running multiple queries and receiving mul- tiple result sets, you receive a single result set.
 Suppose that you have two tables that list prospective and actual customers, and a third that lists vendors FROM whom you purchase supplies, and you want to create a single mailing list by merging names and addresses FROM all three tables. UNION provides a way to do this. Assume that the three tables have the following contents:
-mysql> SELECT * FROM prospect;
+SELECT * FROM prospect;
 +---------+-------+------------------------+
 | fname | lname | addr  |
 +---------+-------+------------------------+
 | Peter | Jones | 482 Rush St., Apt. 402 |
 | Bernice | Smith | 916 Maple Dr.   |
 +---------+-------+------------------------+
-mysql> SELECT * FROM customer;
+SELECT * FROM customer;
 +-----------+------------+---------------------+
 | last_name | first_name | address  |
 +-----------+------------+---------------------+
@@ -3903,7 +3935,7 @@ mysql> SELECT * FROM customer;
 | Smith | Bernice   | 916 Maple Dr. |
 | Brown | Walter    | 8602 1st St.  |
 +-----------+------------+---------------------+
-mysql> SELECT * FROM vendor;
+SELECT * FROM vendor;
 +-------------------+---------------------+
 | company   | street    |
 +-------------------+---------------------+
@@ -3911,7 +3943,7 @@ mysql> SELECT * FROM vendor;
 | Parts-to-go, Ltd. | 213B Commerce Park. |
 +-------------------+---------------------+
 The tables have columns that are similar but not identical. prospect and customer use different names for the first name and last name columns, and the vendor table includes only a single name column. None of that matters for UNION; all you need to do is make sure to SELECT the same number of columns FROM each table, and in the same order. The following statement illustrates how to SELECT names and addresses FROM the three tables all at once:
-mysql> SELECT fname, lname, addr FROM prospect
+SELECT fname, lname, addr FROM prospect
 UNION
 SELECT first_name, last_name, address FROM customer
 UNION
@@ -3927,7 +3959,7 @@ SELECT company, '', street FROM vendor;
 | Parts-to-go, Ltd. |   | 213B Commerce Park.   |
 +-------------------+----------+------------------------+
 The column names in the result set are taken FROM the names of the columns retrieved by the first SELECT statement. Notice that, by default, a UNION eliminates duplicates; Bernice Smith appears in both the prospect and customer tables, but only once in the final result. If you want to SELECT all rows, including duplicates, follow each UNION key- word with ALL:
-mysql> SELECT fname, lname, addr FROM prospect
+SELECT fname, lname, addr FROM prospect
 UNION ALL
 SELECT first_name, last_name, address FROM customer
 UNION ALL
@@ -3944,7 +3976,7 @@ SELECT company, '', street FROM vendor;
 | Parts-to-go, Ltd. |   | 213B Commerce Park.   |
 +-------------------+----------+------------------------+
 Because it’s necessary to SELECT the same number of columns FROM each table, the SELECT for the vendor table (which has just one name column) retrieves a dummy (emp- ty) last name column. Another way to SELECT the same number of columns is to combine the first and last name columns FROM the prospect and customer tables into a single column:
-mysql> SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect
+SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect
 UNION
 SELECT CONCAT(last_name,', ',first_name), address FROM customer
 UNION
@@ -3960,7 +3992,7 @@ SELECT company, street FROM vendor;
 | Parts-to-go, Ltd. | 213B Commerce Park.   |
 +-------------------+------------------------+
 To sort the result set, place each SELECT statement within parentheses and add an ORDER BY clause after the final one. Any columns specified by name in the ORDER BY should refer to the column names used in the first SELECT, because those are the names used for the columns in the result set. For example, to sort by name, do this:
-mysql> (SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect)
+(SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect)
 UNION
 (SELECT CONCAT(last_name,', ',first_name), address FROM customer)
 UNION
@@ -3977,7 +4009,7 @@ ORDER BY name;
 | Smith, Bernice    | 916 Maple Dr. |
 +-------------------+------------------------+
 It’s possible to ensure that the results FROM each SELECT appear consecutively, although you must generate an extra column to use for sorting. Enclose each SELECT within pa- rentheses, add a sort-value column to each one, and place an ORDER BY at the end that sorts using that column:
-mysql> (SELECT 1 AS sortval, CONCAT(lname,', ',fname) AS name, addr
+(SELECT 1 AS sortval, CONCAT(lname,', ',fname) AS name, addr
 FROM prospect)
 UNION
 (SELECT 2 AS sortval, CONCAT(last_name,', ',first_name) AS name, address
@@ -3997,7 +4029,7 @@ ORDER BY sortval;
 |   3 | Parts-to-go, Ltd. | 213B Commerce Park. |
 +---------+-------------------+------------------------+
 If you also want the rows within each SELECT sorted, include a secondary sort column in the ORDER BY clause. The following query sorts by name within each SELECT:
-mysql> (SELECT 1 AS sortval, CONCAT(lname,', ',fname) AS name, addr
+(SELECT 1 AS sortval, CONCAT(lname,', ',fname) AS name, addr
 FROM prospect)
 UNION
 (SELECT 2 AS sortval, CONCAT(last_name,', ',first_name) AS name, address
@@ -4017,7 +4049,7 @@ ORDER BY sortval, name;
 |   3 | ReddyParts, Inc.  | 38 Industrial Blvd. |
 +---------+-------------------+------------------------+
 Similar syntax can be used for LIMIT as well. That is, you can limit the result set as a whole with a trailing LIMIT clause, or for individual SELECT statements. Typically, LIMIT is combined with ORDER BY. Suppose that you want to SELECT a lucky prizewinner for some kind of promotional giveaway. To SELECT a single winner at random FROM the combined results of the three tables, do this:
-mysql> (SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect)
+(SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect)
 UNION
 (SELECT CONCAT(last_name,', ',first_name), address FROM customer)
 UNION
@@ -4029,7 +4061,7 @@ ORDER BY RAND() LIMIT 1;
 | Peterson, Grace | 16055 Seminole Ave. |
 +-----------------+---------------------+
 To SELECT a single winner FROM each table and combine the results, do this instead:
-mysql> (SELECT CONCAT(lname,', ',fname) AS name, addr
+(SELECT CONCAT(lname,', ',fname) AS name, addr
 FROM prospect ORDER BY RAND() LIMIT 1)
 UNION
 (SELECT CONCAT(last_name,', ',first_name), address
@@ -4062,7 +4094,7 @@ To identify unattached rows, use a LEFT JOIN, because this is a “find unmatche
 To delete rows that are unmatched, use a multiple-table DELETE statement that specifies which rows to remove using a similar LEFT JOIN.
 The presence of unmatched data is useful to know about because you can alert whoever gave you the data. This may be a signal of a flaw in the data collection method that must be corrected. For example, with sales data, a missing region might mean that some regional manager didn’t report in and that the omission was overlooked.
 The following example shows how to identify and remove mismatched rows using two datasets that describe sales regions and volume of sales per region. One dataset contains the ID and location of each sales region:
-mysql> SELECT * FROM sales_region ORDER BY region_id;
+SELECT * FROM sales_region ORDER BY region_id;
 +-----------+------------------------+
 | region_id | name  |
 +-----------+------------------------+
@@ -4072,7 +4104,7 @@ mysql> SELECT * FROM sales_region ORDER BY region_id;
 |   4 | Athens, Greece  |
 +-----------+------------------------+
 The other dataset contains sales volume figures. Each row contains the amount of sales for a given quarter of a year and indicates the sales region to which the row applies:
-mysql> SELECT * FROM sales_volume ORDER BY region_id, year, quarter;
+SELECT * FROM sales_volume ORDER BY region_id, year, quarter;
 +-----------+------+---------+--------+
 | region_id | year | quarter | volume |
 +-----------+------+---------+--------+
@@ -4080,7 +4112,7 @@ mysql> SELECT * FROM sales_volume ORDER BY region_id, year, quarter;
 +-----------+------+---------+--------+
 A little visual inspection reveals that neither table is fully matched by the other. Sales regions 2 and 4 are not represented in the sales volume table, and the sales volume table contains rows for region 5, which is not in the sales region table. But we don’t want to check the tables by inspection. We want to find unmatched rows by using SQL state- ments that do the work for us.
 Mismatch identification is a matter of using outer joins. For example, to find sales regions for which there are no sales volume rows, use the following LEFT JOIN:
-mysql> SELECT sales_region.region_id AS 'unmatched region row IDs'
+SELECT sales_region.region_id AS 'unmatched region row IDs'
 FROM sales_region LEFT JOIN sales_volume
  ON sales_region.region_id = sales_volume.region_id
 WHERE sales_volume.region_id IS NULL;
@@ -4091,7 +4123,7 @@ WHERE sales_volume.region_id IS NULL;
 |   4 |
 +--------------------------+
 Conversely, to find sales volume rows that are not associated with any known region, reverse the roles of the two tables:
-mysql> SELECT sales_volume.region_id AS 'unmatched volume row IDs'
+SELECT sales_volume.region_id AS 'unmatched volume row IDs'
 FROM sales_volume LEFT JOIN sales_region
  ON sales_volume.region_id = sales_region.region_id
 WHERE sales_region.region_id IS NULL;
@@ -4102,7 +4134,7 @@ WHERE sales_region.region_id IS NULL;
 |   5 |
 +--------------------------+
 In this case, an ID appears more than once in the list if there are multiple volume rows for a missing region. To see each unmatched ID only once, use SELECT DISTINCT:
-mysql> SELECT DISTINCT sales_volume.region_id AS 'unmatched volume row IDs'
+SELECT DISTINCT sales_volume.region_id AS 'unmatched volume row IDs'
 FROM sales_volume LEFT JOIN sales_region
  ON sales_volume.region_id = sales_region.region_id
 WHERE sales_region.region_id IS NULL
@@ -4170,7 +4202,7 @@ Revise the query using column aliases so that each column has a unique name, or 
 
 Discussion
 Joins typically retrieve columns FROM related tables, so it’s not unusual for columns SELECTed FROM different tables to have the same names. Consider the following join that shows the items in your art collection (originally seen in Recipe 12.1). For each painting, it displays artist name, painting title, the state in which you acquired the item, and how much it cost:
-mysql> SELECT artist.name, painting.title, states.name, painting.price
+SELECT artist.name, painting.title, states.name, painting.price
 FROM artist INNER JOIN painting INNER JOIN states
 ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
 +----------+-------------------+----------+-------+
