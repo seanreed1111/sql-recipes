@@ -124,141 +124,145 @@ IN
 ## You need to report how many of your employee have a commission percentage as part of their remuneration, together with the number that get only a fixed salary. You track this using the COMMISSION_PCT field of the employee table.
 
 
-Solution
-The structure of the employee tables allows the COMMISSION_PCT to be NULL. Two queries can be used to find those whose commission percent is NULL and those whose commission percent is non-NULL. First, here’s the query that finds employee with NULL commission percent:
+## Solution
+## The employee table allows the `commission_pct` to be NULL. Two queries can be used to find those whose commission percent IS NULL and those whose commission percent is non-NULL. First, here’s the query that finds employee with NULL commission percent:
 
-SELECT first_name, last_name FROM employee
-WHERE commission_pct is null;
+```sql
+SELECT 
+    first_name, 
+    last_name 
+FROM employee
+WHERE 
+    commission_pct IS NULL;
+```
+## Now here’s the query that finds non-NULL commission-percentage holders:
 
-Now here’s the query that finds non-NULL commission-percentage holders:
+```sql
+SELECT 
+    first_name, 
+    last_name 
+FROM employee
+WHERE 
+    commission_pct IS NOT NULL;
+```
 
-SELECT first_name, last_name FROM employee
-WHERE commission_pct is not null;
 ---
-1-14. Sorting as a Person Expects
-Problem
-Your textual data has been stored in a mix of uppercase, lowercase, and sentence case. You need to sort this data alphabetically as a person normally would, in a case-insensitive fashion.
+# Sorting as a Person Expects
+## Problem
+## Your textual data has been stored in a mix of uppercase, lowercase, and sentence case. You need to sort this data alphabetically as a person normally would, in a case-insensitive fashion.
+
 ---
-1-15. Enabling Other Sorting and Comparison Options
-Problem
-You need to perform case-insensitive comparisons and other sorting operations on textual data that has been stored in an assortment of uppercase, lowercase, and sentence case.
+
+# Enabling Other Sorting and Comparison Options
+## Problem
+## You need to perform case-insensitive comparisons and other sorting operations on textual data that has been stored in an assortment of uppercase, lowercase, and sentence case.
+
 ---
-2-1. Summarizing the Values in a Column
-Problem
-You need to summarize data in a column in some way. For example, you have been asked to report on the average salary paid per employee, as well as the total salary budget, number of employee, highest and lowest earners, and more.
 
-Solution
-You don’t need to calculate a total and count the number of employee separately to determine the average salary. The AVG function calculates average salary for you, as shown in the next SELECT statement.
+# Summarizing the Values in a Column
+## Problem
+## You need to summarize data in a column in some way. For example, you have been asked to report on the average salary paid per employee, as well as the total salary budget, number of employee, highest and lowest earners, and more.
 
+## Solution
+## You don’t need to calculate a total and count the number of employee separately to determine the average salary. The AVG function calculates average salary for you, as shown in the next SELECT statement.
 
+```sql
 SELECT avg(salary) FROM employee;
 AVG(SALARY)
 6473.36449
-Note there is no WHERE clause in our recipe, meaning all rows in the employee table are assessed to calculate the overall average for the table’s rows.
-Functions such as AVG are termed aggregate functions, and there are many such functions at your disposal.
+```
+## Note there is no WHERE clause in our recipe, meaning all rows in the employee table are assessed to calculate the overall average for the table’s rows. Functions such as AVG are termed aggregate functions, and there are many such functions at your disposal.
 
 
 ----
 
-Summarizing with COUNT( )
-Problem
-You want to count the number of rows in a table, the number of rows that match certain conditions, or the number of times that particular values occur.
+# Summarizing with COUNT( )
+## Problem
+## You want to count the number of rows in a table, the number of rows that match certain conditions, or the number of times that particular values occur.
 
-Solution
+## Solution
 Use the COUNT( ) function.
 
-Discussion
-To count the number of rows in an entire table or that match particular conditions, use the COUNT( ) function. For example, to display the contents of the rows in a table, you can use a SELECT * statement, but to count them instead, use SELECT COUNT(*). With- out a WHERE clause, the statement counts all the rows in the table, such as in the following statement that shows how many rows the driver_log table contains:
-mysql> SELECT COUNT(*) FROM driver_log;
-+----------+
-| COUNT(*) |
-+----------+
-|   10 |
-+----------+
-If you don’t know how many U.S. states there are, this statement tells you:
-mysql> SELECT COUNT(*) FROM states;
+## Discussion
+## To display the contents of the rows in a table, you can use a `SELECT *` statement, but to count them instead, use `SELECT COUNT(*)`. Without a WHERE clause, the statement counts all the rows in the table.
+
+```sql
+SELECT COUNT(*) FROM states;
+```
+```
 +----------+
 | COUNT(*) |
 +----------+
 |   50 |
 +----------+
-COUNT(*) with no WHERE clause is very quick for MyISAM tables. However, for BDB or InnoDB tables, you may want to avoid it because the statement requires a full table scan, which can be slow for large tables. If an approximate row count is all you require, a workaround that avoids a full scan for those storage engines is to extract the TABLE_ROWS value FROM the INFORMATION_SCHEMA database:
-mysql> SELECT TABLE_ROWS FROM INFORMATION_SCHEMA.TABLES
--> WHERE TABLE_SCHEMA = 'cookbook' AND TABLE_NAME = 'states';
-+------------+
-| TABLE_ROWS |
-+------------+
-|   50 |
-+------------+
-Before MySQL 5.0, INFORMATION_SCHEMA is unavailable. Instead, use SHOW TABLE STATUS
-and extract the value of the Rows column.
-To count only the number of rows that match certain conditions, include an appro- priate WHERE clause in a SELECT COUNT(*) statement. The conditions can be chosen to make COUNT(*) useful for answering many kinds of questions:
-How many times did drivers travel more than 200 miles in a day?
-mysql> SELECT COUNT(*) FROM driver_log WHERE miles > 200;
-+----------+
-| COUNT(*) |
-+----------+
-|   4 |
-+----------+
-How many days did Suzi drive?
-mysql> SELECT COUNT(*) FROM driver_log WHERE name = 'Suzi';
-+----------+
-| COUNT(*) |
-+----------+
-|   2 |
-+----------+
-How many states did the United States consist of at the beginning of the 20th century?
-mysql> SELECT COUNT(*) FROM states WHERE statehood < '1900-01-01';
-+----------+
-| COUNT(*) |
-+----------+
-|   45 |
-+----------+
-How many of those states joined the Union in the 19th century?
-mysql> SELECT COUNT(*) FROM states
--> WHERE statehood BETWEEN '1800-01-01' AND '1899-12-31';
-+----------+
-| COUNT(*) |
-+----------+
-|   29 |
-+----------+
-The COUNT( ) function actually has two forms. The form we’ve been using, COUNT(*), counts rows. The other form, COUNT( expr ), takes a column name or expression argu- ment and counts the number of non-NULL values. The following statement shows how
-to produce both a row count for a table and a count of the number of non-NULL values in one of its columns:
-SELECT COUNT(*), COUNT(mycol) FROM mytbl;
-The fact that COUNT( expr ) doesn’t count NULL values is useful for producing multiple counts FROM the same set of rows. To count the number of Saturday and Sunday trips in the driver_log table with a single statement, do this:
-mysql> SELECT
--> COUNT(IF(DAYOFWEEK(trav_date)=7,1,NULL)) AS 'Saturday trips',
--> COUNT(IF(DAYOFWEEK(trav_date)=1,1,NULL)) AS 'Sunday trips'
--> FROM driver_log;
-+----------------+--------------+
-| Saturday trips | Sunday trips |
-+----------------+--------------+
-|   3 | 1 |
-+----------------+--------------+
-Or to count weekend versus weekday trips, do this:
-mysql> SELECT
--> COUNT(IF(DAYOFWEEK(trav_date) IN (1,7),1,NULL)) AS 'weekend trips',
--> COUNT(IF(DAYOFWEEK(trav_date) IN (1,7),NULL,1)) AS 'weekday trips'
--> FROM driver_log;
-+---------------+---------------+
-| weekend trips | weekday trips |
-+---------------+---------------+
-|   4 | 6 |
-+---------------+---------------+
-The IF( ) expressions determine, for each column value, whether it should be counted. If so, the expression evaluates to 1 and COUNT( ) counts it. If not, the expression evaluates to NULL and COUNT( ) ignores it. The effect is to count the number of values that satisfy the condition given as the first argument to IF( ).
+```
+
+## To count only the number of rows that match certain conditions, include an appropriate `WHERE` clause in a `SELECT COUNT(*)` statement. The conditions can be chosen to make `COUNT(*)` useful for answering many kinds of questions, for example:
+
+## How many times did drivers travel more than 200 miles in a day?
+```sql
+SELECT COUNT(*) 
+FROM driver_log 
+WHERE miles_driven > 200;
+```
+
+## How many days did Suzi drive?
+```sql
+SELECT COUNT(*) 
+FROM driver_log 
+WHERE name = 'Suzi';
+```
+
+## How many states did the United States consist of at the beginning of the 20th century?
+```sql
+SELECT COUNT(*) 
+FROM states 
+WHERE statehood < '1900-01-01'::date;
+```
+
+## How many of those states joined the Union in the 19th century?
+```sql
+SELECT COUNT(*) 
+FROM states
+WHERE statehood 
+BETWEEN '1800-01-01'::date AND '1899-12-31'::date;
+```
+
+## The COUNT( ) function actually has two forms. The form we’ve been using, COUNT(*), counts rows. The other form, COUNT( expr ), takes a column name or expression argument and counts the number of non-NULL values. The following statement shows how to produce both a row count for a table and a count of the number of non-NULL values its columns, using `AS` to make column aliases for readability:
+
+```sql
+SELECT 
+    COUNT(*) AS all_ct, 
+    COUNT(driver_name) AS name_ct,
+    COUNT(truck_id) AS id_ct,
+    COUNT(miles_driven) miles_ct, 
+    COUNT(start_date) AS start_dt_ct,
+    COUNT(end_date) AS end_dt_ct
+FROM driver_log;
+```
+## output
+```
+ all_ct | name_ct | id_ct | miles_ct | start_dt_ct | end_dt_ct
+--------+---------+-------+----------+-------------+-----------
+   4044 |    4044 |  4044 |     4044 |        4044 |      3999
+```
+
+## The output above shows us that the `end_date` column contains 45 NULLs.
+
 
 ---
 
-Summarizing with MIN( ) and MAX( )
-Problem
-You need to determine the smallest or largest of a set of values.
+# Summarizing with MIN( ) and MAX( )
+## Problem
+## You need to determine the smallest or largest of a set of values.
 
-Solution
-Use MIN( ) to find the smallest value, MAX( ) to find the largest.
+## Solution
+## Use MIN( ) to find the smallest value, MAX( ) to find the largest.
 
-Discussion
-Finding smallest or largest values is somewhat akin to sorting, except that instead of producing an entire set of sorted values, you SELECT only a single value at one end or the other of the sorted range. This kind of operation applies to questions about smallest, largest, oldest, newest, most expensive, least expensive, and so forth. One way to find such values is to use the MIN( ) and MAX( ) functions. (Another way to address these questions is to use LIMIT; see the discussions in Recipes 3.14 and 3.16.)
-Because MIN( ) and MAX( ) determine the extreme values in a set, they’re useful for char- acterizing ranges:
+## Discussion
+## Finding smallest or largest values is somewhat akin to sorting, except that instead of producing an entire set of sorted values, you SELECT only a single value at one end or the other of the sorted range. This kind of operation applies to questions about smallest, largest, oldest, newest, most expensive, least expensive, and so forth. One way to find such values is to use the MIN( ) and MAX( ) functions. (Another way to address these questions is to use LIMIT; see the discussions in Recipes 3.14 and 3.16.)
+
+## Because MIN( ) and MAX( ) determine the extreme values in a set, they’re useful for characterizing ranges:
 What date range is represented by the rows in the mail table? What are the smallest and largest messages sent?
 mysql> SELECT
 -> MIN(t) AS earliest, MAX(t) AS latest,
@@ -1870,12 +1874,12 @@ SELECT * FROM (
 SELECT department_id as "dept", job_id as "job", to_char(hire_date,'YYYY') as "Start_Year", avg(salary) as "avsal"
 FROM employee
 group by rollup (department_id, job_id, to_char(hire_date,'YYYY'))) salcalc WHERE salcalc.start_year > '1990'
-or salcalc.start_year is null ORDER BY 1,2,3,4;
+or salcalc.start_year IS NULL ORDER BY 1,2,3,4;
 
 How It Works
 Our recipe uses the aggregated and grouped results of the subquery as an inline view, which we then SELECT FROM and apply further criteria. In this case, we could avoid the subquery approach by using
 a more complex HAVING clause like this.
-having to_char(hire_date,'YYYY') > '1990' or to_char(hire_date,'YYYY') is null
+having to_char(hire_date,'YYYY') > '1990' or to_char(hire_date,'YYYY') IS NULL
 
 Avoiding a subquery here works only because we’re comparing our aggregates with literals. If we wanted to find averages for jobs in departments WHERE someone had previously held the job, we’d need to reference the HR.JOBHISTORY table. Depending on the business requirement, we might get lucky and be able to construct our join, aggregates, groups, and having criteria in one statement. By treating the results of the aggregate and grouping query as input to another query, we get better readability, and the ability to code even more complexity than the HAVING clause allows.
 ---
@@ -2337,7 +2341,7 @@ FULL OUTER JOIN syntax, WHERE only one pass on each table is required.
 
 You can tweak the FULL OUTER JOIN to produce only the mismatched records as follows:
 SELECT employee_id, last_name, first_name, department_id, department_name FROM employee
-full outer join departments using(department_id) WHERE employee_id is null or department_name is null
+full outer join departments using(department_id) WHERE employee_id IS NULL or department_name IS NULL
 ;
 ---
 
@@ -4241,7 +4245,7 @@ nvl2(trim(first_name),', ','') || trim(first_name) full_name,
 email
 FROM employee
 ;
-The NVL2 function evaluates the first argument TRIM(FIRST_NAME). If it is not NULL, it returns ', ', otherwise it returns a NULL (empty string), so that our celebrity employee won’t have a phantom comma at the end of their name:
+The NVL2 function evaluates the first argument TRIM(FIRST_NAME). If it IS NOT NULL, it returns ', ', otherwise it returns a NULL (empty string), so that our celebrity employee won’t have a phantom comma at the end of their name:
 
 
 
@@ -4323,16 +4327,16 @@ set order_mode_num = decode(order_mode,
 DECODE translates the ORDER_MODE column just as CASE does. If the values in the column do not match any of the values in the first of each pair of constants, DECODE returns 0.
 
 ---
-5-2. Sorting on Null Values
+5-2. Sorting on NULL Values
 Problem
-Results for a business report are sorted by department manager, but you need to find a way to override the sorting of nulls so they appear WHERE you want at the beginning or end of the report.
+Results for a business report are sorted by department manager, but you need to find a way to override the sorting of NULLs so they appear WHERE you want at the beginning or end of the report.
 
 Solution
 Oracle provides two extensions to the ORDER BY clause to enable SQL developers to treat NULL values separately FROM the known data, allowing any NULL entries to sort explicitly to the beginning or end of the results.
 For our recipe, we’ll assume that the report desired is based on the department names and manager identifiers FROM the department table. This SQL SELECTs this data and uses the NULLS FIRST option to explicitly control NULL handling.
 
 SELECT department_name, manager_id FROM department
-ORDER BY manager_id nulls first;
+ORDER BY manager_id NULLs first;
 
 The results present the “unmanaged” departments first, followed by the departments with managers by MANAGER_ID. We’ve abbreviated the results to save trees.
 
@@ -4386,7 +4390,7 @@ For circumstances WHERE you need to conditionally branch or alternate between so
 To bring focus to our example, we’ll assume our problem is far more tangible and straightforward. We want to find the date employee in the shipping department (with the DEPARTMENT_ID of 50) started their current job. We know their initial hire date with the firm is tracked in the HIRE_DATE column on the employee table, but if they’ve had a promotion or changed roles, the date when they commenced their new position can be inferred FROM the END_DATE of their previous position in the HR.JOB_HISTORY table. We need to branch between HIRE_DATE or END_DATE for each employee of the shipping department accordingly, as shown in the next SQL statement.
 
 SELECT e.employee_id, case
-when old.job_id is null then e.hire_date else old.end_date end
+when old.job_id IS NULL then e.hire_date else old.end_date end
 job_start_date
 FROM employee e left outer join hr.job_history old on e.employee_id = old.employee_id
 WHERE e.department_id = 50 ORDER BY e.employee_id;
@@ -4419,7 +4423,7 @@ WHERE e.department_id = 50 ORDER BY e.employee_id;
 
 
 …
-The results show the data that drove the CASE function’s decision in our recipe. The values in bold were the results returned by our recipe. For the first, second, fourth, and fifth rows shown, END_DATE FROM the HR.JOB_HISTORY table is NULL, so the CASE operation returned the HIRE_DATE. For the third row, with EMPLOYEE_ID 122, END_DATE has a date value, and thus was returned in preference to HIRE_DATE when examined by our original recipe. There is a shorthand form of the CASE statement known as the Simple CASE that only operates against one column or expression and has THEN clauses for possible values. This wouldn’t have suited us as Oracle limits the use of NULL with the Simple CASE in awkward ways.
+The results show the data that drove the CASE function’s decision in our recipe. The values in bold were the results returned by our recipe. For the first, second, fourth, and fifth rows shown, END_DATE FROM the HR.JOB_HISTORY table IS NULL, so the CASE operation returned the HIRE_DATE. For the third row, with EMPLOYEE_ID 122, END_DATE has a date value, and thus was returned in preference to HIRE_DATE when examined by our original recipe. There is a shorthand form of the CASE statement known as the Simple CASE that only operates against one column or expression and has THEN clauses for possible values. This wouldn’t have suited us as Oracle limits the use of NULL with the Simple CASE in awkward ways.
 
 ---
 
@@ -4434,7 +4438,7 @@ For those with a commission, we want to assume the commission is earned but don�
 
 SELECT employee_id, last_name, salary, commission_pct FROM employee
 ORDER BY case
-when commission_pct is null then salary else salary * (1+commission_pct)
+when commission_pct IS NULL then salary else salary * (1+commission_pct)
 end desc;
 
 We can see FROM just the first few rows of results how the conditional branching while sorting has worked.
