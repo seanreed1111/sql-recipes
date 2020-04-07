@@ -630,6 +630,7 @@ Extract the hunks you want and sort them separately.
 
 Discussion
 This is a specific application of sorting by expression value (see Recipe 7.2). If you want to sort rows using just a particular portion of a column’s values, extract the substring you need and use it in the ORDER BY clause. This is easiest if the substrings are at a fixed position and length within the column. For substrings of variable position or length, you may still be able to use them for sorting if there is some reliable way to identify them. The next several recipes show how to use substring extraction to produce spe- cialized sort orders.
+
 Sorting by Fixed-Length Substrings
 Problem
 You want to sort using parts of a column that occur at a given position within the column.
@@ -872,6 +873,7 @@ mysql> SELECT * FROM housewares3
 | 97-681-37-66  | bedside lamp	|
 +---------------+------------------+
 The substring-extraction expressions here are messy, but at least the column values to which we’re applying the expressions have a consistent number of segments. To sort values that have varying numbers of segments, the job can be more difficult. The next section shows an example illustrating why that is.
+
 Sorting Hostnames in Domain Order
 Problem
 You want to sort hostnames in domain order, with the rightmost parts of the names more significant than the leftmost parts.
@@ -1285,17 +1287,15 @@ mysql> SELECT name FROM color ORDER BY name;
 | indigo |
 | violet |
 +--------+
+
+
+
+
+
+
 CHAPTER 8
 
 Generating  Summaries
-
-
-
-
-
-
-
-
 
 Introduction
 Database systems are useful for storing and retrieving records, but they can also sum- marize your data in more concise forms. Summaries are useful when you want the overall picture rather than the details. They’re also typically more readily understood than a long list of records. Summary techniques enable you to answer questions such as “How many?” or “What is the total?” or “What is the range of values?” If you’re running a business, you may want to know how many customers you have in each state, or how much sales volume you’re generating each month. You could determine the per-state count by producing a list of customer records and counting them yourself, but that makes no sense when MySQL can count them for you. Similarly, to determine sales volume by month, a list of raw order information records is not especially useful if you have to add up the order amounts yourself. Let MySQL do it.
@@ -1607,9 +1607,14 @@ mysql> SELECT DISTINCT HOUR(t) AS hour FROM mail ORDER BY hour;
 +------+
 Note that this statement doesn’t tell you how many messages were sent each hour. That’s covered in Recipe 8.15.
 
-Finding Values Associated with Minimum and Maximum Values
+ngle-statement solution, use a subquery in the WHERE clause that returns the maximum population value:
+mysql> SELECT pop AS 'highest population', name FROM states
+-> WHERE pop = (Finding Values Associated with Minimum and Maximum Values
+
 Problem
 You want to know the values for other columns in the row that contains a minimum or maximum value.
+
+
 Solution
 Use two statements and a user-defined variable. Or use a subquery. Or use a join.
 
@@ -1628,13 +1633,11 @@ Probably everyone tries something like that sooner or later, but it doesn’t wo
 mysql> SET @max = (SELECT MAX(pop) FROM states);
 mysql> SELECT pop AS 'highest population',  name  FROM  states WHERE pop = @max;
 +--------------------+------------+
-| highest population | name	|
+| highest population | name |
 +--------------------+------------+
-|	35893799 | California |
+|   35893799 | California |
 +--------------------+------------+
-For a single-statement solution, use a subquery in the WHERE clause that returns the maximum population value:
-mysql> SELECT pop AS 'highest population', name FROM states
--> WHERE pop = (SELECT MAX(pop) FROM states);
+For a siSELECT MAX(pop) FROM states);
 +--------------------+------------+
 | highest population | name	|
 +--------------------+------------+

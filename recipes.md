@@ -99,6 +99,1005 @@ AVG(SALARY)
 6473.36449
 Note there is no WHERE clause in our recipe, meaning all rows in the HR.EMPLOYEES table are assessed to calculate the overall average for the table’s rows.
 Functions such as AVG are termed aggregate functions, and there are many such functions at your disposal.
+
+
+----
+
+Summarizing with COUNT( )
+Problem
+You want to count the number of rows in a table, the number of rows that match certain conditions, or the number of times that particular values occur.
+
+Solution
+Use the COUNT( ) function.
+
+Discussion
+To count the number of rows in an entire table or that match particular conditions, use the COUNT( ) function. For example, to display the contents of the rows in a table, you can use a SELECT * statement, but to count them instead, use SELECT COUNT(*). With- out a WHERE clause, the statement counts all the rows in the table, such as in the following statement that shows how many rows the driver_log table contains:
+mysql> SELECT COUNT(*) FROM driver_log;
++----------+
+| COUNT(*) |
++----------+
+|   10 |
++----------+
+If you don’t know how many U.S. states there are, this statement tells you:
+mysql> SELECT COUNT(*) FROM states;
++----------+
+| COUNT(*) |
++----------+
+|   50 |
++----------+
+COUNT(*) with no WHERE clause is very quick for MyISAM tables. However, for BDB or InnoDB tables, you may want to avoid it because the statement requires a full table scan, which can be slow for large tables. If an approximate row count is all you require, a workaround that avoids a full scan for those storage engines is to extract the TABLE_ROWS value from the INFORMATION_SCHEMA database:
+mysql> SELECT TABLE_ROWS FROM INFORMATION_SCHEMA.TABLES
+-> WHERE TABLE_SCHEMA = 'cookbook' AND TABLE_NAME = 'states';
++------------+
+| TABLE_ROWS |
++------------+
+|   50 |
++------------+
+Before MySQL 5.0, INFORMATION_SCHEMA is unavailable. Instead, use SHOW TABLE STATUS
+and extract the value of the Rows column.
+To count only the number of rows that match certain conditions, include an appro- priate WHERE clause in a SELECT COUNT(*) statement. The conditions can be chosen to make COUNT(*) useful for answering many kinds of questions:
+How many times did drivers travel more than 200 miles in a day?
+mysql> SELECT COUNT(*) FROM driver_log WHERE miles > 200;
++----------+
+| COUNT(*) |
++----------+
+|   4 |
++----------+
+How many days did Suzi drive?
+mysql> SELECT COUNT(*) FROM driver_log WHERE name = 'Suzi';
++----------+
+| COUNT(*) |
++----------+
+|   2 |
++----------+
+How many states did the United States consist of at the beginning of the 20th century?
+mysql> SELECT COUNT(*) FROM states WHERE statehood < '1900-01-01';
++----------+
+| COUNT(*) |
++----------+
+|   45 |
++----------+
+How many of those states joined the Union in the 19th century?
+mysql> SELECT COUNT(*) FROM states
+-> WHERE statehood BETWEEN '1800-01-01' AND '1899-12-31';
++----------+
+| COUNT(*) |
++----------+
+|   29 |
++----------+
+The COUNT( ) function actually has two forms. The form we’ve been using, COUNT(*), counts rows. The other form, COUNT( expr ), takes a column name or expression argu- ment and counts the number of non-NULL values. The following statement shows how
+to produce both a row count for a table and a count of the number of non-NULL values in one of its columns:
+SELECT COUNT(*), COUNT(mycol) FROM mytbl;
+The fact that COUNT( expr ) doesn’t count NULL values is useful for producing multiple counts from the same set of rows. To count the number of Saturday and Sunday trips in the driver_log table with a single statement, do this:
+mysql> SELECT
+-> COUNT(IF(DAYOFWEEK(trav_date)=7,1,NULL)) AS 'Saturday trips',
+-> COUNT(IF(DAYOFWEEK(trav_date)=1,1,NULL)) AS 'Sunday trips'
+-> FROM driver_log;
++----------------+--------------+
+| Saturday trips | Sunday trips |
++----------------+--------------+
+|   3 | 1 |
++----------------+--------------+
+Or to count weekend versus weekday trips, do this:
+mysql> SELECT
+-> COUNT(IF(DAYOFWEEK(trav_date) IN (1,7),1,NULL)) AS 'weekend trips',
+-> COUNT(IF(DAYOFWEEK(trav_date) IN (1,7),NULL,1)) AS 'weekday trips'
+-> FROM driver_log;
++---------------+---------------+
+| weekend trips | weekday trips |
++---------------+---------------+
+|   4 | 6 |
++---------------+---------------+
+The IF( ) expressions determine, for each column value, whether it should be counted. If so, the expression evaluates to 1 and COUNT( ) counts it. If not, the expression evaluates to NULL and COUNT( ) ignores it. The effect is to count the number of values that satisfy the condition given as the first argument to IF( ).
+
+---
+
+Summarizing with MIN( ) and MAX( )
+Problem
+You need to determine the smallest or largest of a set of values.
+
+Solution
+Use MIN( ) to find the smallest value, MAX( ) to find the largest.
+
+Discussion
+Finding smallest or largest values is somewhat akin to sorting, except that instead of producing an entire set of sorted values, you select only a single value at one end or the other of the sorted range. This kind of operation applies to questions about smallest, largest, oldest, newest, most expensive, least expensive, and so forth. One way to find such values is to use the MIN( ) and MAX( ) functions. (Another way to address these questions is to use LIMIT; see the discussions in Recipes 3.14 and 3.16.)
+Because MIN( ) and MAX( ) determine the extreme values in a set, they’re useful for char- acterizing ranges:
+What date range is represented by the rows in the mail table? What are the smallest and largest messages sent?
+mysql> SELECT
+-> MIN(t) AS earliest, MAX(t) AS latest,
+-> MIN(size) AS smallest, MAX(size) AS largest
+-> FROM mail;
++---------------------+---------------------+----------+---------+
+| earliest  | latest    | smallest | largest |
++---------------------+---------------------+----------+---------+
+| 2006-05-11 10:15:08 | 2006-05-19 22:21:51 |   271 | 2394482 |
++---------------------+---------------------+----------+---------+
+What are the shortest and longest trips in the driver_log table?
+mysql> SELECT MIN(miles) AS shortest, MAX(miles) AS longest
+-> FROM driver_log;
++----------+---------+
+| shortest | longest |
++----------+---------+
+|   79 |    502 |
++----------+---------+
+What are the lowest and highest U.S. state populations?
+mysql> SELECT MIN(pop) AS 'fewest people', MAX(pop) AS 'most people'
+-> FROM states;
++---------------+-------------+
+| fewest people | most people |
++---------------+-------------+
+|   506529 |    35893799 |
++---------------+-------------+
+What are the first and last state names, lexically speaking?
+mysql> SELECT MIN(name), MAX(name) FROM states;
++-----------+-----------+
+| MIN(name) | MAX(name) |
++-----------+-----------+
+| Alabama   | Wyoming   |
++-----------+-----------+
+MIN( ) and MAX( ) need not be applied directly to column values. They also work with expressions or values that are derived from column values. For example, to find the lengths of the shortest and longest state names, do this:
+mysql> SELECT
+-> MIN(CHAR_LENGTH(name)) AS shortest,
+-> MAX(CHAR_LENGTH(name)) AS longest
+-> FROM states;
++----------+---------+
+| shortest | longest |
++----------+---------+
+|   4 | 14 |
++----------+---------+
+
+
+---
+
+Summarizing with SUM( ) and AVG( )
+Problem
+You need to add a set of numbers or find their average.
+
+Solution
+Use the SUM( ) or AVG( ) functions.
+
+Discussion
+SUM( ) and AVG( ) produce the total and average (mean) of a set of values:
+What is the total amount of mail traffic and the average size of each message?
+mysql> SELECT
+-> SUM(size) AS 'total traffic',
+-> AVG(size) AS 'average message size'
+-> FROM  mail;
++---------------+----------------------+
+| total traffic | average message size |
++---------------+----------------------+
+|   3798185 |   237386.5625 |
++---------------+----------------------+
+How many miles did the drivers in the driver_log table travel? What was the aver- age number of miles traveled per day?
+mysql> SELECT
+-> SUM(miles) AS 'total miles',
+-> AVG(miles) AS 'average miles/day'
+-> FROM driver_log;
++-------------+-------------------+
+| total miles | average miles/day |
++-------------+-------------------+
+|   2166 |  216.6000 |
++-------------+-------------------+
+What is the total population of the United States?
+mysql> SELECT SUM(pop) FROM states;
++-----------+
+| SUM(pop) |
++-----------+
+| 293101881 |
++-----------+
+The value represents the population reported for July 2004. The figure shown here differs from the U.S. population reported by the U.S. Census Bureau, because the states table doesn’t contain a count for Washington, D.C.
+SUM( ) and AVG( ) are strictly numeric functions, so they can’t be used with strings or temporal values. On the other hand, sometimes you can convert nonnumeric values to useful numeric forms. Suppose that a table stores TIME values that represent elapsed time:
+mysql> SELECT t1 FROM time_val;
++----------+
+| t1    |
++----------+
+| 15:00:00 |
+| 05:01:30 |
+| 12:30:20 |
++----------+
+To compute the total elapsed time, use TIME_TO_SEC( ) to convert the values to seconds before summing them. The resulting sum also will be in seconds; pass it to SEC_TO_TIME( ) to convert the sum back to TIME format:
+mysql> SELECT SUM(TIME_TO_SEC(t1)) AS 'total  seconds',
+-> SEC_TO_TIME(SUM(TIME_TO_SEC(t1))) AS 'total time'
+-> FROM time_val;
++---------------+------------+
+| total seconds | total time |
++---------------+------------+
+|   117110 | 32:31:50   |
++---------------+------------+
+
+See Also
+The SUM( ) and AVG( ) functions are especially useful in applications that compute sta- tistics. They’re explored further in Chapter 13 along with STD( ), a related function that calculates standard deviations.
+
+---
+
+Using DISTINCT to Eliminate Duplicates
+Problem
+You want to know which values are present in a set of values, without displaying duplicate values multiple times. Or you want to know how many distinct values there are.
+
+Solution
+Use DISTINCT to select unique values or COUNT(DISTINCT) to count them.
+
+Discussion
+One summary operation that doesn’t use aggregate functions is to determine which values or rows are contained in a dataset by eliminating duplicates. Do this with DISTINCT (or DISTINCTROW, which is synonymous). DISTINCT is useful for boiling down a query result, and often is combined with ORDER BY to place the values in more mean- ingful order. For example, to determine the names of the drivers listed in the driver_log table, use the following statement:
+mysql> SELECT DISTINCT name FROM driver_log ORDER BY name;
++-------+
+| name |
++-------+
+| Ben   |
+| Henry |
+| Suzi |
++-------+
+A statement without DISTINCT produces the same names, but is not nearly as easy to understand, even with a small dataset:
+mysql> SELECT name FROM driver_log;
++-------+
+| name |
++-------+
+| Ben   |
+| Suzi |
+| Henry |
+| Henry |
+| Ben   |
+| Henry |
+| Suzi |
+| Henry |
+| Ben   |
+| Henry |
++-------+
+To determine how many different drivers there are, use COUNT(DISTINCT):
+mysql> SELECT COUNT(DISTINCT name) FROM driver_log;
++----------------------+
+| COUNT(DISTINCT name) |
++----------------------+
+|   3 |
++----------------------+
+COUNT(DISTINCT) ignores NULL values. Should you wish to count NULL as one of the values in the set if it’s present, use one of the following expressions:
+COUNT(DISTINCT val) + IF(COUNT(IF(val IS NULL,1,NULL))=0,0,1) COUNT(DISTINCT val) + IF(SUM(ISNULL(val))=0,0,1) COUNT(DISTINCT val) + (SUM(ISNULL(val))!=0)
+DISTINCT queries often are useful in conjunction with aggregate functions to obtain a more complete characterization of your data. Suppose that you have a customer table that contains a state column indicating the state where customers are located. Applying COUNT(*) to the customer table indicates how many customers you have, using  DISTINCT on the state values in the table tells you the number of states in which you have customers, and COUNT(DISTINCT) on the state values tells you how many states your customer base represents.
+When used with multiple columns, DISTINCT shows the different combinations of val- ues in the columns and COUNT(DISTINCT) counts the number of combinations. The following statements show the different sender/recipient pairs in the mail table and how many such pairs there are:
+mysql> SELECT DISTINCT srcuser, dstuser FROM mail
+-> ORDER BY srcuser, dstuser;
++---------+---------+
+| srcuser | dstuser |
++---------+---------+
+| barb  | barb  |
+| barb  | tricia |
+| gene  | barb  |
+| gene  | gene  |
+| gene  | tricia |
+| phil  | barb  |
+| phil  | phil  |
+| phil  | tricia |
+| tricia | gene |
+| tricia | phil |
++---------+---------+
+mysql> SELECT COUNT(DISTINCT srcuser, dstuser) FROM mail;
++----------------------------------+
+| COUNT(DISTINCT srcuser, dstuser) |
++----------------------------------+
+|   10 |
++----------------------------------+
+DISTINCT works with expressions, too, not just column values. To determine the num- ber of hours of the day during which messages in the mail are sent, count the distinct HOUR( ) values:
+mysql> SELECT COUNT(DISTINCT HOUR(t)) FROM mail;
++-------------------------+
+| COUNT(DISTINCT HOUR(t)) |
++-------------------------+
+|   12 |
++-------------------------+
+To find out which hours those were, list them:
+mysql> SELECT DISTINCT HOUR(t) AS hour FROM mail ORDER BY hour;
++------+
+| hour |
++------+
+
++------+
+
+
+---
+
+Problem
+You want to know the values for other columns in the row that contains a minimum or maximum value.
+
+
+Solution
+Use two statements and a user-defined variable. Or use a subquery. Or use a join.
+
+Discussion
+MIN( ) and MAX( ) find the endpoints of a range of values, but sometimes when finding a minimum or maximum value, you’re also interested in other values from the row in which the value occurs. For example, you can find the largest state population like this:
+mysql> SELECT MAX(pop) FROM states;
++----------+
+| MAX(pop) |
++----------+
+| 35893799 |
++----------+
+But that doesn’t show you which state has this population. The obvious attempt at getting that information looks like this:
+mysql> SELECT MAX(pop), name FROM states WHERE pop = MAX(pop);
+ERROR 1111 (HY000): Invalid use of group function
+Probably everyone tries something like that sooner or later, but it doesn’t work. Ag- gregate functions such as MIN( ) and MAX( ) cannot be used in WHERE clauses, which require expressions that apply to individual rows. The intent of the statement is to determine which row has the maximum population value, and then display the asso- ciated state name. The problem is that while you and I know perfectly well what we mean by writing such a thing, it makes no sense at all to MySQL. The statement fails because MySQL uses the WHERE clause to determine which rows to select, but it knows the value of an aggregate function only after selecting the rows from which the func- tion’s value is determined! So, in a sense, the statement is self-contradictory. You can solve this problem by saving the maximum population value in a user-defined variable and then comparing rows to the variable value:
+mysql> SET @max = (SELECT MAX(pop) FROM states);
+mysql> SELECT pop AS 'highest population',  name  FROM  states WHERE pop = @max;
++--------------------+------------+
+| highest population | name |
++--------------------+------------+
+|   35893799 | California |
++--------------------+------------+
+For a siSELECT MAX(pop) FROM states);
++--------------------+------------+
+| highest population | name |
++--------------------+------------+
+|   35893799 | California |
++--------------------+------------+
+This technique also works even if the minimum or maximum value itself isn’t actually contained in the row, but is only derived from it. If you want to know the length of the shortest verse in the King James Version, that’s easy to find:
+mysql> SELECT MIN(CHAR_LENGTH(vtext)) FROM kjv;
++-------------------------+
+| MIN(CHAR_LENGTH(vtext)) |
++-------------------------+
+|   11 |
++-------------------------+
+If you want to know, “What verse is that?” do this instead:
+mysql> SELECT bname, cnum, vnum, vtext FROM kjv
+-> WHERE CHAR_LENGTH(vtext) = (SELECT MIN(CHAR_LENGTH(vtext)) FROM kjv);
++-------+------+------+-------------+
+| bname | cnum | vnum | vtext   |
++-------+------+------+-------------+
+| John |    11 |    35 | Jesus wept. |
++-------+------+------+-------------+
+Yet another way to select other columns from rows containing a minimum or maximum value is to use a join. Select the value into another table, and then join it to the original table to select the row that matches the value. To find the row for the state with the highest population, use a join like this:
+mysql> CREATE TABLE t SELECT MAX(pop) as maxpop FROM states;
+mysql> SELECT states.* FROM states INNER JOIN t ON states.pop = t.maxpop;
++------------+--------+------------+----------+
+| name  | abbrev | statehood | pop  |
++------------+--------+------------+----------+
+| California | CA   | 1850-09-09 | 35893799 |
++------------+--------+------------+----------+
+
+See Also
+For more information about joins, see Chapter 12, in particular, Recipe 12.6, which further discusses the problem of finding rows that contain groupwise minimum or maximum values.
+
+
+---
+
+Dividing a Summary into Subgroups
+Problem
+You want to calculate a summary for each subgroup of a set of rows, not an overall summary value.
+
+Solution
+Use a GROUP BY clause to arrange rows into groups.
+
+Discussion
+The summary statements shown so far calculate summary values over all rows in the result set. For example, the following statement determines the number of records in the mail table, and thus the total number of mail messages that have been sent:
+mysql> SELECT COUNT(*) FROM mail;
++----------+
+| COUNT(*) |
++----------+
+|   16 |
++----------+
+Sometimes it’s desirable to break a set of rows into subgroups and summarize each group. Do this by using aggregate functions in conjunction with a GROUP BY clause. To determine the number of messages per sender, group the rows by sender name, count how many times each name occurs, and display the names with the counts:
+mysql> SELECT srcuser, COUNT(*) FROM mail
+-> GROUP BY srcuser;
++---------+----------+
+| srcuser | COUNT(*) |
++---------+----------+
+| barb  |   3 |
+| gene  |   6 |
+| phil  |   5 |
+| tricia |  2 |
++---------+----------+
+That query summarizes the same column that is used for grouping (srcuser), but that’s not always necessary. Suppose that you want a quick characterization of the mail table, showing for each sender listed in it the total amount of traffic sent (in bytes) and the average number of bytes per message. In this case, you still use the srcuser column to place the rows in groups, but the summary functions operate on the size values:
+mysql> SELECT srcuser,
+-> SUM(size) AS 'total bytes',
+-> AVG(size) AS 'bytes per message'
+-> FROM mail GROUP BY srcuser;
++---------+-------------+-------------------+
+| srcuser | total bytes | bytes per message |
++---------+-------------+-------------------+
+| barb  |   156696 |    52232.0000 |
+| gene  |   1033108 |   172184.6667 |
+| phil  |   18974 | 3794.8000 |
+| tricia |  2589407 |   1294703.5000 |
++---------+-------------+-------------------+
+Use as many grouping columns as necessary to achieve as fine-grained a summary as you require. The earlier query that shows the number of messages per sender is a coarse summary. To be more specific and find out how many messages each sender sent from each host, use two grouping columns. This produces a result with nested groups (groups within groups):
+mysql> SELECT srcuser, srchost, COUNT(srcuser) FROM mail
+-> GROUP BY srcuser, srchost;
++---------+---------+----------------+
+| srcuser | srchost | COUNT(srcuser) |
++---------+---------+----------------+
+
++---------+---------+----------------+
+The preceding examples in this section have used COUNT( ), SUM( ), and AVG( ) for per- group summaries. You can use MIN( ) or MAX( ), too. With a GROUP BY clause, they will tell you the smallest or largest value per group. The following query groups mail table rows by message sender, displaying for each the size of the largest message sent and the date of the most recent message:
+mysql> SELECT srcuser, MAX(size), MAX(t) FROM mail GROUP BY srcuser;
++---------+-----------+---------------------+
+| srcuser | MAX(size) | MAX(t)  |
++---------+-----------+---------------------+
+| barb  |   98151 | 2006-05-14 14:42:21 |
+| gene  |   998532 | 2006-05-19 22:21:51 |
+| phil  |   10294 | 2006-05-17 12:49:23 |
+| tricia |  2394482 | 2006-05-14 17:03:01 |
++---------+-----------+---------------------+
+You can group by multiple columns and display a maximum for each combination of values in those columns. This query finds the size of the largest message sent between each pair of sender and recipient values listed in the mail table:
+mysql> SELECT srcuser, dstuser, MAX(size) FROM mail GROUP BY srcuser, dstuser;
++---------+---------+-----------+
+| srcuser | dstuser | MAX(size) |
++---------+---------+-----------+
+
++---------+---------+-----------+
+When using aggregate functions to produce per-group summary values, watch out for the following trap, which involves selecting nonsummary table columns not related to the grouping columns. Suppose that you want to know the longest trip per driver in the driver_log table. That’s produced by this query:
+mysql> SELECT name, MAX(miles) AS 'longest trip'
+-> FROM driver_log GROUP BY name;
++-------+--------------+
+| name  | longest trip |
++-------+--------------+
+| Ben   |   152 |
+| Henry |   300 |
+| Suzi |    502 |
++-------+--------------+
+But what if you also want to show the date on which each driver’s longest trip occurred? Can you just add trav_date to the output column list? Sorry, that won’t work:
+mysql> SELECT name, trav_date, MAX(miles) AS 'longest trip'
+-> FROM driver_log GROUP BY   name;
++-------+------------+--------------+
+| name  | trav_date  | longest trip |
++-------+------------+--------------+
+| Ben   | 2006-08-30 |  152 |
+| Henry | 2006-08-29 |  300 |
+| Suzi  | 2006-08-29 |  502 |
++-------+------------+--------------+
+The query does produce a result, but if you compare it to the full table (shown follow- ing), you’ll see that although the dates for Ben and Henry are correct, the date for Suzi is not:
++--------+-------+------------+-------+
+| rec_id | name  | trav_date  | miles |
++--------+-------+------------+-------+
+|   1 | Ben | 2006-08-30 |  152 |   ← Ben’s longest trip
+
+So what’s going on? Why does the summary statement produce incorrect results? This happens because when you include a GROUP BY clause in a query, the only values that you can select are the grouped columns or summary values calculated from the groups. If you display additional table columns, they’re not tied to the grouped columns and the values displayed for them are indeterminate. (For the statement just shown, it ap- pears that MySQL may simply be picking the first date for each driver, regardless of whether it matches the driver’s maximum mileage value.)
+The general solution to the problem of displaying contents of rows associated with minimum or maximum group values involves a join. The technique is described in Chapter 12. For the problem at hand, the required results are produced as follows:
+mysql> CREATE TABLE t
+-> SELECT name, MAX(miles) AS miles FROM driver_log GROUP BY name;
+mysql> SELECT d.name, d.trav_date, d.miles AS 'longest trip'
+-> FROM driver_log AS d INNER JOIN t USING (name, miles) ORDER BY name;
++-------+------------+--------------+
+| name  | trav_date  | longest trip |
++-------+------------+--------------+
+| Ben   | 2006-08-30 |  152 |
+| Henry | 2006-08-29 |  300 |
+| Suzi  | 2006-09-02 |  502 |
++-------+------------+--------------+
+
+---
+
+Summaries and NULL Values
+Problem
+You’re summarizing a set of values that may include NULL values and you need to know how to interpret the results.
+
+Solution
+Understand how aggregate functions handle NULL values.
+Discussion
+Most aggregate functions ignore NULL values. Suppose that you have a table expt that records experimental results for subjects who are to be given four tests each and that lists the test score as NULL for those tests that have not yet been administered:
+mysql> SELECT subject, test, score FROM expt ORDER BY subject, test;
++---------+------+-------+
+| subject | test | score |
++---------+------+-------+
+| Jane  | A |   47 |
+| Jane  | B |   50 |
+| Jane  | C |  NULL |
+| Jane  | D |  NULL |
+| Marvin | A    |   52 |
+| Marvin | B    |   45 |
+| Marvin | C    |   53 |
+| Marvin | D    |  NULL |
++---------+------+-------+
+By using a GROUP BY clause to arrange the rows by subject name, the number of tests taken by each subject, as well as the total, average, lowest, and highest scores can be calculated like this:
+mysql> SELECT subject,
+-> COUNT(score) AS n,
+-> SUM(score) AS total,
+-> AVG(score) AS average,
+-> MIN(score)   AS  lowest,
+-> MAX(score)  AS  highest
+-> FROM expt GROUP BY subject;
++---------+---+-------+---------+--------+---------+
+| subject | n | total | average | lowest | highest |
++---------+---+-------+---------+--------+---------+
+| Jane  | 2 |   97 | 48.5000 |  47 |    50 |
+| Marvin  | 3 | 150 | 50.0000 | 45 |    53 |
++---------+---+-------+---------+--------+---------+
+You can see from the results in the column labeled n (number of tests) that the query counts only five values, even though the table contains eight. Why? Because the values in that column correspond to the number of non-NULL test scores for each subject. The other summary columns display results that are calculated only from the non-NULL scores as well.
+It makes a lot of sense for aggregate functions to ignore NULL values. If they followed the usual SQL arithmetic rules, adding NULL to any other value would produce a NULL result. That would make aggregate functions really difficult to use because you’d have to filter out NULL values every time you performed a summary, to avoid getting a NULL result. Ugh. By ignoring NULL values, aggregate functions become a lot more convenient.
+However, be aware that even though aggregate functions may ignore NULL values, some of them can still produce NULL as a result. This happens if there’s nothing to summarize, which occurs if the set of values is empty or contains only NULL values. The following
+query is the same as the previous one, with one small difference. It selects only NULL
+test scores, so there’s nothing for the aggregate functions to operate on:
+mysql> SELECT subject,
+-> COUNT(score) AS n,
+-> SUM(score) AS total,
+-> AVG(score) AS average,
+-> MIN(score)   AS  lowest,
+-> MAX(score)  AS  highest
+-> FROM expt WHERE score IS NULL GROUP BY subject;
++---------+---+-------+---------+--------+---------+
+| subject | n | total | average | lowest | highest |
++---------+---+-------+---------+--------+---------+
+| Jane  | 0 | NULL | NULL   | NULL  | NULL  |
+| Marvin  | 0 | NULL | NULL | NULL  | NULL  |
++---------+---+-------+---------+--------+---------+
+For COUNT( ), the number of scores per subject is zero and is reported that way. On the other hand, SUM( ) , AVG( ), MIN( ), and MAX( ) return NULL when there are no values to summarize. If you don’t want these functions to produce NULL in the query output, use IFNULL( ) to map their results appropriately:
+mysql> SELECT subject,
+-> COUNT(score) AS n,
+-> IFNULL(SUM(score),0) AS total,
+-> IFNULL(AVG(score),0) AS average,
+-> IFNULL(MIN(score),'Unknown')   AS   lowest,
+-> IFNULL(MAX(score),'Unknown')   AS  highest
+-> FROM expt WHERE score IS NULL GROUP BY subject;
++---------+---+-------+---------+---------+---------+
+| subject | n | total | average | lowest  | highest |
++---------+---+-------+---------+---------+---------+
+| Jane  | 0 |   0 |  0.0000 | Unknown | Unknown |
+| Marvin  | 0 | 0 |  0.0000 | Unknown | Unknown |
++---------+---+-------+---------+---------+---------+
+COUNT( ) is somewhat different with regard to NULL values than the other aggregate functions. Like other aggregate functions, COUNT( expr ) counts only non-NULL values, but COUNT(*) counts rows, regardless of their content. You can see the difference be- tween the forms of COUNT( ) like this:
+mysql> SELECT COUNT(*), COUNT(score) FROM expt;
++----------+--------------+
+| COUNT(*) | COUNT(score) |
++----------+--------------+
+|   8 | 5 |
++----------+--------------+
+This tells us that there are eight rows in the expt table but that only five of them have the score value filled in. The different forms of COUNT( ) can be very useful for counting missing values. Just take the difference:
+mysql> SELECT COUNT(*) - COUNT(score) AS missing FROM expt;
++---------+
+| missing |
++---------+
+|   3 |
++---------+
+Missing and nonmissing counts can be determined for subgroups as well. The following query does so for each subject, providing an easy way to assess the extent to which the experiment has been completed:
+mysql> SELECT subject,
+-> COUNT(*) AS total,
+-> COUNT(score) AS 'nonmissing',
+-> COUNT(*) - COUNT(score) AS missing
+-> FROM expt GROUP BY subject;
++---------+-------+-------------+---------+
+| subject | total | nonmissing  | missing |
++---------+-------+-------------+---------+
+| Jane  |   4 | 2 | 2 |
+| Marvin |  4 | 3 | 1 |
++---------+-------+-------------+---------+
+
+
+---
+
+Selecting Only Groups with Certain Characteristics
+Problem
+You want to calculate group summaries but display the results only for those groups that match certain criteria.
+
+Solution
+Use a HAVING clause.
+
+Discussion
+You’re familiar with the use of WHERE to specify conditions that individual rows must satisfy to be selected by a statement. It’s natural, therefore, to use WHERE to write con- ditions that involve summary values. The only trouble is that it doesn’t work. If you want to identify drivers in the driver_log table who drove more than three days, you’d probably first think to write the statement like this:
+mysql> SELECT COUNT(*), name
+-> FROM driver_log
+-> WHERE COUNT(*) > 3
+-> GROUP BY name;
+ERROR 1111 (HY000): Invalid use of group function
+The problem here is that WHERE specifies the initial constraints that determine which rows to select, but the value of COUNT( ) can be determined only after the rows have been selected. The solution is to put the COUNT( ) expression in a HAVING clause instead. HAVING is analogous to WHERE, but it applies to group characteristics rather than to single rows. That is, HAVING operates on the already-selected-and-grouped set of rows, apply-
+ing additional constraints based on aggregate function results that aren’t known during the initial selection process. The preceding query therefore should be written like this:
+mysql> SELECT COUNT(*), name
+-> FROM driver_log
+-> GROUP BY name
+-> HAVING COUNT(*) > 3;
++----------+-------+
+| COUNT(*) | name |
++----------+-------+
+|   5 | Henry |
++----------+-------+
+When you use HAVING, you can still include a WHERE clause—but only to select rows, not to test summary values.
+HAVING can refer to aliases, so the previous query can be rewritten like this:
+mysql> SELECT COUNT(*) AS count, name
+-> FROM driver_log
+-> GROUP BY name
+-> HAVING count > 3;
++-------+-------+
+| count | name |
++-------+-------+
+|   5 | Henry |
++-------+-------+
+
+
+---
+
+Using Counts to Determine Whether Values Are Unique
+Problem
+You want to know whether table values are unique.
+
+Solution
+Use HAVING in conjunction with COUNT( ).
+
+Discussion
+DISTINCT eliminates duplicates but doesn’t show which values actually were duplicated in the original data. You can use HAVING to find unique values in situations to which DISTINCT does not apply. HAVING can tell you which values were unique or nonunique.
+The following statements show the days on which only one driver was active, and the days on which more than one driver was active. They’re based on using HAVING and COUNT( ) to determine which trav_date values are unique or nonunique:
+mysql> SELECT trav_date, COUNT(trav_date)
+-> FROM driver_log
+-> GROUP BY trav_date
+-> HAVING COUNT(trav_date) = 1;
++------------+------------------+
+| trav_date  | COUNT(trav_date) |
++------------+------------------+
+| 2006-08-26 |  1 |
+| 2006-08-27 |  1 |
+| 2006-09-01 |  1 |
++------------+------------------+
+mysql> SELECT trav_date, COUNT(trav_date)
+-> FROM driver_log
+-> GROUP BY trav_date
+-> HAVING COUNT(trav_date) > 1;
++------------+------------------+
+| trav_date  | COUNT(trav_date) |
++------------+------------------+
+| 2006-08-29 |  3 |
+| 2006-08-30 |  2 |
+| 2006-09-02 |  2 |
++------------+------------------+
+This technique works for combinations of values, too. For example, to find message sender/recipient pairs between whom only one message was sent, look for combina- tions that occur only once in the mail table:
+mysql> SELECT srcuser, dstuser
+-> FROM mail
+-> GROUP BY srcuser, dstuser
+-> HAVING COUNT(*) = 1;
++---------+---------+
+| srcuser | dstuser |
++---------+---------+
+| barb  | barb  |
+| gene  | tricia |
+| phil  | barb  |
+| tricia | gene |
+| tricia | phil |
++---------+---------+
+Note that this query doesn’t print the count. The first two examples did so, to show that the counts were being used properly, but you can refer to an aggregate value in a HAVING clause without including it in the output column list.
+
+
+---
+
+Grouping by Expression Results
+Problem
+You want to group rows into subgroups based on values calculated from an expression.
+
+Solution
+Put the expression in the GROUP BY clause.
+Discussion
+GROUP BY, like ORDER BY, can refer to expressions. This means you can use calculations as the basis for grouping. For example, to find the distribution of the lengths of state names, use those lengths as the grouping characteristic:
+mysql> SELECT CHAR_LENGTH(name), COUNT(*)
+-> FROM states GROUP BY CHAR_LENGTH(name);
++-------------------+----------+
+| CHAR_LENGTH(name) | COUNT(*) |
++-------------------+----------+
+
++-------------------+----------+
+As with ORDER BY, you can write the grouping expression directly in the GROUP BY clause, or use an alias for the expression (if it appears in the output column list), and refer to the alias in the GROUP BY.
+You can group by multiple expressions if you like. To find days of the year on which more than one state joined the Union, group by statehood month and day, and then use HAVING and COUNT( ) to find the nonunique combinations:
+mysql> SELECT
+-> MONTHNAME(statehood) AS month,
+-> DAYOFMONTH(statehood) AS day,
+-> COUNT(*) AS count
+-> FROM states GROUP BY month, day HAVING count > 1;
++----------+------+-------+
+| month | day  | count |
++----------+------+-------+
+| February |    14 |    2 |
+| June  |   1 | 2 |
+| March |   1 | 2 |
+| May   |   29 |    2 |
+| November |    2 | 2 |
++----------+------+-------+
+
+
+---
+
+Categorizing Noncategorical Data
+Problem
+You need to summarize a set of values that are not naturally categorical.
+Solution
+Use an expression to group the values into categories.
+
+Discussion
+Recipe 8.11 showed how to group rows by expression results. One important applica- tion for doing so is to provide categories for values that are not particularly categorical. This is useful because GROUP BY works best for columns with repetitive values. For ex- ample, you might attempt to perform a population analysis by grouping rows in the states table using values in the pop column. As it happens, that does not work very well due to the high number of distinct values in the column. In fact, they’re all distinct, as the following query shows:
+mysql> SELECT COUNT(pop), COUNT(DISTINCT pop) FROM states;
++------------+---------------------+
+| COUNT(pop) | COUNT(DISTINCT pop) |
++------------+---------------------+
+|   50 |    50 |
++------------+---------------------+
+In situations like this, where values do not group nicely into a small number of sets, you can use a transformation that forces them into categories. Begin by determining the range of population values:
+mysql> SELECT MIN(pop), MAX(pop) FROM states;
++----------+----------+
+| MIN(pop) | MAX(pop) |
++----------+----------+
+|   506529 | 35893799 |
++----------+----------+
+You can see from that result that if you divide the pop values by five million, they’ll group into six categories—a reasonable number. (The category ranges will be 1 to 5,000,000, 5,000,001 to 10,000,000, and so forth.) To put each population value in the proper category, divide by five million, and use the integer result:
+mysql> SELECT FLOOR(pop/5000000) AS 'max population (millions)',
+-> COUNT(*) AS 'number of states'
+-> FROM states GROUP BY 'max population (millions)';
++---------------------------+------------------+
+| max population (millions) | number of states |
++---------------------------+------------------+
+
++---------------------------+------------------+
+Hmm. That’s not quite right. The expression groups the population values into a small number of categories, all right, but doesn’t report the category values properly. Let’s try multiplying the FLOOR( ) results by five:
+mysql> SELECT FLOOR(pop/5000000)*5 AS 'max population (millions)',
+-> COUNT(*) AS 'number of states'
+-> FROM states GROUP BY 'max population (millions)';
++---------------------------+------------------+
+| max population (millions) | number of states |
++---------------------------+------------------+
+
++---------------------------+------------------+
+That still isn’t correct. The maximum state population was 35,893,799, which should go into a category for 40 million, not one for 35 million. The problem here is that the category-generating expression groups values toward the lower bound of each category. To group values toward the upper bound instead, use the following technique. For categories of size n, you can place a value x into the proper category using this expression:
+FLOOR((x+(n-1))/n)
+So the final form of our query looks like this:
+mysql> SELECT FLOOR((pop+4999999)/5000000)*5 AS 'max population (millions)',
+-> COUNT(*) AS 'number of states'
+-> FROM states GROUP BY 'max population (millions)';
++---------------------------+------------------+
+| max population (millions) | number of states |
++---------------------------+------------------+
+
++---------------------------+------------------+
+The result shows clearly that the majority of U.S. states have a population of five million or less.
+This technique works for all kinds of numeric values. For example, you can group
+mail table rows into categories of 100,000 bytes as follows:
+mysql> SELECT FLOOR((size+99999)/100000) AS 'size (100KB)',
+-> COUNT(*) AS 'number of messages'
+-> FROM mail GROUP BY 'size (100KB)';
++--------------+--------------------+
+| size (100KB) | number of messages |
++--------------+--------------------+
+|   1 | 13 |
+|   2 | 1 |
+|   10 |    1 |
+|   24 |    1 |
++--------------+--------------------+
+In some instances, it may be more appropriate to categorize groups on a logarithmic scale. For example, the state population values can be treated that way as follows:
+mysql> SELECT FLOOR(LOG10(pop)) AS 'log10(population)',
+-> COUNT(*) AS 'number of states'
+-> FROM states GROUP BY 'log10(population)';
++-------------------+------------------+
+| log10(population) | number of states |
++-------------------+------------------+
+|   5 | 7 |
+|   6 | 35 |
+|   7 | 8 |
++-------------------+------------------+
+The query shows the number of states that have populations measured in hundreds of thousands, millions, and tens of millions, respectively.
+
+How Repetitive Is a Set of Values?
+To assess how much repetition is present in a set of values, use the ratio of COUNT(DISTINCT) and COUNT( ). If all values are unique, both counts will be the same and the ratio will be 1. This is the case for the t values in the mail table and the pop values in the states table:
+mysql> SELECT COUNT(DISTINCT t) / COUNT(t) FROM mail;
++------------------------------+
+| COUNT(DISTINCT t) / COUNT(t) |
++------------------------------+
+|   1.0000 |
++------------------------------+
+mysql> SELECT COUNT(DISTINCT pop) / COUNT(pop) FROM states;
++----------------------------------+
+| COUNT(DISTINCT pop) / COUNT(pop) |
++----------------------------------+
+|   1.0000 |
++----------------------------------+
+For a more repetitive set of values, COUNT(DISTINCT) will be less than COUNT( ), and the ratio will be smaller:
+mysql> SELECT COUNT(DISTINCT name) / COUNT(name) FROM driver_log;
++------------------------------------+
+| COUNT(DISTINCT name) / COUNT(name) |
++------------------------------------+
+|   0.3000 |
++------------------------------------+
+What’s the practical use for this ratio? A result close to zero indicates a high degree of repetition, which means the values will group into a small number of categories natu- rally. A result of 1 or close to it indicates many unique values, with the consequence
+
+
+---
+
+Controlling Summary Display Order
+Problem
+You want to sort the result of a summary statement.
+
+Solution
+Use an ORDER BY clause—if GROUP BY doesn’t produce the desired sort order.
+
+Discussion
+In MySQL, GROUP BY not only groups, it sorts. Thus, there is often no need for an ORDER BY clause in a summary statement. But you can still use ORDER BY if you want a sort order other than the one that GROUP BY produces by default. For example, to de- termine the number of days driven and total miles for each person in the driver_log table, use this statement:
+mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+-> FROM driver_log GROUP BY name;
++-------+------+---------+
+| name  | days | mileage |
++-------+------+---------+
+| Ben   |   3 | 362 |
+| Henry |   5 | 911 |
+| Suzi |    2 | 893 |
++-------+------+---------+
+But that sorts by the names. If you want to sort drivers according to who drove the most days or miles, add the appropriate ORDER BY clause:
+mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+-> FROM driver_log GROUP BY name ORDER BY days DESC;
++-------+------+---------+
+| name  | days | mileage |
++-------+------+---------+
+| Henry |   5 | 911 |
+| Ben   |   3 | 362 |
+| Suzi |    2 | 893 |
++-------+------+---------+
+mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+-> FROM driver_log GROUP BY name ORDER BY mileage DESC;
++-------+------+---------+
+| name  | days | mileage |
++-------+------+---------+
+
++-------+------+---------+
+The ORDER BY clause in these statements refers to an aggregate value by using an alias. In MySQL 5.0 and up, that is not necessary and you can refer directly to aggregate values in ORDER BY clauses. Before MySQL 5.0, you must alias them and use the alias in the ORDER BY.
+Sometimes you can reorder a summary without an ORDER BY clause by choosing an appropriate GROUP BY expression. For example, if you count how many states joined the Union on each day of the week, grouped by day name, the results are sorted in lexical order:
+mysql> SELECT DAYNAME(statehood), COUNT(*) FROM states
+-> GROUP BY DAYNAME(statehood);
++--------------------+----------+
+| DAYNAME(statehood) | COUNT(*) |
++--------------------+----------+
+
++--------------------+----------+
+From this you can see that no state entered the Union on a Sunday, but that becomes apparent only after you stare at the query result for a while. The output would be more easily understood were it sorted into day-of-week order. It’s possible to do that by adding an explicit ORDER BY to sort on the numeric day-of-week value, but another way to achieve the same result without ORDER BY is to group by DAYOFWEEK( ) rather than by DAYNAME( ):
+mysql> SELECT DAYNAME(statehood), COUNT(*)
+-> FROM states GROUP BY DAYOFWEEK(statehood);
++--------------------+----------+
+| DAYNAME(statehood) | COUNT(*) |
++--------------------+----------+
+
++--------------------+----------+
+The implicit ordering done by GROUP BY can add overhead to query processing. If you don’t care whether output rows are sorted, add an ORDER BY NULL clause to suppress this sorting and eliminate its overhead:
+mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+-> FROM driver_log GROUP BY name;
++-------+------+---------+
+| name  | days | mileage |
++-------+------+---------+
+| Ben   |   3 | 362 |
+| Henry |   5 | 911 |
+| Suzi |    2 | 893 |
++-------+------+---------+
+mysql> SELECT name, COUNT(*) AS days, SUM(miles) AS mileage
+-> FROM driver_log GROUP BY name ORDER BY NULL;
++-------+------+---------+
+| name  | days | mileage |
++-------+------+---------+
+| Ben   |   3 | 362 |
+| Suzi |    2 | 893 |
+| Henry |   5 | 911 |
++-------+------+---------+
+The sorting done by GROUP BY is a MySQL extension. To write statements for MySQL that are less likely to need revision when used with other database systems, you may find it beneficial to add an explicit ORDER BY clause in all cases.
+
+
+---
+
+Finding Smallest or Largest Summary Values
+Problem
+You want to compute per-group summary values but display only the smallest or largest of them.
+
+Solution
+Add a LIMIT clause to the statement.
+
+Discussion
+MIN( ) and MAX( ) find the values at the endpoints of a range of values, but if you want to know the extremes of a set of summary values, those functions won’t work. The arguments to MIN( ) and MAX( ) cannot be other aggregate functions. For example, you can easily find per-driver mileage totals:
+mysql> SELECT name, SUM(miles)
+-> FROM driver_log
+-> GROUP BY name;
++-------+------------+
+| name  | SUM(miles) |
++-------+------------+
+| Ben   |   362 |
+| Henry |   911 |
+| Suzi |    893 |
++-------+------------+
+But this doesn’t work if you want to select only the row for the driver with the most miles:
+mysql> SELECT name, SUM(miles)
+-> FROM driver_log
+-> GROUP BY name
+-> HAVING SUM(miles) = MAX(SUM(miles));
+ERROR 1111 (HY000): Invalid use of group function
+Instead, order the rows with the largest SUM( ) values first, and use LIMIT to select the first row:
+mysql> SELECT name, SUM(miles) AS 'total miles'
+-> FROM driver_log
+-> GROUP BY name
+-> ORDER BY 'total miles' DESC LIMIT 1;
++-------+-------------+
+| name  | total miles |
++-------+-------------+
+| Henry |   911 |
++-------+-------------+
+Note that if there is more than one row with the given summary value, a LIMIT 1 query won’t tell you that. For example, you might attempt to ascertain the most common initial letter for state names like this:
+mysql> SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
+-> GROUP BY letter ORDER BY count DESC LIMIT 1;
++--------+-------+
+| letter | count |
++--------+-------+
+| M |   8 |
++--------+-------+
+But eight state names also begin with N. If you need to know all most-frequent values when there may be more than one of them, find the maximum count first, and then select those values with a count that matches the maximum:
+mysql> SET @max = (SELECT COUNT(*) FROM states
+-> GROUP BY LEFT(name,1) ORDER BY COUNT(*) DESC LIMIT 1);
+mysql> SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
+-> GROUP BY letter HAVING count = @max;
++--------+-------+
+| letter | count |
++--------+-------+
+| M | 8 |
+| N | 8 |
++--------+-------+
+Alternatively, put the maximum-count calculation in a subquery and combine the statements into one:
+mysql> SELECT LEFT(name,1) AS letter, COUNT(*) AS count FROM states
+-> GROUP  BY  letter  HAVING  count =
+->  (SELECT  COUNT(*)  FROM   states
+->  GROUP BY LEFT(name,1) ORDER BY COUNT(*) DESC LIMIT 1);
++--------+-------+
+| letter | count |
++--------+-------+
+| M | 8 |
+| N | 8 |
++--------+-------+
+
+---
+
+Date-Based Summaries
+Problem
+You want to produce a summary based on date or time values.
+
+Solution
+Use GROUP BY to place temporal values into categories of the appropriate duration. Often this involves using expressions to extract the significant parts of dates or times.
+
+Discussion
+To put rows in time order, use an ORDER BY clause to sort a column that has a temporal type. If instead you want to summarize rows based on groupings into time intervals, you need to determine how to categorize each row into the proper interval and use GROUP BY to group them accordingly.
+For example, to determine how many drivers were on the road and how many miles were driven each day, group the rows in the driver_log table by date:
+mysql> SELECT trav_date,
+-> COUNT(*) AS 'number of drivers', SUM(miles) As 'miles logged'
+-> FROM driver_log GROUP BY trav_date;
++------------+-------------------+--------------+
+| trav_date  | number of drivers | miles logged |
++------------+-------------------+--------------+
+
++------------+-------------------+--------------+
+However, this summary will grow lengthier as you add more rows to the table. At some point, the number of distinct dates likely will become so large that the summary fails to be useful, and you’d probably decide to change the category size from daily to weekly or monthly.
+When a temporal column contains so many distinct values that it fails to categorize well, it’s typical for a summary to group rows using expressions that map the relevant
+parts of the date or time values onto a smaller set of categories. For example, to produce a time-of-day summary for rows in the mail table, do this:*
+mysql> SELECT HOUR(t) AS hour,
+-> COUNT(*) AS 'number of messages',
+-> SUM(size) AS 'number of bytes sent'
+-> FROM mail
+-> GROUP BY hour;
++------+--------------------+----------------------+
+| hour | number of messages | number of bytes sent |
++------+--------------------+----------------------+
+
++------+--------------------+----------------------+
+To produce a day-of-week summary instead, use the DAYOFWEEK( ) function:
+mysql> SELECT DAYOFWEEK(t) AS weekday,
+-> COUNT(*) AS 'number of messages',
+-> SUM(size) AS 'number of bytes sent'
+-> FROM mail
+-> GROUP BY weekday;
++---------+--------------------+----------------------+
+| weekday | number of messages | number of bytes sent |
++---------+--------------------+----------------------+
+
++---------+--------------------+----------------------+
+To make the output more meaningful, you might want to use DAYNAME( ) to display weekday names instead. However, because day names sort lexically (for example, “Tuesday” sorts after “Friday”), use DAYNAME( ) only for display purposes. Continue to group based on the numeric day values so that output rows sort that way:
+mysql> SELECT DAYNAME(t) AS weekday,
+-> COUNT(*) AS 'number of messages',
+-> SUM(size) AS 'number of bytes sent'
+
+
+Note that the result includes an entry only for hours of the day actually represented in the data. To generate a summary with an entry for every hour, use a join to fill in the “missing” values. See Recipe 12.8.
+-> FROM mail
+-> GROUP BY DAYOFWEEK(t);
++-----------+--------------------+----------------------+
+| weekday   | number of messages | number of bytes sent |
++-----------+--------------------+----------------------+
+
++-----------+--------------------+----------------------+
+A similar technique can be used for summarizing month-of-year categories that are sorted by numeric value but displayed by month name.
+Uses for temporal categorizations are numerous:
+DATETIME or TIMESTAMP columns have the potential to contain many unique values. To produce daily summaries, strip off the time of day part to collapse all values occurring within a given day to the same value. Any of the following GROUP BY clauses will do this, although the last one is likely to be slowest:
+GROUP BY DATE(col_name)
+GROUP BY FROM_DAYS(TO_DAYS(col_name))
+GROUP BY YEAR(col_name), MONTH(col_name), DAYOFMONTH(col_name) GROUP BY DATE_FORMAT(col_name,'%Y-%m-%e')
+To produce monthly or quarterly sales reports, group by MONTH( col_name ) or
+QUARTER( col_name ) to place dates into the correct part of the year.
+To summarize web server activity, store your server’s logs in MySQL and run statements that collapse the rows into different time categories. Recipe 19.14 dis- cusses how to do this for Apache.
+
 ---
 2-2. Summarizing Data for Different Groups
 Problem
@@ -120,6 +1119,531 @@ Oracle’s GROUP BY capabilities extend to an arbitrary number of columns and ex
 Select department_id, job_id, min(salary), avg(salary), max(salary) From hr.employees
 Group by department_id, job_id
 Order by department_id, max(salary) desc;
+
+---
+Using ORDER BY to Sort Query Results
+Problem
+Output rows from a query don’t come out in the order you want.
+
+Solution
+Add an ORDER BY clause to the query to sort the result rows.
+
+Discussion
+The contents of the driver_log and mail tables shown in the chapter introduction are disorganized and difficult to make any sense of. The exception is that the values in the id and t columns are in order, but that’s just coincidental. Rows do tend to be returned from a table in the order they were originally inserted, but only until the table is sub- jected to delete and update operations. Rows inserted after that are likely to be returned in the middle of the result set somewhere. Many MySQL users notice this disturbance in row retrieval order, which leads them to ask, “How can I store rows in my table so they come out in a particular order when I retrieve them?” The answer to this question is, “That’s the wrong question.” Storing rows is the server’s job, and you should let the
+server do it. Besides, even if you can specify storage order, how would that help you if you want to see results sorted in different orders at different times?
+When you select rows, they’re pulled out of the database and returned in whatever order the server happens to use. This order might change, even for statements that don’t sort rows, depending on which index the server happens to use when it executes a statement, because the index can affect the retrieval order. Even if your rows appear to come out in the proper order naturally, a relational database makes no guarantee about the order in which it returns rows—unless you tell it how. To arrange the rows from a query result into a specific order, sort them by adding an ORDER BY clause to your SELECT statement. Without ORDER BY, you may find that the retrieval order changes when you modify the contents of your table. With an ORDER BY clause, MySQL will always sort rows the way you indicate.
+ORDER BY has the following general characteristics:
+You can sort using a single column of values or multiple columns.
+You can sort any column in either ascending order (the default) or descending order.
+You can refer to sort columns by name or by using an alias.
+This section shows some basic sorting techniques, such as how to name the sort col- umns and specify the sort direction. The following sections illustrate how to perform more complex sorts. Paradoxically, you can even use ORDER BY to disorder a result set, which is useful for randomizing the rows or (in conjunction with LIMIT) for picking a row at random from a result set. Those uses for ORDER BY are described in Chapter 13.
+The following set of examples demonstrates how to sort on a single column or multiple columns and how to sort in ascending or descending order. The examples select the rows in the driver_log table but sort them in different orders so that you can compare the effect of the different ORDER BY clauses.
+This query produces a single-column sort using the driver name:
+mysql> SELECT * FROM driver_log ORDER BY name;
++--------+-------+------------+-------+
+| rec_id | name  | trav_date  | miles |
++--------+-------+------------+-------+
+|   1 | Ben | 2006-08-30 |  152 |
+|   9 | Ben | 2006-09-02 |  79 |
+|   5 | Ben | 2006-08-29 |  131 |
+|   8 | Henry | 2006-09-01 |    197 |
+|   6 | Henry | 2006-08-26 |    115 |
+|   4 | Henry | 2006-08-27 |    96 |
+|   3 | Henry | 2006-08-29 |    300 |
+|   10 | Henry | 2006-08-30 |   203 |
+|   7 | Suzi  | 2006-09-02 |    502 |
+|   2 | Suzi  | 2006-08-29 |    391 |
++--------+-------+------------+-------+
+The default sort direction is ascending. You can make the direction for an ascending sort explicit by adding ASC after the sorted column’s name:
+SELECT * FROM driver_log ORDER BY name ASC;
+The opposite (or reverse) of ascending order is descending order, specified by adding
+DESC after the sorted column’s name:
+mysql> SELECT * FROM driver_log ORDER BY name DESC;
++--------+-------+------------+-------+
+| rec_id | name  | trav_date  | miles |
++--------+-------+------------+-------+
+
++--------+-------+------------+-------+
+If you closely examine the output from the queries just shown, you’ll notice that al- though the rows are sorted by name, the rows for any given name aren’t in any special order. (The trav_date values aren’t in date order for Henry or Ben, for example.) That’s because MySQL doesn’t sort something unless you tell it to:
+The overall order of rows returned by a query is indeterminate unless you specify an ORDER BY clause.
+Within a group of rows that sort together based on the values in a given column, the order of values in other columns also is indeterminate unless you name them in the ORDER BY clause.
+To more fully control output order, specify a multiple-column sort by listing each col- umn to use for sorting, separated by commas. The following query sorts in ascending order by name and by trav_date within the rows for each name:
+mysql> SELECT * FROM driver_log ORDER BY name, trav_date;
++--------+-------+------------+-------+
+| rec_id | name  | trav_date  | miles |
++--------+-------+------------+-------+
+|   5 | Ben | 2006-08-29 |  131 |
+|   1 | Ben | 2006-08-30 |  152 |
+|   9 | Ben | 2006-09-02 |  79 |
+|   6 | Henry | 2006-08-26 |    115 |
+|   4 | Henry | 2006-08-27 |    96 |
+|   3 | Henry | 2006-08-29 |    300 |
+|   10 | Henry | 2006-08-30 |   203 |
+|   8 | Henry | 2006-09-01 |    197 |
+|   2 | Suzi  | 2006-08-29 |    391 |
+|   7 | Suzi  | 2006-09-02 |    502 |
++--------+-------+------------+-------+
+Multiple-column sorts can be descending as well, but DESC must be specified after each column name to perform a fully descending sort:
+mysql> SELECT * FROM driver_log ORDER BY name DESC, trav_date DESC;
++--------+-------+------------+-------+
+| rec_id | name  | trav_date  | miles |
++--------+-------+------------+-------+
+
++--------+-------+------------+-------+
+Multiple-column ORDER BY clauses can perform mixed-order sorting where some col- umns are sorted in ascending order and others in descending order. The following query sorts by name in descending order and then by trav_date in ascending order for each name:
+mysql> SELECT * FROM driver_log ORDER BY name DESC, trav_date;
++--------+-------+------------+-------+
+| rec_id | name  | trav_date  | miles |
++--------+-------+------------+-------+
+
++--------+-------+------------+-------+
+The ORDER BY clauses in the queries shown thus far refer to the sorted columns by name. You can also name the columns by using aliases. That is, if an output column has an alias, you can refer to the alias in the ORDER BY clause:
+mysql> SELECT name, trav_date, miles AS distance FROM driver_log
+-> ORDER BY distance;
++-------+------------+----------+
+| name  | trav_date  | distance |
++-------+------------+----------+
+
+| Henry | 2006-08-30 |  203 |
+| Henry | 2006-08-29 |  300 |
+| Suzi  | 2006-08-29 |  391 |
+| Suzi  | 2006-09-02 |  502 |
++-------+------------+----------+
+Columns specified by aliases can be sorted in either ascending or descending order, just like named columns:
+mysql> SELECT name, trav_date, miles AS distance FROM driver_log
+-> ORDER BY distance DESC;
++-------+------------+----------+
+| name  | trav_date  | distance |
++-------+------------+----------+
+
++-------+------------+----------+
+
+
+Using Expressions for Sorting
+Problem
+You want to sort a query result based on values calculated from a column, rather than using the values actually stored in the column.
+
+Solution
+Put the expression that calculates the values in the ORDER BY clause.
+Discussion
+One of the columns in the mail table shows how large each mail message is, in bytes:
+mysql> SELECT * FROM mail;
++---------------------+---------+---------+---------+---------+---------+
+| t | srcuser | srchost | dstuser | dsthost | size  |
++---------------------+---------+---------+---------+---------+---------+
+| 2006-05-11 10:15:08 | barb    | saturn  | tricia | mars   |   58274 |
+| 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
+| 2006-05-12 15:02:49 | phil    | mars  | phil  | saturn |  1048 |
+| 2006-05-13 13:59:18 | barb    | saturn  | tricia | venus  |   271 |
+...
+Suppose that you want to retrieve rows for “big” mail messages (defined as those larger than 50,000 bytes), but you want them to be displayed and sorted by sizes in terms of kilobytes, not bytes. In this case, the values to sort are calculated by an expression:
+FLOOR((size+1023)/1024)
+Wondering about the +1023 in the FLOOR( ) expression? That’s there so that size values group to the nearest upper boundary of the 1024-byte categories. Without it, the values group by lower boundaries (for example, a 2047-byte message would be reported as having a size of 1 kilobyte rather than 2). This technique is discussed in more detail in Recipe 8.12.
+There are two ways to use an expression for sorting query results. First, you can put the expression directly in the ORDER BY clause:
+mysql> SELECT t, srcuser, FLOOR((size+1023)/1024)
+-> FROM mail WHERE size > 50000
+-> ORDER BY FLOOR((size+1023)/1024);
++---------------------+---------+-------------------------+
+| t | srcuser | FLOOR((size+1023)/1024) |
++---------------------+---------+-------------------------+
+| 2006-05-11 10:15:08 | barb    |   57 |
+| 2006-05-14 14:42:21 | barb    |   96 |
+| 2006-05-12 12:48:13 | tricia |    191 |
+| 2006-05-15 10:25:52 | gene    |   976 |
+| 2006-05-14 17:03:01 | tricia |    2339 |
++---------------------+---------+-------------------------+
+Second, if you are sorting by an expression named in the output column list, you can give it an alias and refer to the alias in the ORDER BY clause:
+mysql> SELECT t, srcuser, FLOOR((size+1023)/1024) AS kilobytes
+-> FROM mail WHERE size > 50000
+-> ORDER BY kilobytes;
++---------------------+---------+-----------+
+| t | srcuser | kilobytes |
++---------------------+---------+-----------+
+
+| 2006-05-14 17:03:01 | tricia |    2339 |
++---------------------+---------+-----------+
+Although you can write the ORDER BY clause either way, there are at least two reasons you might prefer to use the alias method:
+It’s easier to write the alias in the ORDER BY clause than to repeat the (rather cum- bersome) expression—and if you change one, you’ll need to change the other.
+The alias may be useful for display purposes, to provide a more meaningful column label. Note how the third column heading for the second of the two preceding queries is more meaningful.
+
+Displaying One Set of Values While Sorting by Another
+Problem
+You want to sort a result set using values that you’re not selecting.
+
+Solution
+That’s not a problem. You can use columns in the ORDER BY clause that don’t appear in the output column list.
+
+Discussion
+ORDER BY is not limited to sorting only those columns named in the output column list. It can sort using values that are “hidden” (that is, not displayed in the query output). This technique is commonly used when you have values that can be represented dif- ferent ways and you want to display one type of value but sort by another. For example, you may want to display mail message sizes not in terms of bytes, but as strings such as 103K for 103 kilobytes. You can convert a byte count to that kind of value using this expression:
+CONCAT(FLOOR((size+1023)/1024),'K')
+However, such values are strings, so they sort lexically, not numerically. If you use them for sorting, a value such as 96K sorts after 2339K, even though it represents a smaller number:
+mysql> SELECT t, srcuser,
+-> CONCAT(FLOOR((size+1023)/1024),'K') AS size_in_K
+-> FROM mail WHERE size > 50000
+-> ORDER BY size_in_K;
++---------------------+---------+-----------+
+| t | srcuser | size_in_K |
++---------------------+---------+-----------+
+| 2006-05-12 12:48:13 | tricia | 191K   |
+| 2006-05-14 17:03:01 | tricia | 2339K  |
+| 2006-05-11 10:15:08 | barb    | 57K   |
+| 2006-05-14 14:42:21 | barb    | 96K   |
+| 2006-05-15 10:25:52 | gene    | 976K  |
++---------------------+---------+-----------+
+To achieve the desired output order, display the string, but use the actual numeric size for sorting:
+mysql> SELECT t, srcuser,
+-> CONCAT(FLOOR((size+1023)/1024),'K') AS size_in_K
+-> FROM mail WHERE size > 50000
+-> ORDER BY size;
++---------------------+---------+-----------+
+| t | srcuser | size_in_K |
++---------------------+---------+-----------+
+| 2006-05-11 10:15:08 | barb    | 57K   |
+| 2006-05-14 14:42:21 | barb    | 96K   |
+| 2006-05-12 12:48:13 | tricia | 191K   |
+| 2006-05-15 10:25:52 | gene    | 976K  |
+| 2006-05-14 17:03:01 | tricia | 2339K  |
++---------------------+---------+-----------+
+Displaying values as strings but sorting them as numbers also can bail you out of some otherwise difficult situations. Members of sports teams typically are assigned a jersey number, which normally you might think should be stored using a numeric column. Not so fast! Some players like to have a jersey number of zero (0), and some like double- zero (00). If a team happens to have players with both numbers, you cannot represent them using a numeric column, because both values will be treated as the same number. The way out of the problem is to store jersey numbers as strings:
+CREATE TABLE roster (
+name    CHAR(30),   # player name jersey_num CHAR(3)    # jersey number
+);
+Then the jersey numbers will display the same way you enter them, and 0 and 00 will be treated as distinct values. Unfortunately, although representing numbers as strings solves the problem of distinguishing 0 and 00, it introduces a different problem. Suppose that a team has the following players:
+mysql> SELECT name, jersey_num FROM roster;
++-----------+------------+
+| name  | jersey_num |
++-----------+------------+
+| Lynne | 29    |
+| Ella  | 0 |
+| Elizabeth | 100   |
+| Nancy | 00    |
+| Jean  | 8 |
+| Sherry    | 47    |
++-----------+------------+
+The problem occurs when you try to sort the team members by jersey number. If those numbers are stored as strings, they’ll sort lexically, and lexical order often differs from numeric order. That’s certainly true for the team in question:
+mysql> SELECT name, jersey_num FROM roster ORDER BY jersey_num;
++-----------+------------+
+| name  | jersey_num |
++-----------+------------+
+| Ella  | 0 |
+| Nancy | 00    |
+| Elizabeth | 100   |
+| Lynne | 29    |
+| Sherry    | 47    |
+| Jean  | 8 |
++-----------+------------+
+The values 100 and 8 are out of place. But that’s easily solved. Display the string values, but use the numeric values for sorting. To accomplish this, add zero to the jer sey_num values to force a string-to-number conversion:
+mysql> SELECT name, jersey_num FROM roster ORDER BY jersey_num+0;
++-----------+------------+
+| name  | jersey_num |
++-----------+------------+
+| Ella  | 0 |
+| Nancy | 00    |
+| Jean  | 8 |
+| Lynne | 29    |
+| Sherry    | 47    |
+| Elizabeth | 100   |
++-----------+------------+
+The technique of displaying one value but sorting by another is also useful when you want to display composite values that are formed from multiple columns but that don’t sort the way you want. For example, the mail table lists message senders using separate srcuser and srchost values. If you want to display message senders from the mail table as email addresses in srcuser@srchost format with the username first, you can construct those values using the following expression:
+CONCAT(srcuser,'@',srchost)
+However, those values are no good for sorting if you want to treat the hostname as more significant than the username. Instead, sort the results using the underlying col- umn values rather than the displayed composite values:
+mysql> SELECT t, CONCAT(srcuser,'@',srchost) AS sender, size
+-> FROM mail WHERE size > 50000
+-> ORDER BY srchost, srcuser;
++---------------------+---------------+---------+
+| t | sender    | size  |
++---------------------+---------------+---------+
+| 2006-05-15 10:25:52 | gene@mars   |  998532 |
+| 2006-05-12 12:48:13 | tricia@mars |  194925 |
+| 2006-05-11 10:15:08 | barb@saturn |   58274 |
+| 2006-05-14 17:03:01 | tricia@saturn | 2394482 |
+| 2006-05-14 14:42:21 | barb@venus  |   98151 |
++---------------------+---------------+---------+
+The same idea commonly is applied to sorting people’s names. Suppose that you have a table names that contains last and first names. To display rows sorted by last name first, the query is straightforward when the columns are displayed separately:
+mysql> SELECT last_name, first_name FROM name
+-> ORDER BY last_name, first_name;
++-----------+------------+
+| last_name | first_name |
++-----------+------------+
+| Blue  | Vida  |
+| Brown | Kevin |
+| Gray  | Pete  |
+| White | Devon |
+| White | Rondell   |
++-----------+------------+
+If instead you want to display each name as a single string composed of the first name, a space, and the last name, you can begin the query like this:
+SELECT CONCAT(first_name,' ',last_name) AS full_name FROM name ...
+But then how do you sort the names so they come out in the last name order? The answer is to display the composite names, but refer to the constituent values in the ORDER BY clause:
+mysql> SELECT CONCAT(first_name,' ',last_name) AS full_name
+-> FROM name
+-> ORDER BY last_name, first_name;
++---------------+
+| full_name |
++---------------+
+| Vida Blue |
+| Kevin Brown   |
+| Pete Gray |
+| Devon White   |
+| Rondell White |
++---------------+
+
+
+---
+Sorting by Calendar Day
+Problem
+You want to sort by day of the calendar year.
+
+Solution
+Sort using the month and day of date values, ignoring the year.
+
+Discussion
+Sorting in calendar order differs from sorting by date. You need to ignore the year part of the dates and sort using only the month and day to order rows in terms of where they fall during the calendar year. Suppose that you have an event table that looks like this when values are ordered by actual date of occurrence:
+mysql> SELECT  date,  description  FROM  event  ORDER  BY date;
++------------+-------------------------------------+
+| date  | description   |
++------------+-------------------------------------+
+| 1215-06-15 | Signing of the Magna Carta   |
+| 1732-02-22 | George Washington's birthday |
+| 1776-07-14 | Bastille Day |
+| 1789-07-04 | US Independence Day  |
+| 1809-02-12 | Abraham Lincoln's birthday   |
+| 1919-06-28 | Signing of the Treaty of Versailles |
+| 1944-06-06 | D-Day at Normandy Beaches    |
+| 1957-10-04 | Sputnik launch date  |
+| 1958-01-31 | Explorer 1 launch date   |
+| 1989-11-09 | Opening of the Berlin Wall   |
++------------+-------------------------------------+
+To put these items in calendar order, sort them by month, and then by day within month:
+mysql> SELECT date, description FROM event
+-> ORDER BY MONTH(date), DAYOFMONTH(date);
++------------+-------------------------------------+
+| date  | description   |
++------------+-------------------------------------+
+| 1958-01-31 | Explorer 1 launch date   |
+| 1809-02-12 | Abraham Lincoln's birthday   |
+| 1732-02-22 | George Washington's birthday |
+| 1944-06-06 | D-Day at Normandy Beaches    |
+| 1215-06-15 | Signing of the Magna Carta   |
+| 1919-06-28 | Signing of the Treaty of Versailles |
+| 1789-07-04 | US Independence Day  |
+| 1776-07-14 | Bastille Day |
+| 1957-10-04 | Sputnik launch date  |
+| 1989-11-09 | Opening of the Berlin Wall   |
++------------+-------------------------------------+
+MySQL also has a DAYOFYEAR( ) function that you might suspect would be useful for calendar day sorting:
+mysql> SELECT date, description FROM event ORDER BY DAYOFYEAR(date);
++------------+-------------------------------------+
+| date  | description   |
++------------+-------------------------------------+
+| 1958-01-31 | Explorer 1 launch date   |
+| 1809-02-12 | Abraham Lincoln's birthday   |
+| 1732-02-22 | George Washington's birthday |
+| 1944-06-06 | D-Day at Normandy Beaches    |
+| 1215-06-15 | Signing of the Magna Carta   |
+| 1919-06-28 | Signing of the Treaty of Versailles |
+| 1789-07-04 | US Independence Day  |
+| 1776-07-14 | Bastille Day |
+| 1957-10-04 | Sputnik launch date  |
+| 1989-11-09 | Opening of the Berlin Wall   |
++------------+-------------------------------------+
+That appears to work, but only because the table doesn’t have rows in it that expose a problem with using DAYOFYEAR( ) for sorting: it can generate the same value for different calendar days. For example, February 29 of leap years and March 1 of nonleap years have the same day-of-year value:
+mysql> SELECT DAYOFYEAR('1996-02-29'), DAYOFYEAR('1997-03-01');
++-------------------------+-------------------------+
+| DAYOFYEAR('1996-02-29') | DAYOFYEAR('1997-03-01') |
++-------------------------+-------------------------+
+|   60 |    60 |
++-------------------------+-------------------------+
+This property means that DAYOFYEAR( ) won’t necessarily produce correct results for calendar sorting. It can group dates that actually occur on different calendar days.
+If a table represents dates using separate year, month, and day columns, calendar sort- ing requires no date-part extraction. Just sort the relevant columns directly. For large datasets, sorting using separate date-part columns can be much faster than sorts based on extracting pieces of DATE values. There’s no overhead for part extraction, but more important, you can index the date-part columns separately—something not possible with a DATE column. The principle here is that you should design the table to make it easy to extract or sort by the values that you expect to use a lot.
+Sorting by Day of Week
+Problem
+You want to sort rows in day-of-week order.
+
+Solution
+Use DAYOFWEEK( ) to convert a date column to its numeric day-of-week value.
+
+Discussion
+Day-of-week sorting is similar to calendar-day sorting, except that you use different functions to get at the relevant ordering values.
+You can get the day of the week using DAYNAME( ), but that produces strings that sort lexically rather than in day-of-week order (Sunday, Monday, Tuesday, and so forth). Here the technique of displaying one value but sorting by another is useful (see Rec- ipe 7.3). Display day names using DAYNAME( ), but sort in day-of-week order using DAYOFWEEK( ), which returns numeric values from 1 to 7 for Sunday through Saturday:
+mysql> SELECT DAYNAME(date) AS day, date, description
+-> FROM event
+-> ORDER BY DAYOFWEEK(date);
++----------+------------+-------------------------------------+
+| day   | date  | description   |
++----------+------------+-------------------------------------+
+| Sunday    | 1809-02-12 | Abraham Lincoln's birthday   |
+| Sunday    | 1776-07-14 | Bastille Day |
+| Monday    | 1215-06-15 | Signing of the Magna Carta   |
+| Tuesday  | 1944-06-06 | D-Day at Normandy Beaches |
+| Thursday | 1989-11-09 | Opening of the Berlin Wall    |
+| Friday    | 1732-02-22 | George Washington's birthday |
+| Friday    | 1958-01-31 | Explorer 1 launch date   |
+| Friday    | 1957-10-04 | Sputnik launch date  |
+| Saturday | 1919-06-28 | Signing of the Treaty of Versailles |
+| Saturday | 1789-07-04 | US Independence Day   |
++----------+------------+-------------------------------------+
+If you want to sort rows in day-of-week order but treat Monday as the first day of the week and Sunday as the last, you can use a the MOD( ) function to map Monday to 0, Tuesday to 1, ..., Sunday to 6:
+mysql> SELECT DAYNAME(date), date, description
+-> FROM event
+-> ORDER BY MOD(DAYOFWEEK(date)+5, 7);
++---------------+------------+-------------------------------------+
+| DAYNAME(date) | date  | description   |
++---------------+------------+-------------------------------------+
+
+
++---------------+------------+-------------------------------------+
+The following table shows the DAYOFWEEK( ) expressions to use for putting any day of the week first in the sort order:
+
+Sunday  DAYOFWEEK(date)
+Monday  MOD(DAYOFWEEK(date)+5, 7)
+Tuesday MOD(DAYOFWEEK(date)+4, 7)
+Wednesday   MOD(DAYOFWEEK(date)+3, 7)
+Thursday    MOD(DAYOFWEEK(date)+2, 7)
+Friday  MOD(DAYOFWEEK(date)+1, 7)
+Saturday    MOD(DAYOFWEEK(date)+0, 7)
+
+
+Another function that you can use for day-of-week sorting is WEEKDAY( ), although it returns a different set of values (0 for Monday through 6 for Sunday).
+
+Sorting by Time of Day
+Problem
+You want to sort rows in time-of-day order.
+
+Solution
+Pull out the hour, minute, and second from the column that contains the time, and use them for sorting.
+
+Discussion
+Time-of-day sorting can be done different ways, depending on your column type. If the values are stored in a TIME column named timecol, just sort them directly using ORDER BY timecol. To put DATETIME or TIMESTAMP values in time-of-day order, extract the time parts and sort them. For example, the mail table contains DATETIME values, which can be sorted by time of day like this:
+mysql> SELECT * FROM mail ORDER BY HOUR(t), MINUTE(t), SECOND(t);
++---------------------+---------+---------+---------+---------+---------+
+| t | srcuser | srchost | dstuser | dsthost | size  |
++---------------------+---------+---------+---------+---------+---------+
+| 2006-05-15 07:17:48 | gene    | mars  | gene  | saturn |  3824 |
+| 2006-05-15 08:50:57 | phil    | venus | phil  | venus |   978 |
+| 2006-05-16 09:00:28 | gene    | venus | barb  | mars  |   613 |
+| 2006-05-14 09:31:37 | gene    | venus | barb  | mars  |   2291 |
+| 2006-05-11 10:15:08 | barb    | saturn  | tricia | mars   |   58274 |
+| 2006-05-15 10:25:52 | gene    | mars  | tricia | saturn | 998532 |
+| 2006-05-14 11:52:17 | phil    | mars  | tricia | saturn | 5781 |
+| 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
+...
+You can also use TIME_TO_SEC( ), which strips off the date part and returns the time part as the corresponding number of seconds:
+mysql> SELECT * FROM mail ORDER BY TIME_TO_SEC(t);
++---------------------+---------+---------+---------+---------+---------+
+| t | srcuser | srchost | dstuser | dsthost | size  |
++---------------------+---------+---------+---------+---------+---------+
+| 2006-05-15 07:17:48 | gene    | mars  | gene  | saturn |  3824 |
+| 2006-05-15 08:50:57 | phil    | venus | phil  | venus |   978 |
+| 2006-05-16 09:00:28 | gene    | venus | barb  | mars  |   613 |
+| 2006-05-14 09:31:37 | gene    | venus | barb  | mars  |   2291 |
+| 2006-05-11 10:15:08 | barb    | saturn  | tricia | mars   |   58274 |
+| 2006-05-15 10:25:52 | gene    | mars  | tricia | saturn | 998532 |
+| 2006-05-14 11:52:17 | phil    | mars  | tricia | saturn | 5781 |
+| 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
+...
+
+---
+
+Sorting by Fixed-Length Substrings
+Problem
+You want to sort using parts of a column that occur at a given position within the column.
+
+Solution
+Pull out the parts you need with LEFT( ), MID( ), or RIGHT( ), and sort them.
+
+Discussion
+Suppose that you have a housewares table that acts as a catalog for houseware furnish- ings, and that items are identified by 10-character ID values consisting of three subparts: a three-character category abbreviation (such as DIN for “dining room” or KIT for “kitchen”), a five-digit serial number, and a two-character country code indicating where the part is manufactured:
+mysql> SELECT * FROM housewares;
++------------+------------------+
+| id    | description   |
++------------+------------------+
+| DIN40672US | dining table |
+| KIT00372UK | garbage disposal |
+| KIT01729JP | microwave oven   |
+| BED00038SG | bedside lamp |
+| BTH00485US | shower stall |
+| BTH00415JP | lavatory |
++------------+------------------+
+This is not necessarily a good way to store complex ID values, and later we’ll consider how to represent them using separate columns (see Recipe 11.11). But for now, assume that the values must be stored as just shown.
+If you want to sort rows from this table based on the id values, just use the entire column value:
+mysql> SELECT * FROM housewares ORDER BY id;
++------------+------------------+
+| id    | description   |
++------------+------------------+
+| BED00038SG | bedside lamp |
+| BTH00415JP | lavatory |
+| BTH00485US | shower stall |
+| DIN40672US | dining table |
+| KIT00372UK | garbage disposal |
+| KIT01729JP | microwave oven   |
++------------+------------------+
+But you might also have a need to sort on any of the three subparts (for example, to sort by country of manufacture). For that kind of operation, it’s helpful to use functions that pull out pieces of a column, such as LEFT( ), MID( ), and RIGHT( ). These functions can be used to break apart the id values into their three components:
+mysql> SELECT id,
+-> LEFT(id,3) AS category,
+-> MID(id,4,5)  AS serial,
+-> RIGHT(id,2)   AS  country
+-> FROM housewares;
++------------+----------+--------+---------+
+| id    | category | serial | country |
++------------+----------+--------+---------+
+
++------------+----------+--------+---------+
+Any of those fixed-length substrings of the id values can be used for sorting, either alone or in combination. To sort by product category, extract the category value and use it in the ORDER BY clause:
+mysql> SELECT * FROM housewares ORDER BY LEFT(id,3);
++------------+------------------+
+| id    | description   |
++------------+------------------+
+| BED00038SG | bedside lamp |
+| BTH00485US | shower stall |
+| BTH00415JP | lavatory |
+| DIN40672US | dining table |
+| KIT00372UK | garbage disposal |
+| KIT01729JP | microwave oven   |
++------------+------------------+
+To sort rows by product serial number, use MID( ) to extract the middle five characters from the id values, beginning with the fourth:
+mysql> SELECT * FROM housewares ORDER BY MID(id,4,5);
++------------+------------------+
+| id    | description   |
++------------+------------------+
+| BED00038SG | bedside lamp |
+| KIT00372UK | garbage disposal |
+| BTH00415JP | lavatory |
+| BTH00485US | shower stall |
+| KIT01729JP | microwave oven   |
+| DIN40672US | dining table |
++------------+------------------+
+This appears to be a numeric sort, but it’s actually a string sort, because MID( ) returns strings. It just so happens that the lexical and numeric sort order are the same in this case because the “numbers” have leading zeros to make them all the same length.
+To sort by country code, use the rightmost two characters of the id values:
+mysql> SELECT * FROM housewares ORDER BY RIGHT(id,2);
++------------+------------------+
+| id    | description   |
++------------+------------------+
+| KIT01729JP | microwave oven   |
+| BTH00415JP | lavatory |
+| BED00038SG | bedside lamp |
+| KIT00372UK | garbage disposal |
+| DIN40672US | dining table |
+| BTH00485US | shower stall |
++------------+------------------+
+You can also sort using combinations of substrings. For example, to sort by country code and serial number, the query looks like this:
+mysql> SELECT * FROM housewares ORDER BY RIGHT(id,2), MID(id,4,5);
++------------+------------------+
+| id    | description   |
++------------+------------------+
+| BTH00415JP | lavatory |
+| KIT01729JP | microwave oven   |
+| BED00038SG | bedside lamp |
+| KIT00372UK | garbage disposal |
+| BTH00485US | shower stall |
+| DIN40672US | dining table |
++------------+------------------+
+
+
+---
+
+
+
+
 ---
 2-4. Ignoring Groups in Aggregate Data Sets
 Problem
@@ -138,6 +1662,105 @@ select department_id, job_id, min(salary), avg(salary), max(salary), count(*) fr
 group by department_id, job_id having count(*) > 1
 and min(salary) between 2500 and 17000 and avg(salary) != 5000
 and max(salary)/min(salary) < 2;
+
+---
+Working with Per-Group and Overall Summary Values Simultaneously
+Problem
+You want to produce a report that requires different levels of summary detail. Or you want to compare per-group summary values to an overall summary value.
+
+Solution
+Use two statements that retrieve different levels of summary information. Or use a subquery to retrieve one summary value and refer to it in the outer query that refers to other summary values. If it’s necessary only to display multiple summary levels, WITH ROLLUP might be sufficient.
+Discussion
+Sometimes a report involves different levels of summary information. For example, the following report displays the total number of miles per driver from the driver_log table, along with each driver’s miles as a percentage of the total miles in the entire table:
++-------+--------------+------------------------+
+| name  | miles/driver | percent of total miles |
++-------+--------------+------------------------+
+| Ben   |   362 |   16.7128 |
+| Henry |   911 |   42.0591 |
+| Suzi |    893 |   41.2281 |
++-------+--------------+------------------------+
+The percentages represent the ratio of each driver’s miles to the total miles for all drivers. To perform the percentage calculation, you need a per-group summary to get each driver’s miles and also an overall summary to get the total miles. First, run a query to get the overall mileage total:
+mysql> SELECT @total := SUM(miles) AS 'total miles' FROM driver_log;
++-------------+
+| total miles |
++-------------+
+|   2166 |
++-------------+
+Now, calculate the per-group values and use the overall total to compute the percen- tages:
+mysql> SELECT name,
+-> SUM(miles) AS 'miles/driver',
+-> (SUM(miles)*100)/@total AS 'percent of total miles'
+-> FROM driver_log GROUP BY name;
++-------+--------------+------------------------+
+| name  | miles/driver | percent of total miles |
++-------+--------------+------------------------+
+| Ben   |   362 |   16.7128 |
+| Henry |   911 |   42.0591 |
+| Suzi |    893 |   41.2281 |
++-------+--------------+------------------------+
+To combine the two statements into one, use a subquery that computes the total miles:
+mysql> SELECT name,
+-> SUM(miles) AS 'miles/driver',
+-> (SUM(miles)*100)/(SELECT SUM(miles) FROM driver_log)
+->  AS 'percent of total miles'
+-> FROM driver_log GROUP BY name;
++-------+--------------+------------------------+
+| name  | miles/driver | percent of total miles |
++-------+--------------+------------------------+
+| Ben   |   362 |   16.7128 |
+| Henry |   911 |   42.0591 |
+| Suzi |    893 |   41.2281 |
++-------+--------------+------------------------+
+Another type of problem that uses different levels of summary information occurs when you want to compare per-group summary values with the corresponding overall sum- mary value. Suppose that you want to determine which drivers had a lower average miles per day than the group average. Calculate the overall average in a subquery, and then compare each driver’s average to the overall average using a HAVING clause:
+mysql> SELECT name, AVG(miles) AS driver_avg FROM driver_log
+-> GROUP BY name
+-> HAVING driver_avg < (SELECT AVG(miles) FROM driver_log);
++-------+------------+
+| name  | driver_avg |
++-------+------------+
+| Ben   |   120.6667 |
+| Henry |   182.2000 |
++-------+------------+
+If you just want to display different summary values (and not perform calculations involving one summary level against another), add WITH ROLLUP to the GROUP BY clause:
+mysql> SELECT name, SUM(miles) AS 'miles/driver'
+-> FROM driver_log GROUP BY name WITH ROLLUP;
++-------+--------------+
+| name  | miles/driver |
++-------+--------------+
+| Ben   |   362 |
+| Henry |   911 |
+| Suzi |    893 |
+| NULL |    2166 |
++-------+--------------+
+mysql> SELECT name, AVG(miles) AS driver_avg FROM driver_log
+-> GROUP BY name WITH ROLLUP;
++-------+------------+
+| name  | driver_avg |
++-------+------------+
+| Ben   |   120.6667 |
+| Henry |   182.2000 |
+| Suzi |    446.5000 |
+| NULL |    216.6000 |
++-------+------------+
+In each case, the output row with NULL in the name column represents the overall sum or average calculated over all drivers.
+WITH ROLLUP can present multiple levels of summary, if you group by more than one column. The following statement shows the number of mail messages sent between each pair of users:
+mysql> SELECT srcuser, dstuser, COUNT(*)
+-> FROM mail GROUP BY srcuser, dstuser;
++---------+---------+----------+
+| srcuser | dstuser | COUNT(*) |
++---------+---------+----------+
+
+
++---------+---------+----------+
+Adding WITH ROLLUP causes the output to include an intermediate count for each srcuser value (these are the lines with NULL in the dstuser column), plus an overall count at the end:
+mysql> SELECT srcuser, dstuser, COUNT(*)
+-> FROM mail GROUP BY srcuser, dstuser WITH ROLLUP;
++---------+---------+----------+
+| srcuser | dstuser | COUNT(*) |
++---------+---------+----------+
+
++---------+---------+----------+
+
 ---
 2-5. Aggregating Data at Multiple Levels
 Problem
