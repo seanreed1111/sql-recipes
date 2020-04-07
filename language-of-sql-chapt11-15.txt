@@ -1,0 +1,1437 @@
+
+11
+
+Inner Joins
+
+
+
+
+
+
+
+Keywords Introduced
+INNER JOIN  •  ON
+
+Back in Chapter 1, we talked about the huge advance of relational databases over their predecessors. The significant achievement of relational databases was in their ability to allow data to be organized in any number of tables that are related but at the same time independent of each other. Prior to the advent of relational databases, traditional databases utilized a
+chain of internal pointers to explicitly define the relationships between tables. For example, you might start with a Customers table and then follow pointers to find the first order for a particular customer, then the next order, and so on until all orders for the customer have been retrieved. In contrast, relational databases allow relationships to be inferred by columns that tables have in common. These relationships are sometimes formalized by the definition of primary and foreign keys, but that isn’t always necessary.
+
+With relational databases, it is the responsibility of the SQL developer to determine and define the relationships between tables. This allows for great flexibility in how different data elements can be combined. The great virtue of relational databases lies in the fact that someone can grab data from a variety of tables in ways that serve the immediate business requirement.
+
+Let’s start with a common example. Most organizations have a business entity known as a customer. As such, a database typically contains a Customers table that defines each customer. Such a table would normally include a primary key to uniquely identify each customer, and any number of columns with attributes that further define the customer. Common attributes might include phone number, address, city, state, and so on.
+
+The main idea is that all information about the customer is stored in a single table and only in that table. This simplifies the task of data updates. When a customer changes his phone number, only one table needs to be updated. However, the downside to this setup is that whenever someone needs any information about a customer, they must access the Customers table to retrieve the data.
+
+
+This brings us to the concept of a join. Let’s say that someone is analyzing products that have been purchased. Along with information about the products, it might be necessary to provide information about the customers who purchased each product. For example, an analyst may wish to obtain customer ZIP codes for a geographic analysis. Whereas product information may be found in a Products table, the ZIP code is stored only in the Customers table. To get information on both customers and products, the analyst must join both tables together in such a way that the data matches correctly.
+
+In essence, the promise of relational databases is fulfilled by the ability to join tables together in any desired manner. This is the normal situation. With this chapter, we will leave behind the somewhat artificial examples for which data is retrieved only from a single table and encounter more realistic scenarios involving data in multiple tables.
+
+
+Joining Two Tables
+To begin our exploration of the join process, let’s revisit the Sales table that we encountered previously in Chapters 3 and 6:
+
+SalesID              FirstName              LastName              QuantityPurchased               PricePerItem
+1                          Andrew                     Li                               4                                               2.50
+2                          Carol                         White                        10                                             1.25
+3                          James                       Carpenter                 5                                               4.00
+
+
+To some extent, the use of this table in earlier chapters was somewhat misleading. In reality, a competent database designer would seldom create a table such as this. The problem is that it contains information about two separate entities, customers and orders. In the real world, this information would be split into at least two separate tables. A Customers table might look like the following table, seen previously in Chapter 2, “Basic Data Retrieval”:
+
+CustomerID            FirstName              LastName
+1                               Sara                          Davis
+2                               Rumi                         Shah
+3                               Paul                          Johnson
+4                               Samuel                     Martinez
+
+
+An Orders table might look like this:
+
+OrderID                CustomerID              OrderDate                 OrderAmount
+1                             1                                  2016-09-01                10.00
+2                             2                                  2016-09-02                12.50
+3                             2                                  2016-09-03                18.00
+4                             3                                  2016-09-15                20.00
+
+
+In this Orders table, we’ve chosen to include OrderDate and OrderAmount columns, rather than the QuantityPurchased and PricePerItem columns seen in the first Sales table. Notice that the data that was in the Sales table has now been split into two separate tables. The Customers table contains information only about customers. The Orders table contains information solely about items purchased. The Orders table includes a CustomerID column to indicate which customer placed the order. As you might remember from Chapter 1, “Relational Databases and SQL,” this is referred to as a foreign key.
+
+Even though the Customers and Orders tables both have four rows, this is something of a coincidence. There is one customer in the Customers table who has not placed an order. As
+you can see, CustomerID 4, Samuel Martinez, does not appear in the Orders table. On the other hand, Rumi Shah has placed two different orders, as evidenced by the two rows in the Orders table with an CustomerID of 2.
+
+Even with these two tables, there is still much missing. For example, an Orders table would typically include additional columns, such as information on the tax collected or the salesperson’s name. Plus, the Orders table itself might in fact be split into more than one table so that information about the entire order, such as the order date, could be stored apart from information about each item that was ordered. In other words, this is still not a
+completely realistic example. However, now that we’ve split our information into two separate tables, we can address how to create a SELECT statement that can pull data from both tables simultaneously.
+
+Before we get to the SELECT statement itself, we need to address one additional concern, which
+is how to visually represent the two tables and the implied relationship that exists between them. Previously, we displayed each table with column names on the top row and corresponding data on subsequent rows. Now that we have more than one table to deal with, we’ll introduce another type of visual representation. Figure 11.1 shows a diagram with both tables, with the table name on the top row and the column names in each subsequent row. This diagram is a simplified version of what is commonly called an entity-relationship diagram. The term entity refers to the tables, and relationship refers to the line drawn between the data elements in those tables. Rather than showing detailed data, this diagram indicates the overall structure of the data.
+
+
+
+
+Figure 11.1    Entity-relationship diagram
+
+
+The important point to notice is that we’ve drawn a line from CustomerID in the Customers table to the CustomerID in the Orders table. This indicates a relationship between these two tables—namely, that both tables share values stored in the CustomerID column.
+
+
+The Inner Join
+
+We are now ready to present a SELECT statement with what is called an inner join:
+
+SELECT *
+FROM Customers
+INNER JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+
+Let’s examine this statement line by line. The SELECT keyword on the first line merely
+states that we want all (*) columns from both tables. The second line, with the FROM clause, indicates that the first table we want to specify is the Customers table. The third line introduces the new INNER JOIN keyword. This keyword is used to specify an additional table that we want to include in our query. In this case, we want to add the Orders table.
+
+Finally, the fourth line introduces the ON keyword. This ON works in conjunction with the INNER JOIN and specifies exactly how the two tables are to be joined. In this case, we are connecting the CustomerID column of the Customers table (Customers.CustomerID) to the CustomerID column of the Orders table (Orders.CustomerID). Because the CustomerID column has the same name in both the Customers and Orders table, we need to specify the table name as a prefix to the CustomerID column name. The prefix allows us to distinguish between these columns in two separate tables.
+
+The preceding SELECT statement produces this data:
+
+CustomerID     FirstName    LastName    OrderID    CustomerID      OrderDate       OrderAmount
+1                        Sara               Davis              1               1                         2016-09-01     10.00
+2                        Rumi               Shah              2               2                         2016-09-02     12.50
+2                        Rumi               Shah              3               2                         2016-09-03     18.00
+3                        Paul                Johnson         4               3                         2016-09-15     20.00
+
+
+Let’s analyze the results. Both the Customers table and the Orders table had four rows. Looking at the OrderID column, you can tell that we have data from all four rows from the Orders table. However, looking at the CustomerID column, you might notice that only three customers are shown. Why is that? The answer is that the customer with a CustomerID of 4 doesn’t exist in the Orders table. Because we’re joining the two tables together on the CustomerID field, we
+have no rows in the Orders table that match the CustomerID of 4 in the Customers table.
+
+This brings us to an important observation: An inner join only returns data for which there is a match between both tables being joined. In the next chapter, we’ll talk about an alternative method of joining tables that will allow the customer information for the CustomerID of 4 to be shown, even if there are no orders for that customer.
+
+Here’s a second important observation: Notice that the customer data for Rumi Shah is repeated twice. She existed only once in the Customers table, so one might wonder why she appears
+on two rows. The answer is that the INNER JOIN causes all possible matches to be shown. Because Rumi has two rows in the Orders table, both of these rows match with her row in the Customers table, resulting in her customer information being displayed twice.
+
+
+Finally, you may be wondering why this join is referred to an inner join. There are, in fact, two main variations of the join: the inner join and the outer join. Outer joins will be covered in the next chapter.
+
+
+Table Order in Inner Joins
+
+An inner join brings back data where there is a match between the two specified tables. In the previous SELECT, we specified the Customers table in the FROM clause and the Orders table
+in the INNER JOIN clause. We might ask whether it matters which table is specified first. As it turns out, for inner joins, the order in which the tables are listed can be reversed with no difference in the results. The following two SELECT statements are logically identical and return the same data:
+SELECT *
+FROM Customers
+INNER JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+SELECT * FROM Orders
+INNER JOIN Customers
+ON Orders.CustomerID = Customers.CustomerID
+
+The only difference is that the first statement would display columns from the Customers table first and the Orders table second. The second statement would display columns from
+the Orders table first and the Customers table second. Despite the order of the columns, both statements return identical data.
+
+Remember that SQL is not a procedural language. It doesn’t specify how a task is to be completed. SQL only indicates the desired logic, and leaves it to the internals of the database to decide exactly how to perform the required task. As such, SQL doesn’t determine how the database physically retrieves data. It doesn’t define which table to physically look at first. Instead, the database software determines the optimal method of obtaining the data.
+
+
+An Alternate Specification of Inner Joins
+
+In the previous examples, we used the INNER JOIN and ON keywords to specify inner joins. It is also possible to specify inner joins with just the FROM and WHERE clauses. We have already seen this statement that joins the Customers and Orders tables:
+SELECT *
+FROM Customers
+INNER JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+
+An alternate way of specifying the same inner join without the INNER JOIN and ON keywords is:
+
+SELECT *
+FROM Customers, Orders
+WHERE Customers.CustomerID = Orders.CustomerID
+
+
+In this alternate specification, rather than using the INNER JOIN keyword to define the new table to join to, we merely list all tables to be joined in the FROM clause. Instead of using the ON clause to say how the tables are related, we use the WHERE clause to specify the relationship between the tables.
+
+Even though this alternate format works perfectly well and produces the same results, we don’t recommend its use. The advantage of the INNER JOIN and ON keywords is that they explicitly present the logic of the join. That is their only purpose. Although it is possible to specify the relationship in a WHERE clause, the meaning of the SQL statement is less obvious when the WHERE clause is used for selection criteria and also to indicate relationships between multiple tables.
+
+
+Table Aliases Revisited
+
+Let’s now look at the columns that were returned from the previous SELECT statement. Because we specified all (*) columns, we see all columns from both tables. The CustomerID column appears twice because that column exists in both tables. In practice, however, we would not want this data repeated. Here’s an alternate version of the SELECT, which now specifies only
+the columns we want to see. In this variant, we employ table aliases, C for Customers and O for Orders, which are placed immediately after the FROM and INNER JOIN keywords by inserting the AS keyword. The statement looks like this:
+SELECT
+C.CustomerID AS 'Cust ID',
+C.FirstName AS 'First Name',
+C.LastName AS 'Last Name',
+O.OrderID AS 'Order ID',
+O.OrderDate AS 'Date',
+O.OrderAmount AS 'Amount'
+FROM Customers AS C
+INNER JOIN Orders AS O
+ON C.CustomerID = O.CustomerID
+
+The results are:
+
+Cust ID           First Name             Last Name             Order ID            Date                        Amount
+1                       Sara                          Davis                        1                          2016-09-01             10.00
+2                       Rumi                         Shah                         2                          2016-09-02             12.50
+2                       Rumi                         Shah                         3                          2016-09-03             18.00
+3                       Paul                          Johnson                   4                          2016-09-15             20.00
+
+
+In this statement, we’re displaying only the CustomerID from the Customers table, and not from the Orders table. Also notice that we’re using the AS keyword to specify both column and table aliases. Note that the AS keyword is completely optional. All of the AS keywords can be removed from this SELECT, and the statement would still be valid and return the same results. However, we recommend using the AS keywords for the sake of clarity.
+
+
+Database Differences: Oracle
+As mentioned in Chapter 3, “Calculated Fields and Aliases,” table aliases are specified in
+Oracle without the AS keyword. The syntax for the equivalent statement in Oracle is:
+SELECT
+C.CustomerID AS "Cust ID",
+C.FirstName AS "First Name",
+C.LastName AS "Last Name",
+O.OrderID AS "Order ID",
+O.OrderDate AS "Date",
+O.OrderAmount AS "Amount"
+FROM Customers C
+INNER JOIN Orders O
+ON C.CustomerID = O.CustomerID;
+Although we see the AS keyword used for column aliases, the AS keyword is not used for table aliases in Oracle.
+
+
+
+Looking Ahead
+
+The ability to join tables together in a query is an essential feature of SQL. Relational databases would be of little use without joins. This chapter focused on the formulation of the inner join. The inner join brings back data for which there is a match between both tables being joined. We also talked about an alternate way of specifying the inner join, and the usefulness of using table aliases.
+
+In our next chapter, we will turn to another important type of join: the outer join. As mentioned, inner joins only allow us to view data where there is a match between the tables being joined. So, if you have a customer with no orders, you won’t see any customer information when doing an inner join between a Customers table and an Orders table. The
+outer join will allow you to view that customer information, even if there are no orders for the customer. In other words, the outer join lets us see data that we would not otherwise be able
+to obtain with an inner join. Additionally, the next chapter will begin introducing scenarios in which more than two tables are joined.
+
+
+
+
+
+
+
+
+This page intentionally left blank
+12
+
+Outer Joins
+
+
+
+
+
+
+
+Keywords Introduced
+LEFT JOIN  •  RIGHT JOIN  •  FULL JOIN  •  CROSS JOIN
+
+We now advance from inner joins to outer joins. The main restriction of inner joins is
+that they require a match in all tables being joined to show any results. If you’re joining a Customers table to an Orders table, no data is shown for the customer if that customer hasn’t yet placed an order. This may seem like a relatively unimportant problem, but it often becomes significant with different types of data.
+
+To use a different example, let’s say we have an Orders table and a Refunds table. The Refunds table is related to the Orders table by OrderID. In other words, all refunds are tied to a specific order. The refund can’t exist unless the order exists. The problem arises when we want to see both orders and refunds in a single query. If we join these two tables with an inner join, we won’t see any orders if no refunds were issued against that order. Presumably, this would be the majority of the orders. The outer join allows us to view orders even if they don’t have a matching refund, and is therefore an essential technique to understand and use.
+
+
+The Outer Join
+
+All the joins seen in the previous chapter were inner joins. Because inner joins are the most common join type, SQL considers them the default join. You can specify an inner join using only the keyword JOIN; it isn’t necessary to state INNER JOIN.
+
+In contrast to inner joins, there are three types of outer joins: LEFT OUTER JOIN, RIGHT OUTER JOIN, and FULL OUTER JOIN. These can be referred to as simply LEFT JOIN, RIGHT JOIN, and FULL JOIN. In this case, the word OUTER isn’t necessary. To summarize, our recommendation is to refer to the four join types as:
+
+•   INNER JOIN
+•   LEFT JOIN
+•   RIGHT JOIN
+•   FULL JOIN
+
+
+This keeps the syntax simple and consistent. At the end of this chapter, we’ll also briefly illustrate something called the CROSS JOIN, but that join is neither an inner nor an outer join and is seldom used.
+
+We’ll use three tables in our examples of outer joins. The first will be a Customers table with information about each customer. The second will be an Orders table with data on each order placed. We’ll reference Customers and Orders tables with the same data seen in the previous chapter. Finally, we’ll add a Refunds table with information about any refunds that have been issued to customers.
+
+Figure 12.1 shows how these three tables are related.
+
+
+
+
+Figure 12.1    Entity-relationship diagram for three tables
+
+
+In contrast to the figure seen in the previous chapter, the lines connecting the tables are now shown as arrows. For example, the arrow drawn from the CustomerID field of the Customers table to the CustomerID field of the Orders table indicates that the link between the Customers and Orders table is possibly one-sided, in the sense that there may not be any orders for a given customer. Additionally, there may be multiple orders for a single customer. Similarly, the arrow drawn between the Orders and Refunds tables indicates that there may not be any refunds for a given order, and that there may be multiple refunds for an order.
+
+The line between the Customers and Orders table connects the CustomerID columns because that is the common link between the two tables. Similarly, the line between the Orders and Refunds tables is on the OrderID column because the OrderID is the common link between those two tables.
+
+In other words, the Orders table is related to the Customers table by customer. There must be a customer for an order to exist. The Refunds table is related to the Orders table by the order. There must be an order before a refund is issued. Note that the Refunds table is not directly related to the Customers table; those two tables don’t share a common field. However, by joining all three tables together, we will be able to determine which customer a given refund is for.
+
+Let’s now examine the contents of each table. The Customers table has these values:
+
+CustomerID            FirstName              LastName
+1                               Sara                          Davis
+2                               Rumi                         Shah
+3                               Paul                          Johnson
+4                               Samuel                     Martinez
+
+
+The Orders table has these values:
+
+OrderID               CustomerID                OrderDate              OrderAmount
+1                           1                                    2016-09-01             10.00
+2                           2                                    2016-09-02             12.50
+3                           2                                    2016-09-03             18.00
+4                           3                                    2016-09-15             20.00
+
+
+The Refunds table has these values:
+
+RefundID            OrderID                       RefundDate           RefundAmount
+1                           1                                    2016-09-02             5.00
+2                           3                                    2016-09-18             18.00
+
+
+Notice that only three out of the four customers have placed orders. Likewise, only two refunds have been issued for the four orders placed.
+
+
+Left Joins
+
+Let’s now create a SELECT statement that joins all three tables together using a LEFT JOIN:
+
+SELECT
+Customers.FirstName AS 'First Name',
+Customers.LastName AS 'Last Name',
+Orders.OrderDate AS 'Order Date',
+Orders.OrderAmount AS 'Order Amt',
+Refunds.RefundDate AS 'Refund Date',
+Refunds.RefundAmount AS 'Refund Amt'
+FROM Customers
+LEFT JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+LEFT JOIN Refunds
+ON Orders.OrderID = Refunds.OrderID
+ORDER BY Customers.LastName, Customers.FirstName, Orders.OrderDate
+
+The resulting data looks like:
+
+First Name        Last Name       Order Date          Order Amt         Refund Date       Refund Amt
+Sara                     Davis                  2016-09-01          10.00                 2016-09-02          5.00
+Paul                     Johnson             2016-09-15          20.00                 NULL                      NULL Samuel                Martinez             NULL                      NULL                   NULL                      NULL Rumi                    Shah                   2016-09-02          12.50                 NULL                      NULL Rumi                    Shah                   2016-09-03          18.00                 2016-09-18          18.00
+
+
+Database Differences: Oracle
+Unlike SQL Server and MySQL, Oracle typically displays dates in a DD-MMM-YY format. For example, the date 2016-09-02 in the previous table will display as 02-SEP-16 in Oracle. However, no matter which database you’re using, the exact format in which dates are displayed will vary, depending on how your database was set up.
+
+Before analyzing the previous SELECT statement, notice two interesting aspects of the data. First, Samuel Martinez has no data shown other than his name. The reason for the lack of data is that there are no rows in the Orders table associated with that customer. The power of the outer join becomes evident from the fact that we can see some data for Samuel Martinez, even if he has no orders. If we had specified an INNER JOIN rather than a LEFT JOIN, we would see no rows at all for Samuel.
+
+Similarly, there is no refund data for either the 9/2/2016 order from Rumi Shah or the order from Paul Johnson. This is because there are no rows in the Refunds table associated with these orders. If we had specified an INNER JOIN rather than a LEFT JOIN, we would have seen no rows at all for those two orders.
+
+Let’s now examine the SELECT statement itself. The first few lines that specify the columns are nothing we haven’t seen before. Notice that rather than using table aliases, we’ve chosen to list all the columns with their fully qualified names, including the table names as a prefix.
+
+The first table listed is the Customers table. This table is shown after the FROM keyword. The second table shown is the Orders table, which appears after the first LEFT JOIN
+keyword. The subsequent ON clause specifies how the Orders table is linked to the Customers table. The third table shown is the Refunds table, which appears after the second LEFT JOIN keyword. The subsequent ON clause states how the Refunds table is joined to the Orders table.
+
+It is critical to realize that the order in which tables are listed in reference to the LEFT JOIN keyword is significant. When specifying a LEFT JOIN, the table to the left of LEFT JOIN is always the primary table. The table to the right of LEFT JOIN is the secondary table. When joining the secondary table to the primary table, we want all rows in the primary table, even if there are no matches with any rows in the secondary table.
+
+In the first specified LEFT JOIN, the Customers table is on the left and the Orders table is on the right of the LEFT JOIN. This signifies that Customers is primary and Orders is secondary. In other words, we want to see all selected data from the Customers table, even if there isn’t a corresponding match in the secondary table for that row.
+
+Similarly, in the second LEFT JOIN, the Orders table is to the left and the Refunds table is to the right of the LEFT JOIN keyword. That means that we are specifying Orders as primary and Refunds as secondary in this join. We want all orders, even if there are no matching refunds for some orders.
+
+
+Just as with inner joins, data from one table can be repeated if there is more than one matching row between that table and the table to which it is joined. In this example, we have more than one order for Rumi Shah, so the customer information for Rumi Shah is repeated on two separate lines.
+
+Finally, we included an ORDER BY clause. This was done merely to present the data in an understandable order.
+
+
+Testing for NULL Values
+
+In the previous SELECT, we had one customer with no orders and two orders with no associated refunds. Unlike the INNER JOIN, the LEFT JOIN allows these rows with missing values to appear.
+
+To test our understanding of the LEFT JOIN, let’s now look at how we would list only those orders for which no refund was issued. The solution involves adding a WHERE clause that tests for NULL values, as follows:
+SELECT
+Customers.FirstName AS 'First Name',
+Customers.LastName AS 'Last Name',
+Orders.OrderDate AS 'Order Date',
+Orders.OrderAmount AS 'Order Amt'
+FROM Customers
+LEFT JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+LEFT JOIN Refunds
+ON Orders.OrderID = Refunds.OrderID
+WHERE Orders.OrderID IS NOT NULL
+AND Refunds.RefundID IS NULL
+ORDER BY Customers.LastName, Customers.FirstName, Orders.OrderDate
+
+The resulting data is:
+
+First Name             Last Name             Order Date             Order Amt
+Paul                          Johnson                   2016-09-15             20.00
+Rumi                         Shah                         2016-09-02             12.50
+
+
+The WHERE clause first tests Orders.OrderID to make sure that it isn’t NULL. Doing so ensures that we don’t see customers who never placed an order. The second line of the WHERE clause tests Refunds.RefundID to make sure that it is NULL. This guarantees that we only see orders that don’t have a matching refund.
+
+Notice that we didn’t bother to display the Refund Date or Refund Amount columns in this SELECT. This is because we know those columns would always have NULL values, based on our selection criteria.
+
+
+Right Joins
+
+The previous SELECT statements utilized the LEFT JOIN keyword. The good news about right joins is that they are identical in concept to the left join. The only difference between left and right joins is the order in which the two tables in the join are listed.
+
+In left joins, the primary table is listed to the left of the LEFT JOIN keyword. The secondary table, which may or may not contain matching rows, is listed to the right of the LEFT JOIN keyword.
+
+In right joins, the primary table is listed to the right of the RIGHT JOIN keyword. The secondary table is listed to the left of the RIGHT JOIN keyword. That’s the only difference.
+
+The FROM clause and joins in the previous SELECT statement were:
+
+FROM Customers
+LEFT JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+LEFT JOIN Refunds
+ON Orders.OrderID = Refunds.OrderID
+
+The equivalent logic, using RIGHT JOIN keywords is:
+
+FROM Refunds
+RIGHT JOIN Orders
+ON Orders.OrderID = Refunds.OrderID
+RIGHT JOIN Customers
+ON Customers.CustomerID = Orders.CustomerID
+
+Note that only the order in which tables are listed before and after the RIGHT JOIN matters. The order in which columns are listed after the ON keyword has no significance. Thus, the above is also equivalent to:
+FROM Refunds
+RIGHT JOIN Orders
+ON Refunds.OrderID = Orders.OrderID
+RIGHT JOIN Customers
+ON Orders.CustomerID = Customers.CustomerID
+
+In essence, if you’re comfortable with the LEFT JOIN, it’s completely unnecessary to ever use the RIGHT JOIN keyword. Anything that can be specified with a RIGHT JOIN can be stated as
+a LEFT JOIN. Our suggestion is therefore to stick with the LEFT JOIN, because it is usually more intuitive. Because we read from left to right, it’s natural to think in terms of listing the more important, or primary, tables first.
+
+
+Table Order in Outer Joins
+
+We noted previously that the order in which tables are specified in an inner join is not significant. The same is not true of outer joins, because the order in which tables are listed in
+a left or right join is significant. At the same time, there is some flexibility in listing the tables in situations where there are three or more tables. The order of the LEFT (or RIGHT) JOIN keywords can be switched around if desired.
+
+Let’s look again at the original FROM clause and joins from the previous select:
+
+FROM Customers
+LEFT JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+LEFT JOIN Refunds
+ON Orders.OrderID = Refunds.OrderID
+
+We’ve already seen that the Refunds table can be listed first and the Customers table last, as long as everything is converted to right joins, as in:
+FROM Refunds
+RIGHT JOIN Orders
+ON Orders.OrderID = Refunds.OrderID
+Right JOIN Customers
+ON Customers.CustomerID = Orders.CustomerID
+
+Is it possible to list the Customers table first, and then the Refunds table, followed by the Orders table? Yes, as long as you’re willing to mix left and right joins together and also throw in some parentheses. The following is equivalent to the above:
+FROM Customers
+LEFT JOIN (Refunds
+RIGHT JOIN Orders
+ON Orders.OrderID = Refunds.OrderID)
+ON Customers.CustomerID = Orders.CustomerID
+
+What was a fairly simple statement has now turned into something unnecessarily complex. We only show this logic to indicate what not to do, and also because it’s something that you may encounter when reviewing code. Our advice is to stick with the LEFT JOIN keyword and avoid parentheses when devising complex FROM clauses with multiple tables.
+
+
+Full Joins
+
+In addition to left joins and right joins, there is one additional outer join type, referred to as the full join. We’ve seen that in left and right joins, one table is primary and the other is secondary. Alternatively, you can say that one table is required and one is optional, which means that when matching two tables, rows in the secondary (or optional) table don’t necessarily have to exist.
+
+In the inner join, both tables are primary (or required). When matching two tables, there must be a match between both tables for a row of data to be selected.
+
+
+In the full join, both tables are secondary (or optional). In this situation, if we’re matching rows in Table A and Table B, then we display 1) all rows from Table A, even if there is no matching row in Table B, and also 2) all rows from Table B, even if there is no matching row in Table A.
+
+
+Database Differences: MySQL
+Unlike SQL Server and Oracle, MySQL doesn’t allow for a full join.
+
+Let’s look at an example in which we are matching rows from these two tables. First, we have this Movies table:
+
+MovieID                  MovieTitle                                    Rating
+1                               Love Actually                                  R
+2                               North by Northwest                       Not Rated
+3                               Love and Death                             PG
+4                               The Truman Show                         PG
+5                               Everyone Says I Love You            R
+6                               Down with Love                             PG-13
+7                               Finding Nemo                                G
+
+
+Second, here’s a Ratings table, with rating descriptions from the Motion Picture Association of
+America (MPAA):
+
+RatingID                 Rating                     RatingDescription
+1                               G                               General Audiences
+2                               PG                             Parental Guidance Suggested
+3                               PG-13                       Parents Strongly Cautioned
+4                               R                               Restricted
+5                               NC-17                       Under 17 Not Admitted
+
+
+The Movies table has a list of movies in the database and includes the MPAA rating for each movie. The Ratings table has a list of the ratings and their descriptions. Let’s say we want to find all matches between these two tables. We’ll use a FULL JOIN to show all rows from the Movies table as well as all rows from the Ratings table. The full join will display all rows, even if a match from the other table isn’t found. The SELECT looks like this:
+SELECT
+RatingDescription AS 'Rating Description',
+MovieTitle AS 'Movie'
+FROM Movies
+FULL JOIN Ratings
+ON Movies.Rating = Ratings.Rating
+ORDER BY RatingDescription, MovieTitle
+
+
+The output of this statement is:
+
+Rating Description                                Movie
+NULL                                                           North by Northwest General Audiences                                   Finding Nemo Parental Guidance Suggested                Love and Death Parental Guidance Suggested                The Truman Show Parents Strongly Cautioned                    Down with Love
+Restricted                                                  Everyone Says I Love You
+Under 17 Not Admitted                           NULL
+
+
+Notice that there are two NULL cells in the data, which is a direct result of having used a FULL JOIN. In the first instance, there is no rating shown for North by Northwest because there was
+no matching row in the Ratings table for that movie. In the second instance, there is no movie shown for the “Under 17 Not Admitted” rating description because there were no matching rows in the Movies table for that rating.
+
+As a side note, observe that we chose not to use table aliases or specify table names in the
+columnlist. For example, we listed the column MovieTitle as is, without the fully qualified
+name (Movies.MovieTitle). This is because these columns exist only in one table, so there is no confusion in specifying a column name without the table name.
+
+The FULL JOIN is seldom used in practice for the simple reason that this type of relationship between tables is relatively uncommon. In essence, the full join shows data where there are nonmatches in both directions between two tables. We are normally interested only in data where there is a complete match between two tables (the inner join) or perhaps a one-sided match (the left or right join).
+
+
+Cross Joins
+
+The final join type to be discussed in this chapter, the cross join, is neither an inner join nor an outer join. In essence, the cross join is a way of joining two tables without indicating any relationship between the tables. Because no relationship is stated, the cross join produces every combination of rows between the tables. In technical terms, this is referred to as the Cartesian product. If one table has three rows and a second table has four rows, and those tables are cross joined, the result will have 12 rows. Because of the esoteric nature of this join, it is seldom used in practice.
+
+
+With that in mind, let’s look at two examples of the cross join. In this first example, we’ll imagine that we’re a shirt maker, and we produce shirts in three sizes and in four colors.
+A SizeInventory table holds the available sizes and looks like this:
+
+SizeID                     Size
+1                               Small
+2                               Medium
+3                               Large
+
+
+A ColorInventory table lists the available colors, and includes this data:
+
+ColorID                   Color
+1                               Red
+2                               Blue
+3                               Green
+4                               Yellow
+
+
+We want to determine all of the possible combinations of shirt sizes and colors that can be produced. This can be accomplished by the following SELECT statement, using a cross join:
+SELECT Size, Color
+FROM SizeInventory
+CROSS JOIN ColorInventory
+
+The resulting output is:
+
+Size                         Color Small                        Red Small                        Blue
+Small                        Green
+Small                        Yellow Medium                    Red Medium                    Blue Medium                    Green Medium                    Yellow Large                        Red Large                        Blue Large                        Green Large                        Yellow
+
+
+As you can see, the cross join produces every combination of rows from both tables. Notice that there is no ON keyword in a cross join. This is because no relationship between the tables is specified. The tables don’t have a column in common. The data in both tables is independent
+of each other.
+
+Interestingly, the cross join can also be specified in the “alternate” specification format discussed in the previous chapter. That is, the cross join can be indicated by merely listing both tables in the FROM clause, without the use of the CROSS JOIN keyword. The following SELECT is the equivalent of the previous CROSS JOIN statement and produces the same output:
+SELECT Size, Color
+FROM SizeInventory, ColorInventory
+The preceding cross join example represents a situation that’s not very realistic. However, this second example indicates a somewhat more common use of the cross join. For this example, we’ll imagine that we have a special table with only one row of data that contains certain key pieces of information. Because that table has only one row of data, we can do a cross join to the table without increasing the number of rows in the final result. To illustrate, we’ll use this SpecialDates table that contains a number of dates relevant to the organization:
+
+LastProcessDate              CurrentFiscalYear               CurrentFiscalQuarter
+2016-09-15                        2016                                      Q3
+
+
+In this scenario, we want to select data from our Orders table. However, we only want to see data for the LastProcessDate in the SpecialDates table. The LastProcessDate is a frequently changing date that gives the date of the last group of data processed in the system. The assumption is that there may be some sort of lag, so this may not be the current date. This statement, utilizing a cross join, accomplishes that objective.
+SELECT
+OrderID AS 'Order ID',
+OrderDate AS 'Date',
+OrderAmount AS 'Amount'
+FROM Orders
+CROSS JOIN SpecialDates
+WHERE OrderDate = LastProcessDate
+
+The resulting output is:
+
+Order ID                  Date                        Amount
+4                               2016-09-15             20.00
+
+
+Only one row of data from the Orders table is shown. This is because we’ve used the LastProcessDate of the SpecialDates table as part of the selection logic. Note that because the SpecialDates table has only one row, there is no harm in doing a cross join to this table. It doesn’t affect the number of rows displayed.
+
+
+Looking Ahead
+
+This chapter extended our discussion of joins to outer joins. The left join enables the analyst to join a primary and secondary table together, showing all rows in the primary table even if there is no match in the secondary table. The right join is simply the reverse of the left join, switching the order of the primary and secondary tables. Finally, the full join enables both tables to be secondary tables. The full join displays all rows in either table, even if there is no match in the other table. We also talked about the cross join, a seldom used join type that shows all combinations of rows from both tables being joined. In a cross join, the relationship between the tables, if one exists, is not stated.
+
+In our next chapter, “Self Joins and Views,” we’ll take another slight detour to two related topics. First, we’ll discuss self joins, which is a special technique that allows us to join a table to itself. This creates a virtual view of the table, in the sense that we can now view this table
+from two different perspectives. The second main topic of the following chapter will extend the concept of self joins to a more general way of creating virtual views of multiple tables.
+13
+
+Self Joins and Views
+
+
+
+
+
+
+
+Keywords Introduced
+CREATE VIEW  •  ALTER VIEW  •  DROP VIEW
+
+The inner and outer joins of the previous two chapters dealt with various ways of combining data from multiple tables. The assumption has always been that the data exists in physical tables in a database. We’ll now turn to two techniques that will let us view data in a more virtual way. The first technique, the self join, allows the analyst to join a table to itself, referring to the same table twice, as if it were two separate tables. As such, the self join creates a virtual view of a table, allowing it to be used more than once. Second, we’ll learn about database views, which is a useful concept that enables us to create new virtual tables at will.
+
+
+Self Joins
+
+The self join lets you join a table to itself. The most common use of the self join is in dealing with self-referencing tables. These are tables that include a column that refers to another column in the same table. A common example of this type of relationship is a table that contains information about employees.
+
+In this next example, each row in a Personnel table has a column that points to another row
+in the same table, representing the employee’s manager. In a way, this is similar to the concept of foreign keys. The main difference is that, whereas foreign keys point to a column in another table, we now have a situation where a column points to another column within the same table.
+
+
+Let’s look at the data in this Personnel table:
+
+EmployeeID      EmployeeName                ManagerID
+1                          Susan Carter                      NULL
+2                          Li Wang                                1
+3                          Robert Baker                      1
+4                          Scott Fielding                     1
+5                          Carla Bender                      2
+6                          Janet Brown                        2
+7                          Jules Moreau                      3
+8                          Amy Adamson                     4
+9                          Jaideep Singh                     4
+10                       Amelia Williams                 5
+
+
+This table has one row per employee. The ManagerID column states which manager the employee reports to. The ID number in that column corresponds to a value in the EmployeeID column. For example, Li Wang has a ManagerID of 1. This indicates that Li’s manager is Susan Carter, who has an EmployeeID of 1.
+
+We can see that the three people who report to Susan Carter are Li Wang, Robert Baker, and Scott Fielding. Notice that Susan Carter has no value in the ManagerID column. This indicates that she is the head of the company and thus has no manager.
+
+Now, let’s say that we want to list all employees and show the name of the manager to whom each employee reports. To accomplish this, we’ll create a self-join of the Personnel table to itself. A table alias must always be used with self joins so that we have a way of distinguishing each instance of the table. We’ll give the first instance of the Personnel table a table alias of Employees, and we’ll give the second instance a table alias of Managers. Here’s the statement:
+SELECT
+Employees.EmployeeName AS 'Employee Name',
+Managers.EmployeeName AS 'Manager Name'
+FROM Personnel AS Employees
+INNER JOIN Personnel AS Managers
+ON Employees.ManagerID = Managers.EmployeeID
+ORDER BY Employees.EmployeeName
+
+The resulting data is:
+
+Employee Name         Manager Name Amelia Williams            Carol Bender Amy Adamson               Scott Fielding
+Carla Bender                 Li Wang
+Jaideep Singh               Scott Fielding
+Janet Brown                  Li Wang
+Jules Moreau                Robert Baker Li Wang                          Susan Carter Robert Baker                Susan Carter Scott Fielding                Susan Carter
+
+
+The trickiest part of this SELECT is the ON clause in the join. To get the self join to work correctly, we must use the ON to establish a relationship between the ManagerID column of the Employees view of the Personnel table, and the EmployeeID column of the Managers view of the table. In other words, the indicated manager is also an employee.
+
+Notice that Susan Carter isn’t shown in the previous data as an employee. This is because we used an inner join in the statement. Because Susan Carter has no manager, there is no match to the Managers view of the table. If we want Susan Carter to be included, we merely need to change the inner join to an outer join. The new statement is:
+SELECT
+Employees.EmployeeName AS 'Employee Name',
+Managers.EmployeeName AS 'Manager Name'
+FROM Personnel AS Employees
+LEFT JOIN Personnel AS Managers
+ON Employees.ManagerID = Managers.EmployeeID
+ORDER BY Employees.EmployeeName
+
+The data retrieved is then:
+
+Employee Name         Manager Name Amelia Williams            Carol Bender Amy Adamson               Scott Fielding
+Carla Bender                 Li Wang
+Jaideep Singh               Scott Fielding
+Janet Brown                  Li Wang
+Jules Moreau                Robert Baker Li Wang                          Susan Carter Robert Baker                Susan Carter Scott Fielding                Susan Carter Susan Carter                NULL
+
+
+
+Creating Views
+
+The self join allows you to create multiple views of the same table. We’ll now extend this concept, allowing us to create new views of any table or combination of tables.
+
+Views are merely SELECT statements that have been saved in a database. Once saved, the view can be referred to as if it were a table in the database. Database tables contain physical data; views do not contain data but allow you to proceed as if a view were a real table with data. Views can therefore be thought of as virtual tables. Additionally, views are permanent, not temporary. Once created, a view continues to be referenced until the view itself is deleted.
+
+You might ask why views are necessary. We’ll get into the benefits of views later in the chapter, but in short, views provide added flexibility as to how data can be accessed. Whether a database has been around for a few days or for years, the data in that database is stored in tables in a
+very specific manner. As time progresses, requirements for accessing that data change, but it
+
+
+isn’t a trivial matter to reorganize the tables to meet new requirements. The great advantage of views is that they allow the analyst to create new virtual views of the data already in a database. Views allow you to create the equivalent of new tables without having to physically rearrange data. As such, views add a dynamic element to a database design by keeping it fresh and up to date.
+
+How is a view stored in a database? All relational databases consist of a number of different object types. The most important object type is the table. However, most database management software allows users to save any number of other object types. The most common of these are views and stored procedures. There are often many other object types in a database, such as functions and triggers.
+
+SQL provides the CREATE VIEW keyword to enable users to create new views. The general syntax is as follows:
+CREATE VIEW ViewName AS
+SelectStatement
+
+After the view is created, the ViewName is used to reference the data that would be returned from the SelectStatement in the view. Here’s an example. In the previous chapter, we looked at this SELECT statement:
+SELECT
+Customers.FirstName AS 'First Name',
+Customers.LastName AS 'Last Name',
+Orders.OrderDate AS 'Order Date',
+Orders.OrderAmount AS 'Order Amt',
+Refunds.RefundDate AS 'Refund Date',
+Refunds.RefundAmount AS 'Refund Amt'
+FROM Customers
+LEFT JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+LEFT JOIN Refunds
+ON Orders.OrderID = Refunds.OrderID
+ORDER BY Customers.LastName, Customers.FirstName, Orders.OrderDate
+
+This statement returned this data:
+
+First Name       Last Name        Order Date          Order Amt         Refund Date        Refund Amt
+Sara                    Davis                   2016-09-01          10.00                 2016-09-02           5.00
+Paul                     Johnson              2016-09-15          20.00                 NULL                      NULL Samuel               Martinez             NULL                      NULL                   NULL                      NULL Rumi                   Shah                   2016-09-02          12.50                 NULL                      NULL Rumi                   Shah                   2016-09-03          18.00                 2015-09-18           18.00
+
+
+To set up this SELECT statement as a view, we simply place the entire SELECT in a CREATE VIEW statement, as follows:
+CREATE VIEW CustomersOrdersRefunds AS SELECT
+Customers.FirstName AS 'First Name', Customers.LastName AS 'Last Name', Orders.OrderDate AS 'Order Date', Orders.OrderAmount AS 'Order Amt', Refunds.RefundDate AS 'Refund Date', Refunds.RefundAmount AS 'Refund Amt' FROM Customers
+LEFT JOIN Orders
+ON Customers.CustomerID = Orders.CustomerID
+LEFT JOIN Refunds
+ON Orders.OrderID = Refunds.OrderID
+
+The only item missing in the above CREATE VIEW is the ORDER BY clause of the original SELECT statement. Because views aren’t stored as physical data, there is never a reason to include an ORDER BY clause for a view.
+
+
+Referencing Views
+
+When we execute the above CREATE VIEW statement, it creates a view called CustomersOrdersRefunds. Creating the view does not return any data. It merely defines the view for later use. To use the view to bring back data as before, you would execute this SELECT statement:
+SELECT *
+FROM CustomersOrdersRefunds
+
+This retrieves:
+
+First Name       Last Name        Order Date          Order Amt         Refund Date        Refund Amt
+Sara                    Davis                   2016-09-01          10.00                 2016-09-02           5.00
+Rumi                   Shah                   2016-09-02          12.50                 NULL                      NULL Rumi                   Shah                   2016-09-03          18.00                 2015-09-18           18.00
+Paul                     Johnson              2016-09-15          20.00                 NULL                      NULL Samuel               Martinez             NULL                      NULL                   NULL                      NULL
+
+
+Notice that this data is displayed in a different row order than what was originally retrieved. This is because the view does not contain an ORDER BY clause. As a result, the data is returned in the order in which it is physically stored in the database. This is easily corrected by adding an ORDER BY clause to the SELECT, as follows:
+SELECT *
+FROM CustomersOrdersRefunds
+ORDER BY [Last Name], [First Name], [Order Date]
+
+
+This now returns the data in the expected order. Remember that columns in views must be referenced by the column aliases specified when the view was created. We can no longer reference the original column names. In this example, the CustomersOrdersRefunds view applied a column alias of “Last Name” to the LastName column in the Customers table.
+We therefore need to reference the column alias in the ORDER BY clause. As mentioned in
+Chapter 2, we need to include brackets around each of these column names in the ORDER BY clause to allow for correct interpretation of the embedded spaces.
+
+
+Database Differences: MySQL and Oracle
+MySQL and Oracle use different characters around columns containing spaces. MySQL uses the accent grave (`). Oracle uses double quotes (").
+
+Once a view is created, it can be referenced and utilized just like any other table. For example, we might want to see only a few selected columns from the view and select only one specific customer. To do that, we can issue a SELECT statement such as:
+SELECT
+[First Name],
+[Last Name],
+[Order Date]
+FROM CustomersOrdersRefunds
+WHERE [Last Name] = 'Shah'
+
+The output is:
+
+First Name             Last Name             Order Date
+Rumi                         Shajh                        2016-09-02
+Rumi                         Shah                         2016-09-03
+
+
+As before, we need to place square brackets around each of the column names because they contain embedded spaces.
+
+
+Benefits of Views
+
+The previous example illustrates one of the important benefits of using views. Once a view is created, that view can be referenced just as if it were a table. Even if the view references multiple tables joined together, it now appears, logically, to be just one table.
+
+Let’s summarize the benefits of using views:
+
+•   Views can reduce complexity. First, views can simplify SELECT statements that are particularly complex. For example, if you have a SELECT statement that joins six tables together, it might be useful to create views with two or three tables each. You can then reference those views in a SELECT statement that is less complex than the original.
+
+
+•   Views can increase reusability. In a situation where three tables are always joined together, you can create a view with those three tables. Then, instead of always having to join those three tables every time you query data, you can simply reference a predefined view.
+•   Views can properly format data. If columns are incorrectly formatted in the database, you can use the CAST or other functions to format that column exactly as desired. For example, you might have a date column stored as an integer datatype in the database, in a YYYYMMDD format. It might be advantageous to view this data as a date/time column so it can be presented and manipulated as a true date. To accomplish this, you can create a view on the table that transforms the column to the proper format. All subsequent references to that table can then reference the new view rather than the table.
+•   Views can create calculated columns. Suppose two columns in a table include Quantity and PricePerItem. End users are usually interested in the total price, which is calculated
+by multiplying the two columns together. You can create a view of the original table with a new calculated column with this calculation. Users can then reference the view and always have the calculation available.
+•   Views can be used to rename column names. If a database contains cryptic column names, you can create views with column aliases to translate those names into something more meaningful.
+•   Views can create a subset of data. Let’s say a database contains a table with all of your customers. Most of your users need only to see customers who have placed an order during the prior year. You can easily create a view of this table that includes this useful subset of data.
+•   Views can be used to enforce security restrictions. Often you want certain users to be able to access only certain columns in a given table. To accomplish this, you can create
+a view of the table for those users. The security features of the database can then be used to grant access to the new view for those users, while restricting them from accessing the underlying table.
+
+
+Modifying and Deleting Views
+
+After a view is created, it can be easily modified using the ALTER VIEW statement. Here’s the general syntax:
+ALTER VIEW ViewName AS
+SelectStatement
+
+When altering a view, you must specify the entire SELECT statement contained in the view. The original SELECT in the view gets replaced by the new SELECT. Let’s say we originally created a view with this statement:
+CREATE VIEW CustomersView AS SELECT
+FirstName AS 'First Name', LastName as 'Last Name' FROM Customers
+
+
+To add a new column to this view for a CustomerID, we would issue a statement such as:
+
+ALTER VIEW CustomersView AS SELECT
+FirstName AS 'First Name', LastName AS 'Last Name', CustomerID AS 'Cust ID' FROM Customers
+Once again, creating or altering a view does not return any data. It merely creates or modifies the definition of the view.
+
+
+Database Differences: Oracle
+Unlike SQL Server and MySQL, the ALTER VIEW command in Oracle is more restrictive. To accomplish the previous ALTER VIEW in Oracle, you need to issue a DROP VIEW and then a CREATE VIEW with the new definition.
+
+The DROP VIEW statement is used to delete a previously created view. The syntax is:
+
+DROP VIEW ViewName
+
+To delete the CustomersView created earlier, we can issue this statement:
+
+DROP VIEW CustomersView
+
+
+Looking Ahead
+
+Self joins and views are two different ways of viewing data in a virtual manner. The self join allows the analyst to join a table to itself. Self joins are useful with self-referential data, where one column in a table can be joined to another column in the same table.
+
+Database views are much more flexible. Essentially, any SELECT statement can be saved as a view, which can then be referenced as if it were a physical table. Unlike tables, views do not contain any data. They merely define a new virtual view of data in existing tables. As such, views serve a wide variety of functions, from reducing complexity to reformatting data. Once created, views can be modified or deleted with the ALTER VIEW and DELETE VIEW statements.
+
+In our next chapter, “Subqueries,” we’ll return to a topic more directly related to our previous discussion of how to join tables together. Subqueries provide a method of relating tables to each other without making explicit use of an inner or outer join. Because of the wide variety of ways that subqueries can be structured and used, this is probably the most difficult subject
+in this book. However, an understanding of subqueries can be tremendously rewarding. There’s actually quite a bit of flexibility in how subqueries can be used. As such, this lends itself to a certain amount of creativity in your query designs.
+14
+
+Subqueries
+
+
+
+
+
+
+
+Keywords Introduced
+EXISTS  •  WITH
+
+In Chapter 4, we talked about composite functions: functions that contained other functions. Similarly, SQL queries can contain other queries. Queries contained within other queries are called subqueries.
+
+The topic of subqueries is somewhat complex, primarily because there are many different ways in which they can be used. Subqueries can be found in many different parts of the SELECT statement, each with different nuances and requirements. As a query contained within another query, a subquery can be related to and dependent on the main query, or it can be completely independent of the main query. Again, this distinction results in different requirements for their usage.
+
+No matter how subqueries are used, they add a great deal of flexibility to the ways in which you can write SQL queries. Often, subqueries provide functionality that could be accomplished by other means. In such instances, personal preference will come into play as you decide whether or not to utilize the subquery solution. However, as you’ll see, in certain situations subqueries are absolutely essential for the task at hand.
+
+With that said, let’s begin our discussion with an outline of the basic types of subqueries.
+
+
+Types of Subqueries
+
+Subqueries can be used not only with SELECT statements but also with the INSERT, UPDATE, and DELETE statements that will be covered in Chapter 17, “Modifying Data.” In this chapter, however, we’ll restrict our discussion of subqueries to the SELECT statement.
+
+
+Here’s the general SELECT statement we’ve seen previously:
+
+SELECT columnlist FROM tablelist WHERE condition
+GROUP BY columnlist HAVING condition ORDER BY columnlist
+
+Subqueries can be inserted into virtually any of the clauses in the SELECT statement. However, the way in which the subquery is stated and used varies slightly, depending on whether it is used in a columnlist, tablelist, or condition.
+
+But what exactly is a subquery? A subquery is merely a SELECT statement that has been inserted inside another SQL statement. The results returned from the subquery are used within the context of the overall SQL query. Additionally, there can be more than one subquery in a SQL statement. To summarize, subqueries can be specified in three main ways:
+
+•   When a subquery is part of a tablelist, it specifies a data source. This applies to situations where the subquery is part of a FROM clause.
+•   When a subquery is part of a condition, it becomes part of the selection criteria. This applies to situations where the subquery is part of a WHERE or HAVING clause.
+•   When a subquery is part of a columnlist, it creates a single calculated column. This applies to situations where the subquery is part of a SELECT, GROUP BY, or ORDER BY clause.
+
+The remainder of this chapter explains each of these three scenarios in detail.
+
+
+Using a Subquery as a Data Source
+
+When a subquery is specified as part of the FROM clause, it instantly creates a new data source. This is similar to the concept of creating a view and then referencing that view in a SELECT.
+The only difference is that a view is permanently saved in a database. A subquery used as a data source isn’t saved. It exists only temporarily, as part of the SELECT statement. Nevertheless, you can think of a subquery in a FROM clause as a type of virtual view.
+Let’s first consider an example that illustrates how subqueries can be used as a data source. Let’s say we have this Users table:
+
+UserID                     UserName
+1                               Cecilia Rodriguez
+2                               Elaine Bundy
+3                               Rakesh Gupta
+4                               April Waters
+
+
+We also have this Transactions table:
+
+TransactionID         UserID          TransactionAmount         TransactionType
+1                               1                    22.25                                  Cash
+2                               2                    11.75                                  Credit
+3                               2                    5.00                                     Credit
+4                               2                    8.00                                     Cash
+5                               3                    9.33                                     Credit
+6                               3                    10.11                                  Credit
+
+
+This data is actually quite similar to the Customers and Orders tables we’ve seen in previous chapters. The Users table resembles the Customers table, except that we’ve combined the first and last names into a single column. The Transactions table has entries similar to orders, except that we’ve added a TransactionType column, indicating whether the transaction was cash or credit. We’ve also dispensed with the date column that would normally be present.
+
+We would like to see a list of users, along with a total sum of the cash transactions they have placed. The following SELECT accomplishes that task:
+SELECT
+UserName AS 'User Name',
+ISNULL(CashTransactions.TotalCash, 0) AS 'Total Cash'
+FROM Users
+LEFT JOIN
+
+(SELECT UserID,
+SUM(TransactionAmount) AS 'TotalCash' FROM Transactions
+WHERE TransactionType = 'Cash'
+GROUP BY UserID) AS CashTransactions
+
+ON Users.UserID = CashTransactions.UserID ORDER BY Users.UserID
+Two blank lines were inserted to clearly separate the subquery from the rest of the statement. The subquery is the middle section of the statement. The results are:
+
+User Name                  Total Cash
+Cecilia Rodriguez          22.25
+Elaine Bundy                 8.00
+Rakesh Gupta               0
+April Waters                   0
+
+
+April Waters shows no cash transactions, because she made no transactions at all. Although Rakesh Gupta has two transactions, they were both credit transactions, so he also shows no cash. Note that the ISNULL function converts the NULL values that would normally appear for Rakesh and April to a 0.
+
+
+Let’s now analyze how the subquery works. The subquery in the previous statement is:
+
+SELECT UserID,
+SUM(TransactionAmount) AS 'TotalCash' FROM Transactions
+WHERE TransactionType = 'Cash' GROUP BY UserID
+
+In general form, the main SELECT statement in the above is:
+
+SELECT
+UserName AS 'User Name'
+ISNULL(CashTransactions.TotalCash, 0) AS 'Total Cash'
+FROM Users
+LEFT JOIN (subquery) AS CashTransactions
+ON Users.UserID = CashTransactions.UserID
+ORDER BY Users.UserID
+
+If the subquery were executed on its own, the results would be:
+
+UserID                     TotalCash
+1                               22.25
+2                               8.00
+
+
+We see data for only users 1 and 2. The WHERE clause in the subquery enforces the requirement that we look only at cash orders.
+
+The entire subquery is then referenced as if it were a separate table or view. Notice that the subquery is given a table alias of CashTransactions. This allows the columns in the subquery to be referenced in the main SELECT. As such, the following line in the main SELECT references data in the subquery:
+ISNULL(CashTransactions.TotalCash, 0) AS 'Total Cash'
+
+CashTransactions.TotalCash is a column taken from the subquery.
+
+You might ask whether it was truly necessary to use a subquery to obtain the desired data. In this case, the answer is yes. We might have attempted to simply join the Users and Transactions tables via a LEFT JOIN, as in the following:
+SELECT
+UserName AS 'User Name',
+SUM(TransactionAmount) AS 'Total Cash Transactions'
+FROM Users
+LEFT JOIN Transactions
+ON Users.UserID = Transactions.UserID
+WHERE TransactionType = 'Cash'
+GROUP BY Users.UserID, Users.UserName
+ORDER BY Users.UserID
+
+
+However, this statement yields the following data:
+
+User Name                  Total Cash
+Cecilia Rodriguez          22.25
+Elaine Bundy                 8.00
+
+
+We no longer see any rows for Rakesh Gupta or April Waters, because the WHERE clause exclusion for cash orders is now in the main query rather than in a subquery. As a result, we don’t see any data for people who didn’t place cash orders.
+
+
+Using a Subquery in Selection Criteria
+
+In Chapter 7, we introduced the first format of the IN operator. The example we used was:
+
+WHERE State IN ('IL', 'NY')
+
+In this format, the IN operator merely lists a number of values in parentheses. There is
+also a second format for the IN, in which an entire SELECT statement is inserted inside the parentheses. For example, a list of states might be specified as:
+WHERE State IN (SELECT
+States
+FROM StateTable
+WHERE Region = 'Midwest')
+
+Rather than list individual states, this second format allows us to generate a dynamic list of states through more complex logic.
+
+Let’s illustrate with an example that uses the Users and Transactions tables. In this scenario, we want to retrieve a list of users who have ever paid cash for any transaction. A SELECT that accomplishes this is:
+SELECT UserName AS 'User Name' FROM Users
+WHERE UserID IN (SELECT UserID FROM Transactions
+WHERE TransactionType = 'Cash')
+
+The resulting data is:
+
+User Name Cecilia Rodriguez Elaine Bundy
+
+
+Rakesh Gupta is not included in the list because, although he has transactions, none of them were in cash. Notice that the subquery SELECT is placed entirely within the parentheses for the IN keyword. There is only one column, UserID, in the columnlist of the subquery. This
+is a requirement, because we want the subquery to produce the equivalent of a list of values for only one column. Also note that the UserID column is used to connect the two queries. Although we’re displaying UserName, we’re using UserID to define the relationship between the Users and Transactions tables.
+
+Once again, we can ask whether it’s necessary to use a subquery, and this time the answer is no. Here is an equivalent query that returns the same data.
+SELECT UserName AS 'User Name' FROM Users
+INNER JOIN Transactions
+ON Users.UserID = Transactions.UserID
+WHERE TransactionType = 'Cash'
+GROUP BY Users.UserName
+
+Without using a subquery, we can directly join the Users and Transactions tables. However, a GROUP BY clause is now needed to ensure that we bring back only one row per user.
+
+
+Correlated Subqueries
+
+The subqueries we’ve seen so far have been uncorrelated subqueries. Generally speaking, all subqueries can be classified as either uncorrelated or correlated. These terms describe whether the subquery is related to the query in which it is contained. Uncorrelated subqueries are unrelated. When a subquery is unrelated, that means it is completely independent of the outer query. Uncorrelated subqueries are evaluated and executed only once as part of the entire SELECT statement. Furthermore, uncorrelated subqueries can stand on their own. If you wanted to, you could execute an uncorrelated subquery as a separate query.
+
+In contrast, correlated subqueries are specifically related to the outer query. Because of this explicit relationship, correlated subqueries must be evaluated for each row returned and can produce different results each time the subquery is executed. Correlated subqueries can’t
+be executed on their own, because some element in the query makes it dependent on the outer query.
+
+The best way to explain is with an example. Returning to the Users and Transactions tables, let’s say we want to produce a list of users who have a total transaction amount less than
+20 dollars. Here’s a statement that accomplishes that request:
+
+SELECT
+UserName AS 'User Name'
+FROM Users
+WHERE
+(SELECT
+SUM(TransactionAmount)
+FROM Transactions
+WHERE Users.UserID = Transactions.UserID)
+< 20
+
+
+The result is:
+
+User Name
+Rakesh Gupta
+
+
+What makes this subquery correlated, as opposed to uncorrelated? The answer can be seen by looking at the subquery itself:
+SELECT SUM(TransactionAmount) FROM Transactions
+WHERE Users.UserID = Transactions.UserID
+
+This subquery is correlated because it cannot be executed on its own. If run by itself, this subquery would produce an error because the Users.UserID column in the WHERE clause doesn’t exist within the context of the subquery. To understand what's going on, it’s helpful to look at the entire SELECT statement in a more general way:
+SELECT
+UserName AS 'User Name'
+FROM Users
+WHERE
+SubqueryResult < 20
+
+The subquery returns a columnlist with a single value, which we’re calling SubqueryResult. As
+a correlated subquery, the subquery must be evaluated for each user. Also, note that this type of subquery demands that it only returns a single row and a single value. The SubqueryResult couldn’t be evaluated if there were more than one row or value involved.
+
+As before, you might ask whether a subquery is necessary, and once again the answer is no. Here’s an equivalent statement that produces the same result:
+SELECT
+UserName AS 'User Name'
+FROM Users
+LEFT JOIN Transactions
+ON Users.UserID = Transactions.UserID
+GROUP BY Users.UserID, Users.UserName
+HAVING SUM(TransactionAmount) < 20
+
+Notice, however, that without a subquery, the equivalent statement now requires GROUP BY and HAVING clauses. The GROUP BY clause creates groups of users, and the HAVING clause enforces the requirement that each group must have transacted less than 20 dollars.
+
+
+The EXISTS Operator
+
+An additional technique associated with correlated subqueries uses a special operator called EXISTS. This operator allows you to determine whether data in a correlated subquery exists. Let’s say that we want to discover which users have made any transactions. This can be accomplished with the use of the EXISTS operator in this statement:
+SELECT
+UserName AS 'User Name'
+FROM Users
+WHERE EXISTS
+(SELECT *
+FROM Transactions
+WHERE Users.UserID = Transactions.UserID)
+
+This statement returns:
+
+User Name Cecilia Rodriguez Elaine Bundy
+Rakesh Gupta
+
+
+This is a correlated subquery because it cannot be executed on its own without reference to
+the main query. The EXISTS keyword in the above statement is evaluated as true if the SELECT in the correlated subquery returns any data. Notice that the subquery selects all columns (SELECT *). Because it doesn't matter which particular columns are selected in the subquery,
+we use the asterisk to return all columns. We’re interested only in determining whether any data exists in the subquery. The result is that the query returns all users except April Waters. She doesn't appear because she has made no transactions.
+
+As before, the logic in this statement can be expressed in other ways. Here’s a statement that obtains the same results by using a subquery with the IN operator:
+SELECT
+UserName AS 'User Name'
+FROM Users
+WHERE UserID IN
+(SELECT UserID
+FROM Transactions)
+
+This statement is probably easier to comprehend.
+
+Here’s yet another statement that retrieves the same data without the use of a subquery:
+
+SELECT
+UserName AS 'User Name'
+FROM Users
+INNER JOIN Transactions
+ON Users.UserID = Transactions.UserID
+GROUP BY UserName
+
+
+In this statement, the INNER JOIN enforces the requirement that the user must also exist in the Transactions table. Also note that this query requires the use of a GROUP BY clause to avoid returning more than one row per user.
+
+
+Using a Subquery as a Calculated Column
+
+The final general use of subqueries is as a calculated column. Suppose we would like to see a list of users, along with a count of the number of transactions they have placed. This can be accomplished without subqueries using this statement:
+SELECT
+UserName AS 'User Name',
+COUNT(TransactionID) AS 'Number of Transactions'
+FROM Users
+LEFT JOIN Transactions
+ON Users.UserID = Transactions.UserID
+GROUP BY Users.UserID, Users.UserName
+ORDER BY Users.UserID
+
+The output is:
+
+User Name                  Number of Transactions
+Cecilia Rodriguez          1
+Elaine Bundy                 3
+Rakesh Gupta               2
+April Waters                   0
+
+
+Notice that we used a LEFT JOIN to accommodate users who may not have made any transactions. The GROUP BY enforces the requirement that we end up with one row per user. The COUNT function produces a count of the number of rows in the Transactions table.
+
+Another way of obtaining the same result is to use a subquery as a calculated column. This looks like the following:
+SELECT
+UserName AS 'User Name',
+(SELECT
+COUNT(TransactionID)
+FROM Transactions
+WHERE Users.UserID = Transactions.UserID)
+AS 'Number of Transactions'
+FROM Users
+ORDER BY Users.UserID
+
+
+In this example, the subquery is a correlated subquery. The subquery cannot be executed on its own, because it references a column from the Users table in the WHERE clause. This subquery returns a calculated column for the SELECT columnlist. In other words, after the subquery is evaluated, it returns a single value, which is then included in the columnlist. Here’s the general format of the previous statement:
+SELECT
+UserName AS 'User Name',
+SubqueryResult AS 'Number of Transactions'
+FROM Users
+ORDER BY Users.UserID
+
+As seen, the entire subquery returns a single value, which is used for the Number of
+Transactions column.
+
+
+Common Table Expressions
+
+An alternate subquery syntax allows it to be defined explicitly prior to the execution of the main query. This is known as a common table expression. In this syntax, the entire subquery is removed from its normal location and stated at the top of the query. The WITH keyword is used to indicate the presence of a common table expression. Although they may be used with
+correlated subqueries, a common table expression is far more useful for uncorrelated subqueries. To illustrate, let’s return to the first subquery presented in this chapter:
+SELECT
+UserName AS 'User Name',
+ISNULL(CashTransactions.TotalCash, 0) AS 'Total Cash'
+FROM Users
+LEFT JOIN
+
+(SELECT UserID,
+SUM(TransactionAmount) AS 'TotalCash' FROM Transactions
+WHERE TransactionType = 'Cash'
+GROUP BY UserID) AS CashTransactions
+
+ON Users.UserID = CashTransactions.UserID ORDER BY Users.UserID
+As seen, the subquery in the above statement is given an alias of CashTransactions, and is joined to the Users table on the UserID column. The purpose of the subquery is to provide a total of the cash transactions for each user. The output of this query is:
+
+User Name                  Total Cash
+Cecilia Rodriguez          22.25
+Elaine Bundy                 8.00
+Rakesh Gupta               0
+April Waters                   0
+
+
+We’ll now present an alternate way of expressing this same logic, using a common table expression. The query looks like this:
+WITH CashTransactions AS (SELECT
+UserID,
+SUM(TransactionAmount) as TotalCash
+FROM Transactions
+WHERE TransactionType = 'Cash'
+GROUP BY UserID)
+
+SELECT
+UserName AS 'User Name',
+ISNULL(CashTransactions.TotalCash, 0) AS 'Total Cash'
+FROM Users
+LEFT JOIN CashTransactions
+ON Users.UserID = CashTransactions.UserID
+ORDER BY Users.UserID
+
+In this alternative expression, the entire subquery has been moved to the top, prior to the main SELECT query. The WITH keyword indicates that a common table expression follows. The first line indicates that CashTransactions is an alias for the common table expression. The common table expression follows the AS keyword and is enclosed within parentheses.
+
+We’ve inserted a blank line to separate the common table expression from the primary query. The following line in the main query:
+LEFT JOIN CashTransactions
+
+initiates the outer join to the common table expression, which is referenced via the CashTransactions alias. The chief virtue of the common table expression is its simplicity. The main query becomes easier to comprehend, because the details of the subquery now appear
+as a separate entity before the main query. The output of this query with a common table expression is identical to the original query with a subquery.
+In short, it’s really a matter of personal preference as to whether you’d like to use common table expressions in your queries. Whereas subqueries are embedded in a larger query, common table expressions state the subqueries up front.
+
+
+Database Differences: MySQL
+Unlike SQL Server and Oracle, MySQL doesn’t support common table expressions.
+
+
+
+Looking Ahead
+
+In this chapter, we’ve seen subqueries used in three different ways: as a data source, in selection criteria, and as a calculated column. Additionally, we’ve seen examples of both correlated and uncorrelated subqueries. Finally, we briefly demonstrated the use of an alternate method of expressing subqueries using the common table expression. As such, we’ve really only touched on some of the uses of subqueries. What complicates the matter is that many subqueries can
+
+
+be expressed in other ways. Whether or not you choose to use subqueries depends on your personal taste and sometimes on the performance of the statement.
+
+Through our use of joins and subqueries, we’ve explored numerous ways to select data
+from multiple tables. In our next chapter, “Set Logic,” we’ll look at a method of combining entire queries into a single SQL statement. This is a special type of logic that allows us to merge multiple data sets into a single result. As you’ll see, set logic procedures are sometimes necessary in order to display sets of data that are only partially related to each other. As with
+subqueries, the techniques of set logic provide additional flexibility and logical possibilities for your SQL statements.
+15
+
+Set Logic
+
+
+
+
+
+
+
+Keywords Introduced
+UNION  •  UNION ALL  •  INTERSECT  •  EXCEPT
+
+The various joins and subqueries of the previous few chapters have dealt with different ways
+of combining data from multiple tables. The result, however, has always been a single SELECT statement. Now we’ll extend the concept of combining data in multiple tables to the possibility of combining data from multiple queries. In other words, we’ll look at a way to write a single SQL statement that contains more than one SELECT to retrieve data.
+
+The concept of combining queries is often referred to as set logic, a term taken from mathematics. Each SELECT query can be referred to as a set of data. The set logic we’ll employ and examine in this chapter will address four basic scenarios. Assuming that we have data in SET A and in SET B, here are the four possibilities for retrieving data from the two sets:
+
+•   Data that is in SET A or in SET B
+•   Data that is in both SET A and SET B
+•   Data that is in SET A but not in SET B
+•   Data that is in SET B but not in SET A
+
+We’ll start by looking at the first scenario, for which we want data included in SET A or in
+SET B. As we’ll see, this is the most prevalent and important of the set logic possibilities.
+
+
+Using the UNION Operator
+The UNION operator in SQL is used to handle logic to select data in either SET A or SET B. This is by far the most common situation. We’ll start with an example. Let’s say we have two tables in our database. The first is an Orders table containing data on orders placed by customers. We’ll use the same Orders table seen in the previous few chapters:
+
+OrderID              CustomerID            OrderDate                 OrderAmount
+1                          1                               2016-09-01                10.00
+2                          2                               2016-09-02                12.50
+3                          2                               2016-09-03                18.00
+4                          3                               2016-09-15                20.00
+
+
+The second table, named Returns, contains data on merchandise returned by customers. It might look like this:
+
+ReturnID           CustomerID            ReturnDate               ReturnAmount
+1                          1                               2016-09-10                2.00
+2                          2                               2016-09-15                15.00
+3                          3                               2016-09-28                3.00
+
+
+Note that, unlike the Refunds table seen in Chapters 12 and 13, this Returns table is not directly related to the Orders table. In other words, returns are not tied to a specific order. In this scenario, a customer might return merchandise from multiple orders in a single refund transaction.
+
+We want to create a report of all orders and returns from one particular customer. We would like the results sorted either by the order date if it’s an order, or the return date if it’s a return. Following is a statement that can accomplish this. We’ve inserted a few extra blank lines in this statement to emphasize the fact that it contains two completely separate SELECTs, combined
+by the UNION operator:
+
+SELECT
+OrderDate AS 'Date',
+'Order' AS 'Type',
+OrderAmount AS 'Amount'
+FROM Orders
+WHERE CustomerID = 2
+UNION SELECT
+ReturnDate as 'Date',
+'Return' AS 'Type',
+ReturnAmount AS 'Amount'
+FROM Returns
+WHERE CustomerID = 2
+
+ORDER BY Date
+
+
+The resulting data is:
+
+Date                             Type                   Amount
+2016-09-02                   Order                   12.50
+2016-09-03                   Order                   18.00
+2016-09-15                   Return                 15.00
+
+
+As you can see, the UNION operator separates two SELECT statements. Each of these SELECT statements would be capable of being run on its own. There is also an ORDER BY clause at the very end, which applies to the results of both SELECT statements. The general format for the previous statement is:
+SelectStatementOne UNION SelectStatementTwo ORDER BY columnlist
+
+In order for the UNION to work, three rules must be followed:
+
+•   All SELECT statements combined with a UNION must have the same number of columns in the SELECT columnlist.
+•   All columns in each SELECT columnlist must be in the same order.
+•   All corresponding columns in each SELECT columnlist must have the same, or compatible, datatypes.
+
+With reference to these rules, notice that both SELECT statements in the query have three columns. Each of the three columns has data in the same order and with the same datatype.
+
+When using the UNION, you should use column aliases to give the same column name
+to all corresponding columns. In our example, the first column of the first SELECT has an original name of OrderDate. The first column of the second SELECT has an original name of ReturnDate. To ensure that the first column in the final result has the desired name, both OrderDate and ReturnDate are given a column alias of Date. This also allows the column to be referenced in an ORDER BY columnlist.
+
+Also notice that the second column of each SELECT uses literal values. We created a calculated column named Type, which has a value of either Order or Return. This allows us to determine which table each row comes from.
+
+Finally, notice that the ORDER BY clause applies to the final results of both queries combined. This is how it should be, because there would be no point in applying a sort to the individual queries.
+
+At this point, it’s useful to step back and talk about why it was necessary to employ the UNION operator rather than simply joining the Orders and Returns tables together in a single SELECT statement. Because both tables have a CustomerID column, why didn’t we join the two tables together on this column? The problem with that approach is that the two tables are really only indirectly related to each other. Customers can place orders and customers can initiate returns, but there is no direct connection between orders and returns.
+
+
+Additionally, even if there were a direct connection between the two tables, a join would not accomplish what is desired. With a proper join, related information can be placed together
+on the same row. In this case, however, we are interested in showing orders and returns on separate rows. The UNION operator must be used to display data in this manner.
+
+In essence, the UNION allows us to retrieve unrelated or partially related data in a single statement.
+
+
+Distinct and Non-Distinct Unions
+
+There are actually two variations of the UNION operator: UNION and UNION ALL. There is only a slight difference between the two. The UNION operator eliminates all duplicate rows. The UNION ALL operator specifies that all rows will be included, even if they are duplicates.
+
+The UNION operator eliminates duplicates in a manner similar to the DISTINCT keyword seen previously. Whereas DISTINCT applies to a single SELECT, the UNION eliminates duplicates in all SELECT statements combined via the UNION.
+
+In the previous example with the Orders and Returns tables, there was no possibility of duplication, so it didn’t matter which variation of the UNION was used. Here’s an example that illustrates the difference. Let’s say that we were only interested in the dates on which any order or return was issued. We don’t want to see multiple rows for the same date. The following statement accomplishes this task.
+SELECT
+OrderDate AS 'Date'
+FROM Orders
+UNION
+SELECT
+ReturnDate as 'Date'
+FROM Returns
+ORDER BY Date
+
+The resulting data is:
+
+Date
+2016-09-01
+2016-09-02
+2016-09-03
+2016-09-10
+2016-09-15
+2016-09-28
+
+
+Notice that there is only one row with the date 2016-09-15. Even though there is one row with
+2016-09-15 in the Orders table and one row with 2016-09-15 in the Returns table, the UNION
+operator ensures that the 2016-09-15 date is listed only once.
+
+
+If for some reason we wanted to see the date 2016-09-15 listed twice, we could employ the
+UNION ALL operator to accomplish this:
+
+SELECT
+OrderDate AS 'Date'
+FROM Orders
+UNION ALL
+SELECT
+ReturnDate as 'Date'
+FROM Returns
+ORDER BY Date
+
+The output is now:
+
+Date
+2016-09-01
+2016-09-02
+2016-09-03
+2016-09-10
+2016-09-15
+2016-09-15
+2016-09-28
+
+
+As you can see, the UNION ALL operator allows duplicate rows to be displayed.
+
+
+Intersecting Queries
+
+The UNION and UNION ALL operators return data in either of the sets specified in the two SELECT statements being combined. This is like using an OR operator to combine data from two logical sets.
+
+SQL provides an operator called INTERSECT that only pulls data that is in both of the two sets being looked at. The INTERSECT is analogous to the AND operator and handles the second scenario stated at the beginning of this chapter:
+
+•   Data that is in both SET A and SET B
+
+Database Differences: MySQL
+MySQL doesn't support the INTERSECT operator.
+
+
+Using the same Orders and Returns tables, suppose we want to see dates on which there are both orders and returns. A statement that accomplishes this is:
+SELECT
+OrderDate AS 'Date'
+FROM Orders
+INTERSECT
+SELECT
+ReturnDate as 'Date'
+FROM Returns
+ORDER BY Date
+
+The result is:
+
+Date
+2016-09-15
+
+
+Only one row is shown because this is the only date that appears in both the Orders and
+Returns tables.
+
+There is one additional variation on the INTERSECT operator, which is provided by the EXCEPT operator. Whereas the INTERSECT returns data that is in both sets, the EXCEPT returns data that is in one set but not the other. Accordingly, this handles the third and fourth scenarios stated at the beginning of this chapter:
+
+•   Data that is in SET A but not in SET B
+•   Data that is in SET B but not in SET A The general format of the EXCEPT is:
+SelectStatementOne
+EXCEPT
+SelectStatementTwo
+ORDER BY columnlist
+
+This statement will show data that is in SelectStatementOne but not in SelectStatementTwo. Here’s an example:
+SELECT
+OrderDate AS 'Date'
+FROM Orders
+EXCEPT
+SELECT
+ReturnDate as 'Date'
+FROM Returns
+ORDER BY Date
+
+
+The result is:
+
+Date
+2016-09-01
+2016-09-02
+2016-09-03
+
+
+This data shows dates on which orders were placed where no refunds were issued on that same date. Notice that 2016-09-15 does not appear, because a refund was issued on that date.
+
+
+Database Differences: MySQL and Oracle
+MySQL doesn't support the EXCEPT operator.
+The equivalent of the EXCEPT operator in Oracle is MINUS.
+
+
+
+Looking Ahead
+
+This chapter illustrated a variety of ways to use set logic to combine multiple sets of SELECT statements into a single statement. The most commonly used operator is the UNION, which allows you to combine data that is in either of two different sets. As such, the UNION is analogous to the OR operator. The UNION ALL is a variant of the UNION that allows duplicate rows to be shown. Similarly, the INTERCEPT operator allows data to be presented if it is in both of the sets of data being combined. The INTERCEPT is analogous to the AND operator. Finally, the EXCEPT operator allows for selection of data that is in one set but not in another.
+
+Our next chapter, “Stored Procedures and Parameters,” will show how you can save multiple SQL statements in a procedure and make use of parameters within those procedures to add a degree of generality to SQL commands. We’ll also talk about the possibility of creating your own custom functions, and explain how functions differ from stored procedures. Much like the views discussed in Chapter 13, “Self Joins and Views,” stored procedures and custom functions are useful objects that you can create and store in your database to provide some extra polish and functionality.
+
+
+
+
+
+
+
+
+This page intentionally left blank

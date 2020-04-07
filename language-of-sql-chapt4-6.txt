@@ -1,0 +1,1015 @@
+
+4
+
+Using Functions
+
+
+
+
+
+
+
+Keywords Introduced
+LEFT  •  RIGHT  •  SUBSTRING  •  LTRIM  •  RTRIM  •  UPPER  •  LOWER  •  GETDATE  • DATEPART  •  DATEDIFF  •  ROUND  •  PI  •  POWER  •  ISNULL
+
+Anyone familiar with Microsoft Excel is probably aware that functions provide a huge
+amount of functionality for the typical spreadsheet user. Without the ability to use functions, most of the data available in spreadsheets would be of limited value. The same is true in the world of SQL. Familiarity with SQL functions will greatly enhance your ability to generate dynamic results for anyone viewing data or reports generated from SQL.
+
+This chapter covers a wide variety of some of the most commonly used functions in four different categories: character functions, date/time functions, numeric functions, and conversion functions. Additionally, we’ll talk about composite functions—a way of combining multiple functions into a single expression.
+
+
+What Is a Function?
+
+Similar to the calculations covered in the previous chapter, functions provide another way to manipulate data. As was seen, calculations can involve multiple fields, either with arithmetic operators such as multiplication, or by concatenation. Similarly, functions can involve data from multiple values, but the end result of a function is always a single value.
+
+What is a function? A function is merely a rule for transforming any number of input values into one output value. The rule is defined within the function and can’t be altered. However, the user of a function is allowed to specify any desired value for the inputs to the function. Some functions may allow some of the inputs to be optional. That means that the specification of that particular input isn’t required. Functions can also be designed to have no inputs. However, regardless of the type or number of input values, functions always return precisely one output value when the function is invoked.
+
+
+There are two types of functions: scalar and aggregate. The term scalar comes from mathematics and refers to an operation that is done on a single number. In computer usage, it means that
+the function is performed on data in a single row. For example, the LTRIM function removes spaces from one specified value in one row of data.
+
+In contrast, aggregate functions are meant to be performed on a larger set of data. For example, the SUM function can be used to calculate the sum of all the values of a specified column. Because aggregate functions apply to larger sets or groups of data, we will leave discussion
+of this type of function to Chapter 9, “Summarizing Data.”
+
+Every SQL database offers dozens of scalar functions. The actual functions vary widely between databases, in terms of both their names and how they work. As a result, we will cover only a few representative examples of some of the more useful functions.
+
+The most common types of scalar functions can be classified under three categories: character, date/time, and numeric. These are functions that allow you to manipulate character, date/time, or numeric datatypes. In addition, we will talk about some useful conversion functions that can be used to convert data from one datatype to another.
+
+
+Character Functions
+
+Character functions are those that enable you to manipulate character data. Just as character datatypes are sometimes called string datatypes, character functions are sometimes called string functions. We’ll cover these seven examples of character functions: LEFT, RIGHT, SUBSTRING, LTRIM, RTRIM, UPPER, and LOWER.
+
+In this chapter, rather than retrieving data from specific tables, we’ll simply use SELECT statements with literal values in the columnlist. There will be no FROM clause to indicate a table. Let’s start with an example for the LEFT function. When this SQL command is issued:
+SELECT
+LEFT('sunlight',3) AS 'The Answer'
+
+this data is returned:
+
+The Answer
+sun
+
+
+The inclusion of a column alias in this SQL statement allows the output to display “The Answer” as a column header. Note that there is no FROM clause in the SELECT statement. Instead of retrieving data from a table, we’re selecting data from a single literal value, namely
+‘sunlight’. In many SQL implementations, including SQL Server and MySQL, a FROM clause isn’t strictly necessary in a SELECT statement, although in practice one would seldom write
+a SELECT statement like this. We’re using this format, without a FROM clause, only to more easily illustrate how functions work.
+
+
+Let’s now look at the format of this function in greater detail. The general format of the LEFT
+function is:
+
+LEFT(CharacterValue, NumberOfCharacters)
+
+All functions have any number of arguments within the parentheses. For example, the LEFT function has two arguments: CharacterValue and NumberOfCharacters. The term argument is a commonly used mathematical term that describes a component of functions, and has nothing to do with anything being disagreeable or unpleasant. The various arguments that are defined for each function are what truly define the meaning of the function. In the case of the LEFT function, the CharacterValue and NumberOfCharacters arguments are both needed to define what will happen when the LEFT function is invoked.
+
+The LEFT function has two arguments, and both are required. As mentioned, other functions may have more or fewer arguments. Functions are even permitted to have no arguments. But regardless of the number of arguments, even if zero, all functions have a set of parentheses following the function name. The presence of the parentheses tells you that the expression is a function and not something else.
+
+The formula for the LEFT function says: Take the specified CharacterValue, look at the specified NumberOfCharacters on the left, and bring back the result. In the previous example, it looks at the CharacterValue ‘sunlight’ and brings back the left three characters. The result is “sun”.
+
+The main point to remember is that for any function you want to use, you’ll need to look up the function in the database’s reference guide and determine how many arguments are required and what they mean.
+
+The second character function we’ll cover is the RIGHT function. This is the same as the LEFT function, except that characters are now specified for the right side of the input value. The general format of the RIGHT function is:
+RIGHT(CharacterValue, NumberOfCharacters)
+
+As an example:
+
+SELECT
+RIGHT('sunlight',5) AS 'The Answer'
+
+returns:
+
+The Answer
+light
+
+
+In this case, the NumberOfCharacters argument needed to have a value of 5 in order to return the value “light”. A value of 3 would have only returned “ght”.
+
+
+One problem that often arises with the use of the RIGHT function is that character data often contains spaces on the right-hand side. Let’s look at an example in which a table with only one row of data contains a column named President, where the column is defined as being
+20 characters long. The table looks like:
+
+President
+George Washington
+
+
+If we issue this SELECT statement against the table:
+
+SELECT
+RIGHT(President,10) AS 'Last Name'
+FROM table1
+
+we get back this data:
+
+Last Name
+hington
+
+
+We expected to get back “Washington” but only got “hington.” The problem is that the entire column is 20 characters long. In this example, there are three spaces to the right of the value “George Washington”. Therefore, when we ask for the rightmost 10 characters, SQL
+will take the three spaces, plus another seven characters from the original expression. As will soon be seen, the function RTRIM must be used to remove the ending spaces before using the RIGHT function.
+
+You might be wondering how to select data from the middle of an expression. This is accomplished by using the SUBSTRING function. The general format of that function is:
+SUBSTRING(CharacterValue, StartingPosition, NumberOfCharacters)
+
+For example:
+
+SELECT
+SUBSTRING('thewhitegoat',4,5) AS 'The Answer'
+
+returns this data:
+
+The Answer
+white
+
+
+This function is saying to take five characters, starting with position 4. This results in the display of the word “white”.
+
+
+Database Differences: MySQL and Oracle
+MySQL sometimes requires that there be no space between the function name and the left parenthesis. It depends on the specific function used. For example, the previous statement in MySQL must be written exactly as shown. Unlike in Microsoft SQL Server, you can’t type in an extra space after SUBSTRING.
+In Oracle, the equivalent of the SUBSTRING function is SUBSTR. One difference in the Oracle version of SUBSTR is that the second argument (StartingPosition) can have a negative value. A negative value for this argument means that you need to count that number of positions backward from the right side of the column.
+As mentioned, Oracle doesn’t permit you to write a SELECT statement without a FROM clause. However, Oracle does provide a dummy table called DUAL for this type of situation. The Oracle equivalent of the SELECT with a SUBSTRING function is:
+SELECT
+SUBSTR('thewhitegoat',4,5) AS "The Answer"
+FROM DUAL;
+
+Our next two character functions enable us to remove all spaces, either on the left or the right side of an expression. The LTRIM function trims characters from the left side of a character expression. For example:
+SELECT
+LTRIM('    the apple') AS 'The Answer'
+
+returns this data:
+
+The Answer
+the apple
+
+
+Note that LTRIM is smart enough not to eliminate spaces in the middle of a phrase. It only removes the spaces to the very left of a character value.
+
+Similar to LTRIM, the RTRIM function removes any spaces to the right of a character value. An example of RTRIM will be given in the next section, on composite functions.
+
+The final two character functions to be covered are UPPER and LOWER. These functions convert any word or phrase to upper- or lowercase. The syntax is simple and straightforward. Here’s an example that covers both functions:
+SELECT
+UPPER('Abraham Lincoln') AS 'Convert to Uppercase',
+LOWER('ABRAHAM LINCOLN') AS 'Convert to Lowercase'
+
+The output is:
+
+Convert to Uppercase                Convert to Lowercase
+ABRAHAM LINCOLN                      abraham lincoln
+
+
+Composite Functions
+
+An important characteristic of functions, whether they are character, mathematical, or date/time, is that two or more functions can be combined to create composite functions.
+A composite function with two functions can be said to be a function of a function. Let’s go
+back to the George Washington query to illustrate. Again, we’re working from this data:
+
+President
+George Washington
+
+
+Remember that the President column is 20 characters long. In other words, there are three spaces to the right of the value “George Washington”. In addition to illustrating composite functions, this next example will also cover the RTRIM function mentioned in the previous section. The statement:
+SELECT
+RIGHT(RTRIM (President),10) AS 'Last Name'
+FROM table1
+
+returns this data:
+
+Last Name
+Washington
+
+
+Why does this now produce the correct value? Let’s examine how this composite function works. There are two functions involved: RIGHT and RTRIM. When evaluating composite functions, you always start from the inside and work your way out. In this example, the innermost function is:
+RTRIM(President)
+
+This function takes the value in the President column and eliminates all spaces on the right. After this is done, the RIGHT function is applied to the result to bring back the desired value. Because
+RTRIM(President)
+
+equals “George Washington”, we can say that:
+
+SELECT
+RIGHT(RTRIM (President), 10)
+
+is the same as saying:
+
+SELECT
+RIGHT('George Washington', 10)
+
+In other words, we can obtain the desired result by first applying the RTRIM function to the input data and then adding the RIGHT function to the expression to produce the final results.
+
+
+Date/Time Functions
+
+Date/Time functions allow for the manipulation of date and time values. The names of these functions differ, depending on the database used. In Microsoft SQL Server, the functions we’ll cover are called GETDATE, DATEPART, and DATEDIFF.
+
+The simplest of the date/time functions is one that returns the current date and time.
+In Microsoft SQL Server, the function is named GETDATE. This function has no arguments. It merely returns the current date and time. For example:
+SELECT GETDATE()
+
+brings back an expression with the current date and time. Since the GETDATE function has no arguments, there is nothing specified between the parentheses. Remember that a date/time field is a special datatype that contains both a date and a time in a single field. An example of such
+a value is:
+
+2017-05-15 08:48:30
+
+This value refers to the 15th of May 2017, at 48 minutes and 30 seconds past 8 AM.
+
+
+Database Differences: MySQL and Oracle
+In MySQL, the equivalent of GETDATE is NOW. The above statement would be written as:
+SELECT NOW()
+The equivalent of GETDATE in Oracle is CURRENT_DATE. The statement is written as:
+SELECT CURRENT_DATE
+
+The next date/time function enables us to analyze any specified date and return a value to represent such elements as the day or week of the date. Again, the name of this function differs, depending on the database. In Microsoft SQL Server, this function is called DATEPART. The general format is:
+DATEPART(DatePart, DateValue)
+
+The DateValue argument is any date. The DatePart argument can have many different values, including year, quarter, month, dayofyear, day, week, weekday, hour, minute, and second.
+The following chart shows how the DATEPART function evaluates the date '5/6/2017', with different values for the DatePart argument:
+
+DATEPART Function Expression          Resulting Value
+DATEPART(month, '5/6/2017')              5
+DATEPART(day, '5/6/2017')                   6
+DATEPART(week, '5/6/2017')                18
+DATEPART(weekday, '5/6/2017')          7
+
+
+
+
+
+
+
+
+www.allitebooks.com
+
+
+Looking at the values in the previous chart, you can see that the month of 5/6/2017 is 5 (May). The day is 2 (Monday). The week is 18, because 5/6/2017 is in the 18th week of the year. The weekday is 7 because 5/6/2017 falls on a Saturday, which is the seventh day of the week.
+
+
+Database Differences: MySQL and Oracle
+In MySQL, the equivalent of the DATEPART function is named DATE_FORMAT, and it utilizes different values for the DateValue argument. For example, to return the day of the date
+‘5/6/2017’, you would issue this SELECT in MySQL:
+SELECT DATE_FORMAT('2017-05-06', '%d');
+Oracle doesn’t have a function comparable to DATEPART.
+
+The final date/time function we’ll cover, DATEDIFF, enables you to determine quantities such as the number of days between any two dates. The general format is:
+DATEDIFF (DatePart, StartDate, EndDate)
+Valid values for the DatePart argument for this function include year, quarter, month, dayofyear, day, month, hour, minute, and second. Here’s a chart that shows how the DATEDIFF function evaluates the difference between the dates 7/8/2017 and 8/14/2017, with different values for the DatePart argument:
+
+DATEPART Function Expression                                Resulting Value
+DATEDIFF(day, '7/8/2017', '8/14/2017’)                 37
+DATEDIFF(week, '7/8/2017', '8/14/2017’)              6
+DATEDIFF(month, '7/8/2017', '8/14/2017’)            1
+DATEDIFF(year, '7/8/2017', '8/14/2017’)                0
+
+
+The above chart indicates that there are 37 days, or 6 weeks, or 1 month, or 0 years between the two dates.
+
+
+Database Differences: MySQL and Oracle
+In MySQL, the DATEDIFF function only allows you to calculate the number of days between the two dates, and the end date must be listed first to return a positive value. The general format is:
+DATEDIFF(EndDate, StartDate)
+Oracle doesn’t have a function comparable to DATEDIFF.
+
+
+Numeric Functions
+
+Numeric functions allow for manipulation of numeric values. Numeric functions are sometimes called mathematical functions. The functions we’ll cover are ROUND, RAND, PI, and POWER.
+
+The ROUND function allows you to round any numeric value. The general format is:
+
+ROUND(NumericValue, DecimalPlaces)
+
+The NumericValue argument can be any positive or negative number, with or without decimal places, such as 712.863 or –42. The DecimalPlaces argument is trickier. It can contain a positive or negative integer, or zero. If DecimalPlaces is a positive integer, it means to round to that many decimal places. If DecimalPlaces is a negative integer, it means to round to that number of positions to the left of the decimal place. The following chart shows how the number
+712.863 is rounded, with different values for the DecimalPlaces argument.
+
+ROUND Function Expression                Resulting Value
+ROUND(712.863, 3)                                712.863
+ROUND(712.863, 2)                                712.860
+ROUND(712.863, 1)                                712.900
+ROUND(712.863, 0)                                713.000
+ROUND(712.863, –1)                              710.000
+ROUND(712.863, –2)                              700.000
+
+
+The PI function merely returns the value of the mathematical number pi. As you may remember from high school geometry, the number pi is an irrational number approximated by the value 3.14. This function is seldom used, but nicely illustrates the point that numeric functions need not have any arguments. For example, the statement:
+SELECT PI()
+
+returns the value 3.14159265358979. To take this example a little further, let’s say that we want the value of pi rounded to two decimal places. This can be accomplished by creating a composite function with the PI and ROUND functions. The PI function is used to get the initial value, and the ROUND function is added to round it to two decimal places. The following statement returns a value of 3.14:
+SELECT ROUND(PI(),2)
+
+
+Database Differences: Oracle
+Unlike Microsoft SQL Server and MySQL, Oracle doesn’t have a PI function.
+
+The final numeric function we’ll cover, which is much more commonly used than PI, is POWER. The POWER function is used to specify a numeric value that includes exponents. The general format of the function is:
+POWER(NumericValue, Exponent)
+
+
+Let’s start with an example that illustrates how to display the number 5 raised to the second power. This is commonly referred to as “5 squared.” The SELECT statement:
+SELECT POWER(5,2) AS '5 Squared'
+
+returns this data:
+
+5 Squared
+25
+
+
+In this example, 5 is the numeric value to be evaluated, and 2 is the value of the exponent. Remembering that the square root of a number can be expressed as an exponent with a decimal value less than 1, we can calculate the square root of 25 as follows. The statement:
+SELECT POWER(25,.5) AS 'Square Root of 25'
+
+returns this data:
+
+Square Root of 25
+5
+
+
+In algebraic terms, the calculation takes 25 to the 1/2 (or .5) power. This is the same as taking the square root of 25.
+
+
+Conversion Functions
+
+All of the aforementioned functions pertain to specific ways to manipulate character, date/time, or numeric datatypes. We now want to address the need to convert data from one datatype to another, or to convert NULL values to something meaningful. The remainder of this chapter
+will cover two special functions that can be used in these situations.
+
+The CAST function converts data from one datatype to another. The general format of the function is:
+CAST(Expression AS DataType)
+
+The format of this function is slightly different from other functions previously seen, as it uses the word AS to separate the two arguments, rather than a comma. Looking at the usage of the function, it turns out that the CAST function is unnecessary in most situations. Let’s take the situation where we want to execute this statement, where the Quantity column is defined as a character datatype:
+SELECT
+2 * Quantity
+FROM table
+
+
+Your first impression might be that the statement would fail, due to the fact that Quantity is not defined as a numeric column. However, most SQL databases are smart enough to automatically convert the Quantity column to a numeric value so that it can be multiplied by 2.
+
+Here’s an example where the CAST function becomes necessary. Let’s say we have dates stored in a column with a character datatype. We’d like to convert those dates to a true date/time column. This statement illustrates how the CAST function can handle that conversion:
+SELECT
+'2017-04-11' AS 'Original Date',
+CAST('2017-04-11' AS DATETIME) AS 'Converted Date'
+
+The output is:
+
+Original Date         Converted Date
+2017-04-11             2017-04-11 00:00:00
+
+
+The Original Date column looks like a date, but it is really just character data. In contrast, the Converted Date column is a true date/time column, as evidenced by the time value now shown.
+
+A second useful conversion function is one that converts NULL values to a meaningful value.
+In Microsoft SQL Server, the function is called ISNULL. As mentioned in Chapter 1, “Relational
+Databases and SQL,” NULL values are those for which there is an absence of data. A NULL
+value is not the same as a space or zero. Let’s say we have this table of products:
+
+ProductID               Description             Weight
+1                               Printer A                   NULL
+2                               Printer B                   0
+3                               Monitor C                 2
+4                               Laptop D                  4
+
+
+Notice that Printer A has a value of NULL in the Weight column. This indicates that a weight for this printer has not yet been provided. Let’s say we want to produce a list of all products. When this SELECT is issued:
+SELECT Description, Weight
+FROM Products
+
+
+It will show:
+
+Description             Weight Printer A                   NULL Printer B                   0
+Monitor C                 2
+Laptop D                  4
+
+
+There’s nothing inaccurate about this display. However, users may prefer to see something such as “Unknown” rather than NULL for missing values. Here’s the solution:
+SELECT Description,
+ISNULL(CAST(Weight AS VARCHAR),'Unknown') AS Weight
+FROM Products
+
+The following data is displayed:
+
+Description             Weight Printer A                   Unknown Printer B                   0
+Monitor C                 2
+Laptop D                  4
+
+
+Notice that the solution requires the use of both the ISNULL and CAST functions. The ISNULL function handles the display of the weight as “Unknown” when NULL values are encountered. Assuming the Weight column is defined as an integer, the CAST function is needed to convert the weight to a Varchar datatype, so both integer and character values can be displayed in a single column.
+
+
+Database Differences: MySQL and Oracle
+The ISNULL function is called IFNULL in MySQL. Furthermore, MySQL doesn’t require the use of the CAST function in this example. The equivalent of the above statement in MySQL is:
+SELECT Description, IFNULL(Weight,'Unknown') AS Weight FROM Products;
+The ISNULL function is called NVL (Null Value) in Oracle. The equivalent Oracle statement is:
+SELECT Description,
+NVL(CAST(Weight AS CHAR),'Unknown') AS Weight
+FROM Products;
+Additionally, unlike Microsoft SQL Server and MySQL, Oracle displays a dash rather than the word NULL when it encounters NULL values.
+
+
+Looking Ahead
+
+This chapter described a wide variety of functions. Functions are basically predefined rules for transforming a set of values into another value. Just as spreadsheets provide built-in functions for manipulating data, SQL provides similar capabilities. In addition to covering basic character, date/time, numeric, and conversion functions, we also explained how to create composite functions from two or more of these functions.
+
+Because there are simply so many available functions with widely varying possibilities, it’s impossible to discuss every nuance of every available function. The thing to remember is that functions can be easily looked up in a database’s help system or reference guide when they need to be used. Online reference material will provide details on exactly how each function works and the proper syntax.
+
+In our next chapter, we’ll take a break from columnlist issues and talk about something a
+little more interesting: how to sort data. Sorts can serve lots of useful purposes and satisfy the basic desire of users to view data in some type of order. With the sort, we will begin to think of the entire way in which information is presented, rather than with just bits and pieces of individual data items.
+
+
+
+
+
+
+
+
+This page intentionally left blank
+5
+
+Sorting Data
+
+
+
+
+
+
+
+Keywords Introduced
+ORDER BY  •  ASC  •  DESC
+
+The ability to present data in a sorted order is often essential to the task at hand. For example, if an analyst is shown a large list of customers in a random order, they’d probably find it difficult to locate one particular customer. However, if the same list is sorted alphabetically, the desired customer can quickly be located.
+
+The idea of sorting data applies to many situations, even when the data isn’t alphabetic in nature. For example, orders can be sorted by order date, allowing one to rapidly find an order taken at a particular date and time. Alternatively, orders can be sorted by the order amount, allowing orders to be viewed from the smallest to largest. No matter what particular form a sort takes, it can add a useful way of organizing the data being presented to an end user.
+
+
+Sorting in Ascending Order
+
+Up until now, data has not been returned in any particular order. When a SELECT is issued, you never know which row will come first. If the query is executed from within a software program, and no one ever sees the data at that point in time, then it really doesn’t matter. But if the data is to be immediately displayed to a user, then the order of rows is often significant. A sort can be easily added to a SELECT statement by using an ORDER BY clause.
+
+Here’s the general format for a SELECT statement with an ORDER BY clause:
+
+SELECT columnlist
+FROM tablelist
+ORDER BY columnlist
+
+The ORDER BY clause is always placed after the FROM clause, which in turn always comes after the SELECT keyword. The italicized columnlist for the SELECT and ORDER BY keywords indicates that any number of columns can be listed. The columns in columnlist can be individual columns or more complex expressions. Also, the columns specified after the SELECT
+and ORDER BY keywords can be entirely different columns. The italicized tablelist indicates that
+
+
+any number of tables can be listed in the FROM clause. The syntax for listing multiple tables will be introduced in Chapter 11, “Inner Joins,” and Chapter 12, “Outer Joins.”
+
+For the following few examples on sorting, we’ll work from data in this Salespeople table:
+
+SalespersonID       FirstName              LastName
+1                               Gregory                    Brown
+2                               Carla                         Brown
+3                               Natalie                      Lopez
+4                               Connie                      King
+
+
+To sort data in an alphabetic order, with A coming before Z, we simply need to add an
+ORDER BY clause to the SELECT statement. For example:
+
+SELECT FirstName, LastName
+FROM Salespeople
+ORDER BY LastName
+
+brings back this data:
+
+FirstName              LastName Gregory                    Brown Carla                         Brown
+Natalie                      Lopez
+Connie                      King
+
+
+Because there are two Browns, Carla and Gregory, there’s no way to predict which one will be listed first. This is because we are sorting only on LastName, and there are multiple rows with that same last name.
+
+Similarly, if we issue this SELECT:
+
+SELECT FirstName, LastName
+FROM Salespeople
+ORDER BY FirstName
+
+then this data is retrieved:
+
+FirstName              LastName Carla                         Brown Connie                      King
+Gregory                    Brown
+Natalie                      Lopez
+
+
+The order is now completely different, because the sort is by first name rather than last name.
+
+SQL provides a special keyword named ASC, which stands for ascending. This keyword is completely optional and largely unnecessary, because all sorts are assumed to be in ascending order by default. The following SELECT, which uses the ASC keyword, returns the same data shown previously.
+SELECT FirstName, LastName
+FROM Salespeople
+ORDER BY FirstName ASC
+
+In essence, the keyword ASC can be used to emphasize the fact that the sort is in ascending, rather than descending, order.
+
+
+Sorting in Descending Order
+
+The DESC keyword sorts in an order opposite to ASC. Instead of ascending, the order in such a sort is descending. For example:
+SELECT FirstName, LastName
+FROM Salespeople
+ORDER BY FirstName DESC
+
+retrieves:
+
+FirstName              LastName Natalie                      Lopez Gregory                    Brown
+Connie                      King
+Carla                         Brown
+
+
+The first names are now in a Z-to-A order.
+
+
+Sorting by Multiple Columns
+
+We now return to the problem of what to do with the Browns. To sort by last name when there is more than one person with the same last name, we must add a secondary sort by first name, as follows:
+SELECT FirstName, LastName
+FROM Salespeople
+ORDER BY LastName, FirstName
+
+
+This brings back:
+
+FirstName              LastName Carla                         Brown Gregory                    Brown
+Connie                      King
+Natalie                      Lopez
+
+
+Because a second sort column is now specified, we can now be certain that Carla Brown will appear before Gregory Brown. Note that LastName must be listed before FirstName in the ORDER BY clause. The order of the columns is significant. The first column listed always has the primary sort value. Any additional columns listed become secondary, tertiary, and so on.
+
+
+Sorting by a Calculated Field
+
+We’ll now apply our knowledge of calculated fields and aliases from Chapter 3 to illustrate some further possibilities for sorts. This statement:
+SELECT
+LastName + ', ' + FirstName AS 'Name'
+FROM Salespeople
+ORDER BY Name
+
+returns this data:
+
+Name Brown, Carla Brown, Gregory
+King, Connie
+Lopez, Natalie
+
+
+As seen, we utilized concatenation to create a calculated field with an alias of Name. We are able to refer to that same column alias in the ORDER BY clause. This nicely illustrates another benefit of using column aliases. Also, note the design of the calculated field itself. We inserted a column and a space between the last name and first name columns to separate them, and to show the name in a commonly used format. Conveniently, this format also works well for sorting. The ability to display names in this format, with a comma separating the last and first name, is a handy trick to keep in mind. Users very often want to see names arranged in this manner.
+
+
+It’s also possible to put a calculated field in the ORDER BY clause without also using it as a column alias. Similar to the above, we could also specify:
+SELECT FirstName, LastName
+FROM Salespeople
+ORDER BY LastName + FirstName
+
+This would display:
+
+FirstName              LastName Carla                         Brown Gregory                    Brown
+Connie                      King
+Natalie                      Lopez
+
+
+The data is sorted the same as in the prior example. The only difference is that we’re now specifying a calculated field in the ORDER BY clause without making use of column aliases. This gives the same result as if LastName and FirstName were specified as the primary and secondary sort columns.
+
+
+Sort Sequences
+
+In the previous examples, all of the data is character data, consisting of letters from A to Z. There are no numbers or special characters. Additionally, there has been no consideration of upper- and lowercase letters.
+
+Every database lets users specify or customize collation settings that provide details on how data is sorted. The settings vary among databases, but three facts are generally true. First, when data is sorted in an ascending order, any data with NULL values appear first. As previously discussed, NULL values are those where there is an absence of data. After any NULLs, numbers will appear before characters. For data sorted in descending order, character data will display first, then numbers, and then NULLs.
+Second, for character data, there is usually no differentiation between upper- and lowercase. An e is the treated the same as an E. Third, for character data, the individual characters that make up the value are evaluated from left to right. If we’re talking about letters, then AB will come before AC. Let’s look at an example, taken from this table, which we’ll refer to as TableForSort:
+
+TableID                   CharacterData                  NumericData
+1                               23                                        23
+2                               5                                           5
+3                               Dog                                      NULL
+4                               NULL                                    –6
+
+
+In this table, the CharacterData column is defined as a character column, for example as VARCHAR (a variable length datatype). Similarly, the NumericData column is defined as a numeric column, such as INT (an integer datatype). Values with no data are displayed as NULL. When this SELECT is issued against the TableForSort table:
+SELECT NumericData
+FROM TableForSort
+ORDER BY NumericData
+
+it will display:
+
+NumericData
+NULL
+–6
+5
+23
+
+
+Notice that NULLs come first, then the numbers in numeric sequence. If we want the NULL values to assume a default value of 0, we can use the ISNULL function discussed in the previous chapter and issue this SELECT statement:
+SELECT
+ISNULL(NumericData,0) AS 'NumericData'
+FROM TableForSort
+ORDER BY ISNULL(NumericData,0)
+
+The result is now:
+
+NumericData
+–6
+0
+5
+23
+
+The ISNULL function converted the NULL value to a 0, which results in a different sort order. The decision as to whether to display NULL values as NULL or as 0 depends on the specific
+circumstance. If the user thinks of NULL values as meaning 0, then they should be displayed as
+0. However, if the user sees NULL values as an absence of data, then displaying the word NULL
+is appropriate.
+
+
+Turning to a different ORDER BY clause against the same table, if we issue this SELECT:
+
+SELECT CharacterData
+FROM TableForSort
+ORDER BY CharacterData
+
+it will display:
+
+CharacterData
+NULL
+23
+5
+Dog
+
+
+As expected, NULLs come first, then values with numeric digits, and then values with alphabetic characters. Notice that 23 comes before 5. This is because the 23 and 5 values are being evaluated as characters, not as numbers. Because character data is evaluated from left to right and 2 is lower than 5, 23 is displayed first.
+
+
+Looking Ahead
+
+In this chapter, we talked about the basic possibilities for sorting data in a specific order. We illustrated how to sort by more than one column. We also discussed the use of calculated fields in sorts. Finally, we covered some of the quirks of sorting, particularly when it comes to data with NULL values and with numbers in character columns.
+
+At the beginning of the chapter, we mentioned some of the general uses for sorts. Primary among these is the ability to simply place data in an easily understood order, thus allowing users to quickly locate a desired piece of information. People generally like to see data in some kind of order, and sorts accomplish that goal. Another interesting use of sorts will be covered in Chapter 6, “Selection Criteria.” In that chapter, we’ll introduce the keyword TOP and another way to use sorts in conjunction with that keyword. This technique, commonly known as a
+Top N sort, allows us to do such things as display customers with the five highest orders for a given time period.
+
+In our next chapter, we’ll move beyond our analysis of what can be done with columnlists and discuss data selection. The ability to specify selection criteria in SELECT statements is critical to most normal queries. In the real world, it would be very unusual to issue a SELECT statement without some sort of selection criteria. The topics discussed in the next chapter address this important topic.
+
+
+
+
+
+
+
+
+This page intentionally left blank
+6
+
+Selection Criteria
+
+
+
+
+
+
+
+Keywords Introduced
+WHERE  •  TOP  •  LIKE
+
+Up until this point, the SELECT statements we’ve seen have always brought back every row
+in the table. This would rarely be the case in real-world situations. One is normally interested only in retrieving data that meets certain criteria. For example, if you’re selecting orders, you probably only want to see orders that meet certain conditions. When looking at products, you ordinarily only want to view certain types of products. Rarely does someone want to simply see everything. Your interest in data is typically directed toward a small subset of that data in order to analyze or view one particular aspect.
+
+
+Applying Selection Criteria
+
+Selection criteria in SQL begins with the WHERE clause. The WHERE keyword accomplishes the task of selecting a subset of rows. This is the general format of the SELECT statement, including the WHERE clause and other clauses previously discussed:
+SELECT columnlist FROM tablelist WHERE condition
+ORDER BY columnlist
+
+As can be seen, the WHERE clause must always come between the FROM and ORDER BY
+clauses. In fact, if any clause is used, it must appear in the order shown above.
+
+Let’s look at an example, taken from data in this Sales table:
+
+SalesID              FirstName              LastName              QuantityPurchased               PricePerItem
+1                          Andrew                     Li                               4                                               2.50
+2                          Carol                         White                        10                                             1.25
+3                          James                       Carpenter                 5                                               4.00
+
+
+We’ll start with a statement with a simple WHERE clause:
+
+SELECT FirstName, LastName, QuantityPurchased FROM Sales
+WHERE LastName = 'Carpenter'
+
+The output is:
+
+FirstName              LastName              QuantityPurchased
+James                       Carpenter                 5
+
+
+Because the WHERE clause stipulates to select only rows with a LastName equal to ‘Carpenter’, only one of the three rows in the table is returned. Notice that the desired value of the LastName column was enclosed in quotes, due to the fact that LastName is a character column. For numeric fields, no quotes are necessary. For example, the following SELECT is equally valid and returns
+the same data:
+
+SELECT FirstName, LastName, QuantityPurchased FROM Sales
+WHERE QuantityPurchased = 5
+
+
+WHERE Clause Operators
+
+In the previous statements, an equals sign (=) is used as the operator in the WHERE clause. The equals sign indicates a test for equality. The general format shown above requires that a condition follows the WHERE clause. This condition consists of an operator with expressions on either side.
+
+The following is a list of the basic operators that can be used in the WHERE clause:
+
+WHERE Operator             Meaning
+=                                           equals
+<>                                        does not equal
+>                                           is greater than
+<                                           is less than
+>=                                        is greater than or equal to
+<=                                        is less than or equal to
+
+
+More advanced operators will be covered in the next chapter.
+
+
+The meaning of the equals (=) and does not equal (<>) operators should be obvious. Here’s an example of a WHERE clause with an “is greater than” operator, taken from the same Sales table:
+SELECT FirstName, LastName, QuantityPurchased FROM Sales
+WHERE QuantityPurchased > 6
+
+The result is:
+
+FirstName              LastName              QuantityPurchased
+Carol                         White                        10
+
+
+In this example, only one row meets the condition that the QuantityPurchased column be greater than 6. Although not as commonly used, it is also possible to use the “is greater than” operator with a text column. This example:
+SELECT FirstName, LastName FROM Sales
+WHERE LastName > 'K'
+
+returns:
+
+FirstName              LastName
+Andrew                     Li
+Carol                         White
+
+
+Because the test is for last names greater than K, it brings back only Li and White, but not Carpenter. When applied to text fields, the greater than and less than operators indicate selection by the alphabetic order of the values. In this case, Li and White are returned, since L and W come after K in the alphabet.
+
+
+Limiting Rows
+
+We may sometimes want to select a small subset of the rows in a table, but don’t care which rows are returned. Let’s say we have a table with 50,000 rows and want to see just a few rows of data to see what it looks like. It wouldn’t make sense to use the WHERE clause for this purpose, since we don’t care which particular rows are returned.
+
+
+For this situation, the solution is to use a special keyword to specify a limit as to how many rows are returned. This is another instance where syntax differs among databases. In Microsoft SQL Server, the keyword that accomplishes this limit is TOP. The general format is:
+SELECT
+TOP number columnlist
+FROM tablelist
+
+
+Database Differences: MySQL and Oracle
+MySQL uses the keyword LIMIT rather than TOP. The general format is:
+SELECT columnlist FROM tablelist LIMIT number
+Oracle uses the keyword ROWNUM rather than TOP. The ROWNUM keyword must be specified in a WHERE clause, as follows:
+SELECT columnlist
+FROM tablelist
+WHERE ROWNUM <= number
+
+Let’s say that we want to see the first 10 rows from a table. The SELECT to accomplish this looks like:
+SELECT TOP 10 * FROM table
+
+This statement returns all columns in the first 10 rows from the table. Like any SELECT statement without an ORDER BY clause, there’s no way to predict which 10 rows will be returned. It depends on how the data is physically stored in the table.
+
+Similarly, we can list specific columns to return:
+
+SELECT TOP 10 column1, column2
+FROM table
+
+In essence, the TOP keyword accomplishes something similar to the WHERE clause, as it returns a small subset of rows in the specified table. However, keep in mind that rows returned using the TOP keyword are not a true random sample, in a statistical sense. They’re only the first rows that qualify, based on how the data is physically stored in the database.
+
+
+Limiting Rows with a Sort
+Another use of the TOP keyword is to use it in combination with the ORDER BY clause to obtain a designated number of rows with the highest values, based on specified criteria. This type of data selection is commonly referred to as a Top N selection. Here’s an example, taken from this Books table:
+
+BookID         Title                                   Author                     CurrentMonthSales
+1                    Pride and Prejudice           Austen                      15
+2                    Animal Farm                        Orwell                       7
+3                    Merchant of Venice           Shakespeare           5
+4                    Romeo and Juliet               Shakespeare           8
+5                    Oliver Twist                          Dickens                    3
+6                    Candide                               Voltaire                     9
+7                    The Scarlet Letter              Hawthorne               12
+8                    Hamlet                                 Shakespeare           2
+
+
+Let’s say we want to see the three books that sold the most in the current month. The SELECT
+that accomplishes this is:
+
+SELECT TOP 3
+Title AS 'Book Title', CurrentMonthSales AS 'Quantity Sold' FROM Books
+ORDER BY CurrentMonthSales DESC
+
+The output is:
+
+Book Title                         Quantity Sold
+Pride and Prejudice           15
+The Scarlet Letter              12
+Candide                               9
+
+
+Let’s examine this statement in some detail. The TOP 3 in the second line indicates that only three rows of data are to be returned. The main question to ask is how it determines which three rows to display. The answer is found in the ORDER BY clause. If there were no ORDER BY clause, then the SELECT would simply bring back any three rows of data. However, this is not what we want. We’re looking for the three rows with the highest sales. To accomplish this, we
+need to sort the rows by the CurrentMonthSales column in descending order. Why descending? When data is sorted in descending order, the highest numbers appear first. If we had sorted in an ascending order, we would get the books with the least number of sales, not the most.
+
+
+Let’s now add one more twist to this scenario. Let’s say we only want to see which book by Shakespeare has sold the most. In order to accomplish this, we need to add a WHERE clause, as follows:
+SELECT TOP 1
+Title AS 'Book Title', CurrentMonthSales AS 'Quantity Sold' FROM Books
+WHERE Author = 'Shakespeare' ORDER BY CurrentMonthSales DESC
+
+This brings back this data:
+
+Book Title                         Quantity Sold
+Romeo and Juliet               8
+
+
+The WHERE clause adds the qualification to look only at books by Shakespeare. We also revised the TOP keyword to specify TOP 1, indicating that we want to see only one row of data.
+
+
+Pattern Matching
+
+We now want to turn to a situation in which the data to be retrieved is not precisely defined. We often want to view data based on inexact matches with words or phrases. For example, you might be interested in finding companies whose name contains the word “bank.” The selection of data via inexact matches within phrases is often referred to as pattern matching. In SQL, the LIKE operator is used in the WHERE clause to enable us to find matches against part of a column
+value. The LIKE operator requires the use of special wildcard characters to specify exactly how the
+match should work. Let’s start with an example from the following Movies table.
+
+MovieID             MovieTitle                                    Rating
+1                          Love Actually                                  R
+2                          North by Northwest                       Not Rated
+3                          Love and Death                             PG
+4                          The Truman Show                         PG
+5                          Everyone Says I Love You            R
+6                          Down with Love                             PG-13
+7                          Finding Nemo                                G
+
+
+Our first example with a LIKE operator is:
+
+SELECT
+MovieTitle AS 'Movie'
+FROM Movies
+WHERE MovieTitle LIKE '%LOVE%'
+
+
+In this example, the percent (%) sign is used as a wildcard. The percent (%) wildcard means any characters. Any characters includes the possibility of there being no characters. The percent (%) before LOVE means that we will accept a phrase with any (or no) characters before LOVE. Similarly, the percent (%) after LOVE means that we’ll accept a phrase with any (or no) characters after LOVE. In other words, we’re looking for any movie title that contains the
+word LOVE. Here is the data returned from the SELECT:
+
+Movie
+Love Actually
+Love and Death
+Everyone Says I Love You
+Down with Love
+
+
+Notice that LOVE appears as the first word, the last word, and sometimes in the middle of the movie title.
+
+
+Database Differences: Oracle
+Unlike Microsoft SQL Server and MySQL, Oracle is case sensitive when determining matches for literal values. In Oracle, LOVE is not the same as Love. An equivalent statement in Oracle is:
+SELECT
+MovieTitle AS Movie
+FROM Movies
+WHERE MovieTitle LIKE '%LOVE%';
+This would return no data, because no movie title contains the word LOVE in all uppercase. One solution in Oracle is to use the UPPER function to convert your data to uppercase, as follows:
+SELECT
+MovieTitle AS Movie
+FROM Movies
+WHERE UPPER(MovieTitle) LIKE '%LOVE%';
+
+Let’s now attempt to find only movies that begin with LOVE. If we issue:
+
+SELECT
+MovieTitle AS 'Movie'
+FROM Movies
+WHERE MovieTitle LIKE 'LOVE%'
+
+we will retrieve only this data:
+
+Movie
+Love Actually
+Love and Death
+
+
+Because we’re now specifying the percent (%) wildcard only after the word LOVE, we get back only movies that begin with LOVE. Similarly, if we issue:
+SELECT
+MovieTitle AS 'Movie'
+FROM Movies
+WHERE MovieTitle LIKE '%LOVE'
+
+we get only this data:
+
+Movie
+Down with Love
+
+
+This is because we have now specified that the phrase must end with the word LOVE.
+
+One might ask how to arrange the wildcards to see only movies that contain the word LOVE in the middle of the title, without seeing movies where LOVE is at the beginning or end. The solution is to specify:
+SELECT
+MovieTitle AS 'Movie'
+FROM Movies
+WHERE MovieTitle LIKE '% LOVE %'
+Notice that a space has been inserted between the word LOVE and the percent (%) wildcards on either side. This ensures that there is at least one space on both sides of the word. The data brought back from this statement is:
+
+Movie
+Everyone Says I Love You
+
+
+
+Wildcards
+
+The percent (%) sign is the most common wildcard used with the LIKE operator, but there are a few other possibilities. These include the underscore character (_), a characterlist enclosed
+in square brackets, and a caret symbol (^) plus a characterlist enclosed in square brackets. The
+following table lists these wildcards and their meanings:
+
+Wildcard                      Meaning
+%                                     any characters (can be zero characters)
+_                                      exactly one character (can be any character) [characterlist]                exactly one character in the characterlist [^characterlist]              exactly one character not in the characterlist
+
+
+We’ll use the following Actors table to illustrate statements for these wildcards.
+
+ActorID                   FirstName              LastName
+1                               Cary                          Grant
+2                               Mary                         Steenburgen
+3                               Jon                            Voight
+4                               Dustin                       Hoffman
+5                               John                          Wayne
+6                               Gary                          Cooper
+
+
+Here’s an illustration of how the underscore (_) wildcard character can be used:
+
+SELECT FirstName, LastName FROM Actors
+WHERE FirstName LIKE '_ARY'
+
+The output of this SELECT is:
+
+FirstName              LastName
+Cary                          Grant
+Mary                         Steenburgen
+Gary                          Cooper
+
+
+This statement retrieves these three actors because all have a first name consisting of exactly one character followed by the phrase ARY.
+
+Likewise, if we issue this statement:
+
+SELECT FirstName, LastName FROM Actors
+WHERE FirstName LIKE 'J_N'
+
+it produces:
+
+FirstName              LastName
+Jon                            Voight
+
+
+The actor John Wayne is not selected since John doesn’t fit the J_N pattern. An underscore stands for only one character.
+
+
+The final wildcards we’ll discuss, [characterlist] and [^characterlist], enable you to specify multiple wildcard values in a single position.
+
+
+Database Differences: MySQL and Oracle
+The [characterlist] and [^characterlist] wildcards are not available in MySQL or Oracle.
+
+The following illustrates the [characterlist] wildcard:
+
+SELECT FirstName, LastName FROM Actors
+WHERE FirstName LIKE '[CM]ARY'
+
+This retrieves any rows where FirstName begins with a C or M and ends with ARY. The result is:
+
+FirstName              LastName
+Cary                          Grant
+Mary                         Steenburgen
+
+
+The following illustrates the [^characterlist] wildcard:
+
+SELECT FirstName, LastName FROM Actors
+WHERE FirstName LIKE '[^CM]ARY'
+This selects any rows where FirstName does not begin with a C or M and ends with ARY. The result is:
+
+FirstName              LastName
+Gary                          Cooper
+
+
+
+Looking Ahead
+
+This chapter introduced the topic of how to apply selection criteria to queries. A number of basic operators, such as equals and greater than, were introduced. The ability to specify these types of basic selection criteria goes a long way toward making the SELECT statement truly useful. We also covered the related topic of limiting the number of rows returned in a query. The ability to limit rows in combination with an ORDER BY clause allows for a useful Top N type of data selection.
+
+
+We concluded the chapter with a study of matching words or phrases via a specified pattern. Matching by patterns is a significant and widely used function of SQL. Any time you enter a word in a search box and attempt to retrieve all entities containing that word, you are utilizing pattern matching.
+
+In our next chapter, “Boolean Logic,” we’ll greatly enhance our selection criteria capabilities by introducing a number of new keywords that add sophisticated logic to the WHERE clause. At present, we can do such things as select all customers from the state of New York. In the real world, however, much more is typically required. Boolean logic will allow us to formulate a query that will select customers who are in New York or California but not in Los Angeles
+or Albuquerque.
+
+
+
+
+
+
+
+
+This page intentionally left blank

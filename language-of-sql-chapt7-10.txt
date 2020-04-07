@@ -1,0 +1,1673 @@
+
+
+
+The principle keywords used to create complex Boolean logic are AND, OR, and NOT. These three operators are used to provide additional functionality to the WHERE clause. In proper combination, the AND, OR, and NOT operators, along with parentheses, can specify just about any logical expression that can be imagined.
+
+
+The AND Operator
+
+The following examples will all be taken from this Purchases table:
+
+PurchaseID            CustomerName             State            QuantityPurchased            PricePerItem
+1                               Andrew Li                         IL                    4                                             2.50
+2                               Carol White                      CA                  10                                           1.25
+3                               James Carpenter             NY                  5                                             4.00
+
+
+Here’s an example of a WHERE clause that uses the AND operator:
+
+SELECT CustomerName, QuantityPurchased FROM Purchases
+WHERE QuantityPurchased > 3
+AND QuantityPurchased < 7
+The AND clause means that all conditions must evaluate to true for the row to be selected. This SELECT specifies that the only rows to be retrieved are those for which the QuantityPurchased is both greater than 3 and less than 7. Therefore, only these two rows are returned:
+
+CustomerName                QuantityPurchased
+Andrew Li                            4
+James Carpenter               5
+
+
+Notice that the row for Carol White is not returned. Why? Carol purchased a quantity of 10, which, in fact, does satisfy the first condition (QuantityPurchased > 3). However, the second condition (QuantityPurchased < 7) is not satisfied and therefore is not true. When using the AND operator, all conditions specified must be true for the row to be selected.
+
+
+The OR Operator
+
+Now let’s look at the OR operator. The AND operator meant that all conditions must evaluate to true for the row to be selected. The OR operator means that the row will be selected if any of the conditions are determined to be true.
+
+
+Here’s an example, taken from the same table:
+
+SELECT CustomerName, QuantityPurchased, PricePerItem
+FROM Purchases
+WHERE QuantityPurchased > 8
+OR PricePerItem > 3
+
+This SELECT returns this data:
+
+CustomerName                QuantityPurchased               PricePerItem
+Carol White                         10                                              1.25
+James Carpenter               5                                                4.00
+
+
+Why are the rows for Carol White and James Carpenter displayed, and not the row for Andrew Li? The row for Carol White is selected because it meets the requirements of the first condition (QuantityPurchased > 8). It doesn’t matter that the second condition (PricePerItem > 3) isn’t true, because only one condition needs to be true for an OR condition.
+
+Likewise, the row for James Carpenter is selected because the second condition (PricePerItem > 3) is true for that row. The row for Andrew Li isn’t selected because it doesn’t satisfy either of the two conditions.
+
+
+Using Parentheses
+
+Let’s say that we are interested only in orders from customers from either the state of Illinois or the state of California. Additionally, we want to see orders only where the quantity purchased
+is greater than 8. To attempt to satisfy this request, we might put together this SELECT
+statement:
+
+SELECT CustomerName, State, QuantityPurchased FROM Purchases WHERE State = 'IL' OR State = 'CA'
+AND QuantityPurchased > 8
+We would expect this statement to return only one row of data, for Carol White. Although we have two rows for customers in Illinois or California (Li and White), only one of those (White) has a quantity purchased greater than 8. However, when this statement is executed, we get:
+
+CustomerName             State               QuantityPurchased
+Andrew Li                         IL                      4
+Carol White                      CA                     10
+
+
+We see two rows instead of the expected one. What went wrong? The answer lies in how SQL
+interprets the WHERE clause, which happens to contain both AND and OR operators. Like
+other computer languages, SQL has a predetermined order of evaluation that specifies the order in which various operators are interpreted. Unless told otherwise, SQL always processes the
+AND operator before the OR operator. So, in the previous statement, it first looks at the AND, and evaluates the condition:
+State = 'CA'
+AND QuantityPurchased > 8
+
+The row that satisfies that condition is for Carol White. SQL then evaluates the OR operator, which allows for rows where the State equals IL. That adds the row for Andrew Li. The result is that SQL determines that both the Andrew Li and the Carol White rows meet the condition.
+
+Obviously, this isn’t what was intended. This type of problem often comes up when AND and OR operators are combined in a single WHERE clause. The way to resolve the ambiguity is to use parentheses to specify the desired order of evaluation. Anything in parentheses is always evaluated first.
+
+Here’s how parentheses can be added to the previous SELECT to correct the situation:
+
+SELECT CustomerName, State, QuantityPurchased FROM Purchases
+WHERE (State = 'IL' OR State = 'CA')
+AND QuantityPurchased > 8
+
+When this is executed, we see this data:
+
+CustomerName                State            QuantityPurchased
+Carol White                         CA                  10
+
+
+The parentheses in the SELECT statement force the OR expression (State = 'IL' OR State = 'CA')
+to be evaluated first. This produces the intended result.
+
+
+Multiple Sets of Parentheses
+
+Let’s say we want to select two different sets of rows from the Purchases table: first, rows for customers in New York, and second, rows for customers in Illinois who have made a purchase with a quantity between 3 and 10. The following SELECT accomplishes this requirement:
+SELECT CustomerName, State, QuantityPurchased FROM Purchases WHERE State = 'NY' OR (State = 'IL'
+AND (QuantityPurchased >= 3
+AND QuantityPurchased <= 10))
+
+The result is:
+
+CustomerName                State            QuantityPurchased
+Andrew Li                            IL                    4
+James Carpenter               NY                  5
+
+
+Notice that there are two sets of parentheses in this statement, with one set inside the other. This use of parentheses is analogous to the parentheses used in the composite functions seen in Chapter 4. When there is more than one set of parentheses, the innermost set of functions is always evaluated first. The same is true of parentheses used in Boolean expressions. In this example, the innermost set of parentheses contains:
+(QuantityPurchased >= 3
+AND QuantityPurchased <= 10)
+
+After this condition is evaluated for each row, the logic proceeds outward to the second set of parentheses:
+(State = 'IL'
+AND (QuantityPurchased >= 3
+AND QuantityPurchased <= 10))
+
+Finally, the logic adds in the final line of the WHERE clause (not enclosed in any parentheses)
+regarding the state of New York:
+
+WHERE State = 'NY' OR (State = 'IL'
+AND (QuantityPurchased >= 3
+AND QuantityPurchased <= 10))
+
+In essence, SQL’s logic first evaluated expressions in the innermost set of parentheses, then the outer set of parentheses, and then all remaining expressions.
+
+
+The NOT Operator
+
+In addition to the AND and OR operators, the NOT operator is often useful for expressing a complex logical condition. The NOT expresses a negation, or opposite, of whatever follows the NOT. Here’s a simple example:
+SELECT CustomerName, State, QuantityPurchased FROM Purchases
+WHERE NOT State = 'NY'
+
+The result is:
+
+CustomerName                State            QuantityPurchased
+Andrew Li                            IL                    4
+Carol White                         CA                  10
+
+
+This specifies a selection of rows for which the state is not equal to NY. In this simple case, the NOT operator is not truly necessary. The logic of the previous statement can also be accomplished via the following equivalent statement:
+SELECT CustomerName, State, QuantityPurchased FROM Purchases
+WHERE State <> 'NY'
+
+Here, the not equals operator (<>) accomplishes the same thing as the NOT operator. Here’s a more complex example with the NOT operator:
+SELECT CustomerName, State, QuantityPurchased FROM Purchases
+WHERE NOT (State = 'IL' OR State = 'NY')
+
+The result is:
+
+CustomerName                State            QuantityPurchased
+Carol White                         CA                  10
+
+
+When the NOT operator is used before a set of parentheses, it negates everything in the parentheses. In this example, we’re looking for all rows for which the state is not Illinois or New York.
+
+
+Again, note that the NOT operator is not strictly necessary in this example. The logic of the previous query can also be accomplished with the following equivalent statement:
+SELECT CustomerName, State, QuantityPurchased FROM Purchases
+WHERE State <> 'IL' AND State <> 'NY'
+
+It might take a bit of reflection to understand why the preceding two statements are equivalent. The first statement uses the NOT operator and a logical expression with an OR operator. The second statement converts the logic into an expression with an AND operator.
+
+Here’s a final example of how the NOT operator can be used in a complex statement:
+
+SELECT CustomerName, State, QuantityPurchased FROM Purchases
+WHERE NOT (State = 'IL'
+AND QuantityPurchased > 3)
+This query is saying to select customers where it’s not true that the state equals Illinois and has a QuantityPurchased greater than 3. The NOT operator applies to the entire logical expression that the state equals Illinois and has a QuantityPurchased greater than 3. The result is:
+
+CustomerName                State            QuantityPurchased
+Carol White                         CA                  10
+James Carpenter               NY                  5
+
+
+These two rows were selected because the only customer in Illinois who also has a QuantityPurchased greater than 3 is Andrew Li. Because we’re applying a NOT to this entire logic, the end result is the display of the other two customers.
+
+Once again, this query can be expressed in an alternate way without using the NOT:
+
+SELECT CustomerName, State, QuantityPurchased FROM Purchases
+WHERE State <> 'IL'
+OR QuantityPurchased <= 3
+
+As seen in these examples, it may not be logically necessary to use the NOT operator in complex expressions with arithmetic operators such as equals (=) or less than (<). However, it’s often more straightforward to place a NOT in front of a logical expression rather than attempting to convert that expression into one that doesn’t use the NOT. In other words, the NOT operator can provide a convenient and useful way of expressing one’s logical thoughts.
+
+
+The BETWEEN Operator
+
+Let’s now turn to two special operators, BETWEEN and IN, that can simplify expressions
+that would ordinarily require the OR or AND operators. The BETWEEN operator allows us to abbreviate an AND expression with greater than or equal to (>=) and less than or equal to (<=) operators in an expression with a single operator.
+
+Here’s an example. Let’s say we want to select all rows with a quantity purchased from 5 to 20. One way of accomplishing this is with the following SELECT statement:
+SELECT CustomerName, QuantityPurchased FROM Purchases
+WHERE QuantityPurchased >= 5
+AND QuantityPurchased <= 20
+
+Using the BETWEEN operator, the equivalent statement is:
+
+SELECT CustomerName, QuantityPurchased FROM Purchases
+WHERE QuantityPurchased BETWEEN 5 AND 20
+
+In both cases, the SELECT returns this data:
+
+CustomerName                QuantityPurchased
+Carol White                         10
+James Carpenter               5
+
+The BETWEEN operator always requires a corresponding AND placed between the two numbers. Note the relative simplicity of the BETWEEN operator. Also notice that the BETWEEN is
+inclusive of the numbers specified. In this example, BETWEEN 5 AND 20 includes the numbers
+5 and 20. Thus, the BETWEEN is equivalent only to the greater than or equal to (>=) and less than or equal to (<=) operators. It can’t be used to express something simply greater than (>) or less than (<) a range of numbers. The row for James Carpenter is selected because the quantity purchased is equal to 5, and therefore is between 5 and 20.
+
+The NOT operator can be used in conjunction with BETWEEN. For example, this SELECT:
+
+SELECT CustomerName, QuantityPurchased FROM Purchases
+WHERE QuantityPurchased NOT BETWEEN 5 AND 20
+
+
+retrieves this data:
+
+CustomerName                QuantityPurchased
+Andrew Li                            4
+
+
+
+The IN Operator
+
+Just as BETWEEN represents a special case of the AND operator, the IN operator allows for a special case of the OR operator. Let’s say we want to see rows where the state is Illinois or New York. Without the IN operator, this can be accomplished with this statement:
+SELECT CustomerName, State
+FROM Purchases WHERE State = 'IL' OR State = 'NY'
+
+Here is an equivalent statement using the IN operator:
+
+SELECT CustomerName, State
+FROM Purchases
+WHERE State IN ('IL', 'NY')
+
+In either case, the data retrieved is:
+
+CustomerName                State Andrew Li                            IL James Carpenter               NY
+
+
+The IN operator requires a subsequent listing of values enclosed within parentheses. Commas must be used to separate all values.
+
+The usefulness of the IN operator may not be obvious in this example, where only two states are listed. However, the IN can just as easily be used in situations involving dozens of specific values. This greatly reduces the amount of typing required for such a statement. Another handy use for the IN operator comes in situations where values are obtained from an Excel
+spreadsheet. To obtain multiple values from adjacent cells in a spreadsheet for a SQL statement, you merely need to copy those values with a comma delimiter. The values can then be pasted inside parentheses following the IN operator.
+
+
+As with the BETWEEN operator, the NOT operator can be used with the IN operator, as shown in this example:
+SELECT CustomerName, State
+FROM Purchases
+WHERE State NOT IN ('IL', 'NY')
+
+This retrieves this data:
+
+CustomerName                State
+Carol White                         CA
+
+
+One final note about the IN operator. There is a second way to use the IN operator that is substantially different from the syntax just discussed. In the second format, an entire SELECT statement is specified within parentheses, allowing the individual values to be created logically when needed. This is called a subquery, which will be covered in detail in Chapter 14.
+
+
+Boolean Logic and NULL Values
+
+At the beginning of this chapter, we stated that the Boolean logic in SQL evaluates complex expressions as either true or false. This assertion was not completely accurate. When evaluating the conditions in a WHERE clause, there are actually three possibilities: true, false, and unknown. The possibility of an unknown value derives from the fact that columns in SQL databases are sometimes allowed to have a NULL value. As mentioned in Chapter 1, NULL values are those for which there is an absence of data.
+SQL provides a special keyword to test for the presence of NULL values for a column specified in a WHERE clause. The keyword is IS NULL. Let’s look at an example taken from the Products table seen previously:
+
+ProductID               Description             Weight
+1                               Printer A                   NULL
+2                               Printer B                   0
+3                               Monitor C                 2
+4                               Laptop D                  4
+
+
+For this example, we’ll imagine that as rows are added to the Products table, they are initially not given a weight. The Weight column is initially given a value of NULL, and a user later assigns a weight to the product.
+
+
+Let’s say that we attempt to use the following SELECT to find products missing a weight:
+
+SELECT Description, Weight
+FROM Products
+WHERE Weight = 0
+
+This would return:
+
+Description             Weight
+Printer B                   0
+
+
+This is not quite what we want. A weight of zero is not the same as a weight with a NULL
+value. To correct this, we need to issue:
+
+SELECT Description, Weight
+FROM Products
+WHERE Weight = 0
+OR Weight IS NULL
+
+This returns:
+
+Description             Weight Printer A                   NULL Printer B                   0
+
+
+The IS NULL keyword can also be negated as IS NOT NULL, which allows for the retrieval of rows that do not have NULL for the specified column.
+
+Note that the ISNULL function, discussed in Chapter 4, can provide an alternative to the IS NULL
+keyword. The equivalent of the previous SELECT statement, using the ISNULL function, is:
+
+SELECT Description, Weight
+FROM Products
+WHERE ISNULL(Weight, 0) = 0
+
+This SELECT retrieves the same two rows. The ISNULL function converts all values for the Weight column with a value of NULL to 0. This produces the same result as the previous statement, which tested for a value of 0 or NULL.
+
+
+The ISNULL function and IS NULL keywords can also be used together, as in this statement:
+
+SELECT Description,
+ISNULL(Weight, 0) AS 'Weight' FROM Products
+WHERE Weight = 0
+OR Weight IS NULL
+
+This produces this data:
+
+Description             Weight
+Printer A                   0
+Printer B                   0
+
+
+
+Looking Ahead
+
+This chapter covered the important topic of how to create complex expressions of selection logic. The basic Boolean operators used in this endeavor were AND, OR, and NOT. We also discussed the BETWEEN and IN operators, which allow for a more concise statement of
+the AND and OR operators in certain situations. Parentheses are another essential tool in the formulation of complex expressions. By using parentheses, you can create almost every imaginable logical condition. Finally, we discussed how to deal with NULL values when selecting data.
+
+In our next chapter, we’ll revisit the columnlist and explore an important construct that will allow us to inject logic into the individual columns in the columnlist. This is referred to as conditional logic. By using the same Boolean logic operators discussed in this chapter, along with a few additional keywords, we’ll be able to specify logic that determines how individual columns in the columnlist are displayed.
+
+
+The CASE expression can appear in several areas of the SELECT statement. It can appear in the
+columnlist immediately after the SELECT keyword or in the GROUP BY or ORDER BY clauses. It can also appear as an element in a condition of the WHERE or HAVING clauses. In this chapter, we’ll begin by illustrating the use of the CASE expression in a SELECT columnlist. This is its most typical use. We’ll then follow up by also showing how it can be used in the WHERE and ORDER BY clauses.
+
+The CASE expression replaces any individual column in a columnlist or an expression referenced in a condition in the WHERE or HAVING clause. Focusing on its use in a columnlist, a SELECT statement that includes both columns and a CASE expression might look like this:
+SELECT column1, column2, CaseExpression FROM table
+
+The CASE expression itself contains logic embedded in a traditional IF-THEN-ELSE structure. The term IF-THEN-ELSE refers to a commonly used logical construct employed by procedural programming languages. In general terms, this type of logic looks like:
+IF some condition is true
+THEN do this
+ELSE do that
+
+The condition expressed in the IF-THEN-ELSE can contain the full range of Boolean logic discussed in the previous chapter. Thus, the expression can include the AND, OR, NOT, BETWEEN, and IN operators, as well as parentheses.
+
+
+The Simple CASE Format
+
+There are two basic formats for the CASE expression, generally referred to as the simple and the
+searched. The simple format is:
+
+CASE ColumnOrExpression
+WHEN value1 THEN result1
+WHEN value2 THEN result2
+(repeat WHEN-THEN any number of times)
+[ELSE DefaultResult]
+END
+
+As you can see, this CASE expression uses a number of keywords besides CASE; it also includes WHEN, THEN, ELSE, and END. These additional keywords are needed to fully define the logic of the CASE expression. The WHEN and THEN keywords define a condition that is evaluated. If the value after the WHEN is true, then the result after THEN is used. The WHEN and THEN keywords can be repeated any number of times. When there is a WHEN, there must also be a corresponding THEN. The ELSE keyword is used to define a default value to be used if none
+of the WHEN-THEN conditions is true. As indicated by the brackets, the ELSE keyword is not required. However, it is usually a good idea to include the ELSE keyword in every CASE expression to explicitly state a default value. The END keyword terminates the CASE expression.
+
+
+Let’s look at a specific example, using this Groceries table:
+
+GroceryID               CategoryCode             Description
+1                               F                                      Apple
+2                               F                                      Orange
+3                               S                                     Mustard
+4                               V                                     Carrot
+5                               B                                     Water
+
+
+In this data, the CategoryCode column is meant to have these meanings: F is fruit, S is spice,
+V is vegetable, and B is beverage. A SELECT with a CASE expression for data in this table might look like this:
+SELECT
+CASE CategoryCode
+WHEN 'F' THEN 'Fruit'
+WHEN 'V' THEN 'Vegetable'
+ELSE 'Other'
+END AS 'Category',
+Description
+FROM Groceries
+
+and produces this output:
+
+Category                 Description
+Fruit                          Apple Fruit                          Orange Other                        Mustard Vegetable                 Carrot Other                        Water
+
+
+Let’s examine the SELECT statement in some detail. The first line contains the SELECT keyword. The second line, with the CASE keyword, specifies that the CategoryCode column is to be analyzed. The third line introduces the first WHEN-THEN condition. This line says that if the CategoryCode column equals F, then “Fruit” should be displayed. The next line says that if the CategoryCode is V, then “Vegetable” should be displayed. The ELSE line provides
+a default value of “Other” to use if the CategoryCode is not F or V. In other words, if the category is not Fruit or Vegetable, then it can be classified as “Other”. The END line terminates the CASE expression and also includes an AS keyword to assign a column alias. The next line, Description, is merely another column and has nothing to do with the CASE expression.
+
+As seen, the CASE expression is very useful for translating cryptic values into meaningful descriptions. In this example, the CategoryCode column in the Groceries table contains only a single character code to indicate the type of product. The CASE expression allows us to specify the translation.
+
+
+The Searched CASE Format
+
+The general format for the searched CASE expression is:
+
+CASE
+WHEN condition1 THEN result1
+WHEN condition2 THEN result2
+(repeat WHEN-THEN any number of times)
+[ELSE DefaultResult]
+END
+
+The equivalent of the preceding SELECT statement using this second format is:
+
+SELECT CASE
+WHEN CategoryCode = 'F' THEN 'Fruit'
+WHEN CategoryCode = 'V' THEN 'Vegetable'
+ELSE 'Other'
+END AS 'Category',
+Description
+FROM Groceries
+
+The data retrieved from this statement is identical to the first simple CASE format. Notice the subtle differences, however. In the simple format, the column name to be evaluated is placed after the CASE keyword, and the expression following the WHEN is a simple literal value. In the searched format, a column name to be evaluated is not placed next to the CASE keyword.
+Instead, this format allows for a more complex conditional expression to be specified following the WHEN keyword.
+In the previous example, either format of the CASE clause can be used and will produce the same result. Let’s now look at another example for which only the searched CASE format yields the desired result. This example will be taken from this data:
+
+GroceryID               Fruit              Vegetable               Spice                 Beverage             Description
+1                               X                                                                                                                 Apple
+2                               X                                                                                                                 Orange
+3                                                                                        X                                                         Mustard
+4                                                      X                                                                                           Carrot
+5                                                                                                                    X                             Water
+
+
+In this situation, rather than containing a single CategoryCode column, the table has multiple columns to indicate the type of product. For example, a value of X in the Fruit column is used to indicate that the product is a fruit. As such, it would be impossible to use the simple format of the CASE expression to evaluate this data. The simple format works only with an analysis of
+a single column. Using the searched format, a CASE expression that handles this type of data is:
+
+
+SELECT CASE
+WHEN Fruit = 'X' THEN 'Fruit'
+WHEN Vegetable = 'X' THEN 'Vegetable'
+ELSE 'Other'
+END AS 'Category',
+Description
+FROM GroceryCategories
+
+Once again, the result is:
+
+Category                 Description
+Fruit                          Apple Fruit                          Orange Other                        Mustard Vegetable                 Carrot Other                        Water
+
+
+We have been able to use the searched format of the CASE expression to evaluate data in multiple columns to produce a single result.
+
+The CASE expression can be employed in many situations in the columnlist of a SELECT statement. Another common example of the usefulness of the CASE expression is in situations involving division by zero. When formulating a calculation that has the possibility of division by zero, you must be careful to provide some alternative when the denominator equals zero. Like all other computer languages, SQL produces an error when division by zero is attempted. To resolve this issue, a CASE expression can be used, as in this general example:
+SELECT CASE
+WHEN Denominator = 0 THEN 0
+ELSE Numerator / Denominator
+END
+FROM table
+
+In this example, we’re testing the denominator value to see if it equals zero. If it does, the result of the calculation is set to zero. If not, the normal calculation is allowed to proceed. Thus, if
+the denominator in the calculation happens to have a value of zero, we’ll bypass the “divide by zero” error that would otherwise ensue.
+
+
+Conditional Logic in ORDER BY Clauses
+As mentioned at the beginning of this chapter, the CASE expression can be used in numerous places in the SELECT statement. To illustrate its use in the ORDER BY clause, let’s imagine that we have a table with cities from the US and Canada. In this scenario, there are separate columns for US States and Canadian Provinces. This data might appear as the following:
+
+CityID                 Country                State               Province               City
+1                          US                          VT                                                    Burlington
+2                          CA                                                    QU                          Montreal
+3                          US                          CO                                                   Denver
+4                          US                          CO                                                   Boulder
+5                          CA                                                    AB                          Edmonton
+
+
+The goal in this example is to sort data first by country, and then by either state or province, and finally by city. A statement that accomplishes this is:
+SELECT *
+FROM NorthAmerica
+ORDER BY
+Country,
+CASE Country
+WHEN 'US' THEN State
+WHEN 'CA' THEN Province
+ELSE State
+END,
+City
+
+The output from this statement is:
+
+CityID                 Country                State               Province               City
+5                          CA                                                    AB                          Edmonton
+2                          CA                                                    QU                          Montreal
+4                          US                          CO                                                   Boulder
+3                          US                          CO                                                   Denver
+1                          US                          VT                                                    Burlington
+
+
+The CASE expression evaluates the Country column to determine whether it’s US or CA. If it’s US data, then it uses the State column for the sort. If Canada, it uses Province. The result is that this statement sorts by country, then by state or province, and finally by city.
+
+
+Conditional Logic in WHERE Clauses
+Just as the CASE expression can be placed within a columnlist, it can also be placed within an expression in a WHERE condition. In this example, we’ll assume that we have customer data such as the following:
+
+CustomerID            Sex             Age            Income
+1                               M                55               80000
+2                               F                  25               65000
+3                               M                35               40000
+4                               F                  42               90000
+5                               F                  27               25000
+
+
+The goal is to select customers who meet a complex set of demographic and income requirements. If they are male and at least 50 years old, they must have an income of 75000 to qualify. If they are female and at least 35, they must have an income of 60000 to qualify. All other people must have income of at least 50000 to qualify. The following is a statement that specifies that criteria by using a CASE statement:
+SELECT *
+FROM CustomerList
+WHERE Income >
+CASE
+WHEN Sex = 'M' AND Age >= 50 THEN 75000
+WHEN Sex = 'F' AND Age >= 35 THEN 60000
+ELSE 50000
+END
+
+Note that the entire CASE expression replaced just one part of the condition expressed in the
+WHERE clause. In general form, the WHERE clause is:
+
+WHERE Income > CASE_Expression
+The CASE expression provides the value that is compared to Income in the selection logic. When this statement is executed, the data retrieved is:
+
+CustomerID            Sex             Age            Income
+1                               M                55               80000
+2                               F                  25               65000
+4                               F                  42               90000
+9
+
+Summarizing Data
+
+
+
+
+
+
+
+Keywords Introduced
+DISTINCT  •  SUM  •  AVG  •  MIN  •  MAX  •  COUNT  •  GROUP BY  •  HAVING  •  ROW_NUMBER  • RANK  •  DENSE RANK  •  NTILE  •  OVER  •  PARTITION BY
+
+Up until now, all of the calculations, functions, and CASE expressions we’ve used have only altered the values of individual columns. The rows we’ve retrieved have corresponded to rows in tables in the underlying database. We now want to turn to various methods of summarizing data, by combining values in multiple rows.
+
+The computer term usually associated with this type of endeavor is aggregation, which means
+“to combine into groups.” The ability to aggregate and summarize data is key to being able
+to move beyond a mere display of data to something approaching real information. There’s a bit of magic involved when users view summarized data in a report. The ability to summarize offers the opportunity of extracting some real meaning from the mass of data in a database in order to obtain a clearer picture of what it all means.
+
+
+Eliminating Duplicates
+Although it doesn’t provide true aggregation, the most elementary way to summarize data is to eliminate duplicates. SQL’s DISTINCT keyword provides an easy method for removing duplicate values from output. Here’s an example of the DISTINCT keyword, used with the following SongTitles table:
+
+SongID              Artist                                 Album                               Title
+1                          The Beatles                        Revolver                              Yellow Submarine
+2                          The Beatles                        Revolver                              Eleanor Rigby
+3                          The Beatles                        Abbey Road                         Here Comes the Sun
+4                          The Rolling Stones            Beggars Banquet               Sympathy for the Devil
+5                          The Rolling Stones            Let It Bleed                         Gimme Shelter
+6                          Paul McCartney                  Ram                                     Too Many People
+
+
+Let’s say we want to see a list of artists in the table. This can be accomplished with:
+
+SELECT DISTINCT Artist
+FROM SongTitles
+ORDER BY Artist
+
+The result is:
+
+Artist
+Paul McCartney
+The Beatles
+The Rolling Stones
+
+
+The DISTINCT keyword is always placed immediately after the SELECT keyword. The DISTINCT keyword specifies that only unique values of the columnlist that follow are to be returned. In this case, there are only three artists, so only three rows are returned. If we want to see unique combinations of both artists and albums, we can issue:
+SELECT DISTINCT Artist, Album
+FROM SongTitles
+ORDER BY Artist, Album
+
+and the result would be:
+
+Artist                                 Album
+Paul McCartney                  Ram
+The Beatles                        Abbey Road
+The Beatles                        Revolver
+The Rolling Stones            Beggars Banquet
+The Rolling Stones            Let It Bleed
+
+
+Notice that Revolver is listed only once, even though there are two songs from that album in the table. This is because the DISTINCT keyword only considers values from the listed columns.
+
+
+Aggregate Functions
+
+The functions discussed in Chapter 4, “Using Functions,” were all scalar functions. These functions were all performed on a single number or value. In contrast, aggregate functions are meant to be used with groups of data. The most widely used aggregate functions are COUNT, SUM, AVG, MIN, and MAX. These functions provide counts, sums, averages, and minimum and maximum values for groups of data.
+All of our aggregate function examples will be taken from the following two tables with data about student fees and grades. The Fees table contains:
+
+FeeID                      Student                   FeeType                  Fee
+1                               Jose                          Gym                          30
+2                               Jose                          Lunch                       10
+3                               Jose                          Trip                            8
+4                               Rama                        Gym                          30
+5                               Julie                          Lunch                       10
+
+
+This is the Grades table:
+
+GradeID                  Student                   GradeType              Grade                      YearInSchool
+1                               Isabella                    Quiz                          92                             7
+2                               Isabella                    Quiz                          95                             7
+3                               Isabella                    Homework                84                             7
+4                               Hailey                       Quiz                          62                             8
+5                               Hailey                       Quiz                          81                             8
+6                               Hailey                       Homework                NULL                         8
+7                               Peter                         Quiz                          58                             7
+8                               Peter                         Quiz                          74                             7
+9                               Peter                         Homework                88                             7
+
+
+Beginning with the SUM function, let’s say we want to see the total amount of gym fees paid by all students. This can be accomplished with this statement:
+SELECT
+SUM(Fee) AS 'Total Gym Fees'
+FROM Fees
+WHERE FeeType = 'Gym'
+
+The resulting data is:
+
+Total Gym Fees
+60
+
+
+
+
+
+
+
+www.allitebooks.com
+
+
+As you can see, the SUM function sums up the total values for the Fee column, subject to the selection logic specified in the WHERE clause. Because the only expression in the columnlist
+is an aggregate function, the query returns only one column and one row of data with the aggregate amount.
+
+The AVG, MIN, and MAX functions are quite similar to the SUM function. Here’s an example
+of the AVG function. In this case, we’re seeking to obtain the average grade of all quizzes in the
+Grades table:
+
+SELECT
+AVG(Grade) AS 'Average Quiz Score'
+FROM Grades
+WHERE GradeType = 'Quiz'
+
+The result is:
+
+Average Quiz Score
+77
+
+
+More than one aggregate function can be used in a single statement. Here’s a SELECT that shows how to utilize AVG, MIN, and MAX in the same statement:
+SELECT
+AVG(Grade) AS 'Average Quiz Score',
+MIN(Grade) AS 'Minimum Quiz Score',
+MAX(Grade) AS 'Maximum Quiz Score'
+FROM Grades
+WHERE GradeType = 'Quiz'
+
+The result is:
+
+Average Quiz Score         Minimum Quiz Score            Maximum Quiz Score
+77                                        58                                              95
+
+
+
+The COUNT Function
+
+The COUNT function is slightly more complex than the aggregate functions discussed previously, in that it can be employed in three different ways. First, the COUNT function can be used to return a count of all selected rows, regardless of the values in any particular column.
+As an example, the following statement returns a count of all rows that have homework grades:
+
+SELECT
+COUNT(*) AS 'Count of Homework Rows'
+FROM Grades
+WHERE GradeType = 'Homework'
+
+
+The result is:
+
+Count of Homework Rows
+3
+
+
+The asterisk within parentheses means “all columns.” Behind the scenes, SQL actually retrieves the data in all columns for the selected rows, and then returns a count of the number of rows.
+
+In the second format of the COUNT function, a specific column is specified within the parentheses. Here’s an example:
+SELECT
+COUNT(Grade) AS 'Count of Homework Scores'
+FROM Grades
+WHERE GradeType = 'Homework'
+
+The result is:
+
+Count of Homework Rows
+2
+
+
+Notice the subtle difference between the preceding two SELECT statements. In the first, we’re merely counting rows where the GradeType equals Homework. There are three of those
+rows. In the second statement, we’re counting occurrences of the Grade column where the GradeType column has a value of Homework. In this case, one of the three rows has a value of NULL in the Grade column, and SQL is smart enough not to count such a row. As mentioned previously, NULL means that the data doesn’t exist.
+
+The third variant of the COUNT function allows us to use the DISTINCT keyword in addition to a column name. Here’s an example:
+SELECT
+COUNT(DISTINCT FeeType) AS 'Number of Fee Types'
+FROM Fees
+Note that the DISTINCT keyword is placed inside the parentheses. The DISTINCT keyword says that we want to include only distinct values of FeeType. The outer COUNT function counts those values. The result of this statement is:
+
+Number of Fee Types
+3
+
+
+This means that there are three different values found in the FeeType column.
+
+
+Grouping Data
+
+The previous examples of aggregation functions are interesting but of somewhat limited value. The real power of aggregation functions will become evident after we introduce the concept of grouping data.
+
+The GROUP BY keyword is used to separate the data returned from a SELECT statement into any number of groups. For example, when looking at the Grades table, we may be interested in analyzing test scores based on the grade type. In other words, we want to separate the data into two separate groups: quizzes and homework. The value of the GradeType column can be used
+to determine the group to which each row belongs. Once data has been separated into groups, aggregation functions can be used so that summary statistics for each of the groups can be calculated and compared.
+
+Let’s proceed with an example that introduces the GROUP BY keyword:
+
+SELECT
+GradeType AS 'Grade Type',
+AVG(Grade) AS 'Average Grade'
+FROM Grades
+GROUP BY GradeType
+ORDER BY GradeType
+
+The result of this statement is:
+
+Grade Type             Average Grade
+Homework                86
+Quiz                          77
+
+
+In this example, the GROUP BY keyword specifies that groups are to be created based on the value of the GradeType column. The two columns in the SELECT columnlist are GradeType
+and a calculated field that uses the AVG function. The GradeType column was included in the columnlist because, when creating a group, it’s usually a good idea to include the column on which the groups are based. The “Average Grade” calculated field aggregates values based on the rows in each group.
+
+Notice that the average homework grade has been computed as 86. As before, even though there is one row with a NULL value for the Homework GradeType, SQL is smart enough to ignore rows with NULL values when computing an average. If we had wanted the NULL value to be counted as a 0, then the ISNULL function could be used to convert the NULL to a 0,
+as follows:
+
+AVG(ISNULL(Grade, 0)) AS 'Average Grade'
+
+It’s important to note that when using a GROUP BY keyword, all columns in the columnlist
+must either be listed as columns in the GROUP BY clause, or else be used in an aggregation
+
+
+function. Nothing else would make any sense. For example, the following SELECT would produce a syntax error:
+SELECT
+GradeType AS 'Grade Type',
+AVG(Grade) AS 'Average Grade',
+Student AS 'Student'
+FROM Grades
+GROUP BY GradeType
+ORDER BY GradeType
+
+The problem with this statement is that the Student column is not in the GROUP BY, nor is it aggregated in any way. Since everything is presented in summarized groups, SQL doesn’t know what to do with the Student column in the above statement. As such, this statement cannot
+be executed.
+
+
+Database Differences: MySQL
+Unlike Microsoft SQL Server and Oracle, the previous statement will not produce an error in
+MySQL. Nevertheless, it will produce incorrect results.
+
+
+
+Multiple Columns and Sorting
+
+The concept of groups can be extended so that groups are based on more than one column. Let’s go back to the last SELECT and add the Student column to both the GROUP BY clause and the columnlist. It now looks like:
+SELECT
+GradeType AS 'Grade Type',
+Student AS 'Student',
+AVG(Grade) AS 'Average Grade'
+FROM Grades
+GROUP BY GradeType, Student
+ORDER BY GradeType, Student
+
+The resulting data is:
+
+Grade Type             Student             Average Grade Homework                Hailey                  NULL Homework                Isabella               84
+Homework                Peter                   88
+Quiz                          Hailey                  71.5
+Quiz                          Isabella               93.5
+Quiz                          Peter                   66
+
+
+We now see a breakdown not only of grade types but also of students. The average grades are computed on each group. Note that the Homework row for Hailey shows a NULL value, since she has only one homework row, and that row has a value of NULL for the grade.
+
+
+The order in which the columns are listed in the GROUP BY clause has no significance. The results would be the same if the clause were:
+GROUP BY Student, GradeType
+
+However, as always, the order in which columns are listed in the ORDER BY clause is meaningful. If you switch the ORDER BY clause to:
+ORDER BY Student, GradeType
+
+The resulting data is:
+
+GradeType              Student             AverageGrade
+Homework                Hailey                  NULL Quiz                          Hailey                  71.5
+Homework                Isabella               84
+Quiz                          Isabella               93.5
+Homework                Peter                   88
+Quiz                          Peter                   66
+
+
+This looks a bit strange, because it’s difficult to determine at a glance that the data is really sorted by Student and then by GradeType. As a general rule of thumb, it usually helps if columns are listed from left to right in the same order in which columns are sorted. A more understandable SELECT statement would be:
+SELECT
+Student AS 'Student',
+GradeType AS 'Grade Type',
+AVG(Grade) AS 'Average Grade'
+FROM Grades
+GROUP BY GradeType, Student
+ORDER BY Student, GradeType
+
+The data now looks like this:
+
+Student                   Grade Type             Average Grade
+Hailey                       Homework                NULL Hailey                       Quiz                          71.5
+Isabella                    Homework                84
+Isabella                    Quiz                          93.5
+Peter                         Homework                88
+Peter                         Quiz                          66
+
+
+This is more comprehensible, because the column order corresponds to the sort order.
+
+There’s sometimes some confusion as to the difference between the GROUP BY and ORDER BY clauses. The main point to remember is that GROUP BY merely creates the groups. The ORDER BY still must be used to list the rows in a meaningful sequence.
+
+
+Selection Criteria on Aggregates
+
+After data has been separated into groups via the GROUP BY clause, selection criteria become a bit more complex. When applying any kind of selection criteria to a SELECT with a GROUP BY, you must ask whether the criteria apply to individual rows or to the entire group. Whereas the WHERE clause handles selection criteria for individual rows, SQL provides a keyword named HAVING that allows selection logic to be applied at the group level.
+
+Returning to the Grades table, let’s say we want to look only at grades on quizzes that are 70 or higher. The grades we’d like to look at are individual grades, so the WHERE clause can be used, as normal. Such a SELECT might look like this:
+SELECT
+Student AS 'Student',
+GradeType AS 'Grade Type',
+Grade AS 'Grade'
+FROM Grades
+WHERE GradeType = 'Quiz'
+AND Grade >= 70
+ORDER BY Student, Grade
+
+The resulting data is:
+
+Student                   Grade Type             Grade
+Hailey                       Quiz                          81
+Isabella                    Quiz                          92
+Isabella                    Quiz                          95
+Peter                         Quiz                          74
+
+
+Notice that quizzes with a score less than 70 aren’t shown. For example, we can see Peter’s quiz score of 74, but not his quiz score of 58.
+
+To introduce the use of the HAVING clause, let’s say we want to display data for students who have an average quiz grade of 70 or more. In this situation, we want to select on an average, not on individual rows. This is where the HAVING clause comes in. We need to first group grades
+by student, and then apply selection criteria to an aggregate statistic based on the entire group. The following statement produces the desired result:
+SELECT
+Student AS 'Student',
+AVG(Grade) AS 'Average Quiz Grade'
+FROM Grades
+WHERE GradeType = 'Quiz'
+GROUP BY Student
+HAVING AVG(Grade) >= 70
+ORDER BY Student
+
+
+The output is:
+
+Student                   Average Quiz Grade
+Hailey                       71.5
+Isabella                    93.5
+
+
+This SELECT has both a WHERE and a HAVING clause. The WHERE ensures that we only select rows with a GradeType of “Quiz”. The HAVING guarantees that we only select students with an average score of at least 70.
+
+To take this example a step further, what if we wanted to add a column with the GradeType value? If we attempt to add GradeType to the SELECT columnlist, the statement will error. This is because all columns must be either listed in the GROUP BY or involved in an aggregation. Hence, if we want to show the GradeType column, it must be added to the GROUP BY clause, as follows:
+SELECT
+Student AS 'Student',
+GradeType AS 'Grade Type',
+AVG(Grade) AS 'Average Grade'
+FROM Grades
+WHERE GradeType = 'Quiz'
+GROUP BY Student, GradeType
+HAVING AVG(Grade) >= 70
+ORDER BY Student
+
+The resulting data is:
+
+Student                   Grade Type             Average Grade
+Hailey                       Quiz                          71.5
+Isabella                    Quiz                          93.5
+
+
+Now that we’ve added the HAVING clause to the mix, let’s recap the general format of the
+SELECT statement with all the clauses used thus far:
+
+SELECT columnlist FROM tablelist WHERE condition
+GROUP BY columnlist HAVING condition ORDER BY columnlist
+
+Remember that when employing any of the above keywords in a SELECT, they must be listed in the order shown. For example, the HAVING keyword must always come after a GROUP BY but before an ORDER BY.
+
+
+Conditional Logic in GROUP BY Clauses
+In Chapter 8, “Conditional Logic,” we saw examples of the CASE expression in the columnlist of a SELECT statement as well as in the ORDER BY and WHERE clauses. When a GROUP BY clause is used in a statement, all expressions in the columnlist must either be present in the GROUP BY or involve an aggregate function. This means that when a CASE expression is used in a GROUP BY, the same exact expression must be used in the SELECT columnlist. To illustrate, let’s return to the Groceries data seen in the previous chapter:
+
+GroceryID               CategoryCode             Description
+1                               F                                      Apple
+2                               F                                      Orange
+3                               S                                     Mustard
+4                               V                                     Carrot
+5                               B                                     Water
+
+
+In this example, we want to group by the category computed by the CASE expression—namely, Fruit, Vegetable, or Other. The objective is to produce a count of how many products are in each category. Here’s the statement:
+SELECT
+CASE CategoryCode
+WHEN 'F' THEN 'Fruit'
+WHEN 'V' THEN 'Vegetable'
+ELSE 'Other'
+END AS 'Category',
+COUNT(*) AS 'Count'
+FROM Groceries
+GROUP BY
+CASE CategoryCode
+WHEN 'F' THEN 'Fruit'
+WHEN 'V' THEN 'Vegetable'
+ELSE 'Other'
+END
+
+The output appears as:
+
+Category                 Count
+Fruit                          2
+Other                        2
+Vegetable                 1
+
+
+Notice that the same CASE statement is used in the SELECT columnlist and in the GROUP BY clause.
+
+
+Conditional Logic in HAVING Clauses
+
+To illustrate the use of conditional logic in HAVING clauses, let’s return to the HAVING clause example from earlier in this chapter. In that situation, we displayed data for students who had an average quiz grade of 70 or higher. The statement was:
+SELECT
+Student AS 'Student',
+GradeType AS 'Grade Type',
+AVG(Grade) AS 'Average Grade'
+FROM Grades
+WHERE GradeType = 'Quiz'
+GROUP BY Student, GradeType
+HAVING AVG(Grade) >= 70
+ORDER BY Student
+
+In this scenario, the WHERE clause selected quizzes. We declared a GROUP BY student and grade type and then applied the aggregate selection logic in the HAVING clause to enforce the restriction that we want only students with an average quiz of at least 70.
+
+In this new example, we’ll use a column in the data that was previously ignored—namely, the YearInSchool column. With this additional bit of information, we’ll alter the previous statement to list students with an average grade of at least 70 if they’re a Year 7 student, or an average grade of 75 if they’re a Year 8 student. If they’re not Year 7 or Year 8, we’ll accept students with an average grade of 80. To accomplish this goal, we’ll need to place a CASE expression in the HAVING clause. We’ll also display the YearInSchool column, as follows:
+SELECT
+Student AS 'Student',
+YearInSchool AS 'Year in School',
+GradeType AS 'Grade Type',
+AVG(Grade) AS 'Average Grade',
+FROM Grades
+WHERE GradeType = 'Quiz'
+GROUP BY Student, YearInSchool, GradeType
+HAVING AVG(Grade) >=
+CASE
+WHEN YearInSchool = 7 THEN 70
+WHEN YearInSchool = 8 THEN 75
+ELSE 80
+END
+ORDER BY Student
+The HAVING clause states that the average grade must be greater than the number returned by the CASE expression. The CASE expression will provide a value of either 70, 75, or 80, depending on the value of the YearInSchool column. The result is:
+
+Student             Year in School             Grade Type             Average Grade
+Isabella               7                                     Quiz                          93.5
+
+
+Isabella is now the only student listed, because she is only person who satisfies the new criteria.
+
+
+Ranking Functions
+
+In addition to the grouping techniques discussed previously in this chapter, SQL provides a number of special ranking functions that allow for the classification of rows by a method of sequential classification. There are four basic ranking functions:
+Row_Number Rank Dense_Rank NTile
+
+The ROW_NUMBER function creates row numbers based on a specified order of another column or expression associated with the function. After the rows have been placed in the specified order, the generated row numbers will start with 1 and increase sequentially to 2, 3, 4, and so on. The ROW_NUMBER function requires no parameters.
+
+The RANK function is the same as ROW_NUMBER except that if two or more rows have the same value for the specified column or expression, they are both given the same number. For example, if the second and third rows have the same value, the generated ranks will be 1, 2, 2, 4, and so
+on. Because the two rows with a value of 2 have the same value, SQL skips the number 3.
+
+The DENSE_RANK function is the same as the RANK function except that it does not skip any numbers, even when there are duplicate values. In the preceding example, the dense rank would be 1, 2, 2, 3, and so on. The number 3 is not skipped.
+
+Finally, the NTILE function allows for the generation of a percentile or any other ntile, based on the specified order of another column or expression. Unlike RANK, ROW_NUMBER, and DENSE_RANK, NTILE requires a parameter. For example, the function NTILE(100) will assign percentiles. Percentiles are a number from 1 to 100 that represents the relative rank of the value. However, any other number can be used as the argument for the function. Thus, the function NTILE(10) will create deciles, and NTILE(4) will produce quartiles.
+
+Let’s illustrate ranking with a few examples, all based on the following table:
+
+StockSymbol          StockName                                    Exchange             PriceEarningsRatio
+AAPL                         Apple Inc                                           NASDAQ                14
+AMZN                        Amazon.com Inc                               NASDAQ                489
+DIS                            The Walt Disney Company              NYSE                     21
+GE                             General Electric Company              NYSE                     18
+GOOG                       Alphabet Inc                                      NASDAQ                30
+HSY                           The Hershey Company                    NYSE                     26
+KRFT                         Kraft Foods Inc                                 NYSE                     12
+KO                             The Coca-Cola Company                 NYSE                     21
+MCD                         McDonalds Corporation                  NYSE                     18
+MMM                        3M Company                                    NYSE                     20
+MSFT                        Microsoft Corporation                     NASDAQ                15
+ORCL                        Oracle Corporation                           NASDAQ                17
+SBUX                        Starbucks Corporation                    NASDAQ                357
+WBA                          Walgreens Boots Alliance Inc         NYSE                     24
+WMT                         Wal-Mart Stores Inc                         NYSE                     15
+
+
+This table lists some stocks, showing their symbol, their name, the exchange they trade on, and their price–earnings (PE) ratio. For example, Apple (AAPL) is traded on the NASDAQ and has a PE ratio of 14.
+
+In this first example, we’ll sort all the rows by PE ratio and use the ROW_NUMBER function to generate a row number for each row. We want to sort the rows by PE from lowest to highest. We’re displaying low PE’s first, since a low PE is generally better than a high PE. A statement that accomplishes this is:
+SELECT
+ROW_NUMBER() OVER (ORDER BY PriceEarningsRatio) AS 'Row',
+StockSymbol AS 'Symbol',
+StockName AS 'Name',
+Exchange AS 'Exchange',
+PriceEarningsRatio AS 'PE Ratio'
+FROM Stocks
+ORDER BY PriceEarningsRatio
+
+The output of this statement is:
+
+Row                  Symbol               Name                                                   Exchange              PE Ratio
+1                        KRFT                     Kraft Foods Inc                                      NYSE                       12
+2                        AAPL                     Apple Inc                                                 NASDAQ                  14
+3                        MSFT                    Microsoft Corporation                           NASDAQ                  15
+4                        WMT                     Wal-Mart Stores Inc                              NYSE                       15
+5                        ORCL                    Oracle Corporation                                NASDAQ                  17
+6                        GE                         General Electric Company                    NYSE                       18
+7                        MCD                     McDonald’s Corporation                       NYSE                       18
+8                        MMM                    3M Company                                          NYSE                       20
+9                        DIS                       The Walt Disney Company                    NYSE                       21
+10                      KO                         The Coca-Cola Company                       NYSE                       21
+11                      WBA                      Walgreens Boots Alliance Inc              NYSE                       24
+12                      HSY                      The Hershey Company                          NYSE                       26
+13                      GOOG                   Alphabet Inc                                           NASDAQ                  30
+14                      SBUX                    Starbucks Corporation                          NASDAQ                  357
+15                      AMZN                   Amazon.com Inc                                    NASDAQ                  489
+
+
+Let’s examine how this works. First, note that there are no selection criteria or grouping in this statement. Besides the columnlist, there is only a FROM clause and an ORDER BY clause. The ORDER BY clause (the last line of the statement) is necessary to list the rows in the desired order, by PE ratio. The main bit of complexity in this statement is the first item in the columnlist, which uses the ROW_NUMBER ranking function. Note that this value includes an
+OVER keyword as well as another ORDER BY in parentheses. The general format for a columnlist
+element that includes a ranking function is:
+
+Rank_Function() OVER (ORDER BY expression [[ASC]|DESC])
+
+
+The Rank_Function can be any of the four functions mentioned previously. The keyword OVER
+is required. Its purpose is to designate how the rank function is to be applied. The expression in the parentheses indicates the column or expression on which the ranking is to be applied. The ORDER BY keyword indicates that this expression is to evaluated, in either an ascending or descending order. If the order is to be ascending, then the ASC keyword isn’t necessary.
+
+In our example, we’re assigning a row number based on an evaluation of the PriceEarningsRatio column. The values of PriceEarningsRatio are evaluated in an ascending order. The first row,
+for Kraft Foods, is given a row number of 1 because it is first in the sequence. Note that the ROW_NUMBER function only assigns the row number. We still need the ORDER BY clause in the SELECT statement to actually display the output in the desired sequence.
+
+To illustrate the use of the RANK and DENSE_RANK functions, we’ll add them as columns to the previous statement. We won’t bother to display the stock name or exchange. The new statement is:
+SELECT
+ROW_NUMBER() OVER (ORDER BY PriceEarningsRatio) AS 'Row',
+RANK() OVER (ORDER BY PriceEarningsRatio) AS 'Rank',
+DENSE_RANK() OVER (ORDER BY PriceEarningsRatio) AS 'Dense Rank',
+StockSymbol AS 'Symbol',
+PriceEarningsRatio AS 'PE Ratio'
+FROM Stocks
+ORDER BY PriceEarningsRatio
+
+The output is:
+
+Row                   Rank                       Dense Rank                Symbol                   PE Ratio
+1                          1                               1                                     KRFT                         12
+2                          2                               2                                     AAPL                         14
+3                          3                               3                                     MSFT                        15
+4                          3                               3                                     WMT                         15
+5                          5                               4                                     ORCL                        17
+6                          6                               5                                     GE                             18
+7                          6                               5                                     MCD                         18
+8                          8                               6                                     MMM                        20
+9                          9                               7                                     DIS                            21
+10                       9                               7                                     KO                             21
+11                       11                             8                                     WBA                          24
+12                       12                             9                                     HSY                           26
+13                       13                             10                                   GOOG                       30
+14                       14                             11                                   SBUX                        357
+15                       15                             12                                   AMZN                        489
+
+
+In this example, MSFT and WMT have the same PE. As a result, they are given the same value for RANK and for DENSE_RANK. The difference is in the values assigned to subsequent rows. For RANK, the next row after MSFT and WMT, ORCL, skips a number and is given a value of 5. For DENSE_RANK, no numbers are skipped, and ORCL is given a value of 4.
+
+
+Moving on to the NTILE function, we’ll offer examples of NTILE(4) and NTILE(10). As mentioned, the NTILE ranks the rows in a specified sequence, and then assigns them to a group. In the case of NTILE(4), the data is divided into four groups. This is commonly referred to as quartiles. NTILE(10) divides the data into ten groups, otherwise known as deciles. To illustrate, the following statement ranks the stocks by PE ratio and displays NTILE(4) and NTILE(10):
+SELECT
+NTILE(4) OVER (ORDER BY PriceEarningsRatio) AS 'Quartile',
+NTILE(10) OVER (ORDER BY PriceEarningsRatio) AS 'Decile',
+StockSymbol AS 'Symbol',
+PriceEarningsRatio AS 'PE Ratio'
+FROM Stocks
+ORDER BY PriceEarningsRatio
+
+The resulting output is:
+
+Quartile                  Decile                     Symbol                   PE Ratio
+1                               1                               KRFT                         12
+1                               1                               AAPL                         14
+1                               2                               MSFT                        15
+1                               2                               WMT                         15
+2                               3                               ORCL                        17
+2                               3                               GE                             18
+2                               4                               MCD                         18
+2                               4                               MMM                        20
+3                               5                               DIS                            21
+3                               5                               KO                             21
+3                               6                               WBA                          24
+3                               7                               HSY                           26
+4                               8                               GOOG                       30
+4                               9                               SBUX                        357
+4                               10                             AMZN                        489
+
+
+The Quartile column divides the data into four groups, based on a ranking of the PE ratio. As seen, rows 1 to 4 fall in the top quartile, rows 5 to 8 in the second quartile, and so on. The Decile column divides the data into ten groups in a similar manner. With larger data sets, it would be common to include an NTILE(100) function to divide the data into 100 groups. Each of these 100 groups is commonly referred to as a percentile.
+
+
+Database Differences: MySQL
+Unlike Microsoft SQL Server and Oracle, MySQL doesn’t provide the OVER keyword or the ranking functions discussed in this section. Likewise, it doesn’t provide the PARTITION BY keyword discussed in the following section.
+
+
+Partitions
+
+A useful variation on how the ranking functions discussed in the previous section can be used is the ability to divide data into partitions prior to the application of the ranking function. We indicated previously that the general format for a columnlist element that includes a ranking function is:
+Rank_Function() OVER (ORDER BY expression [[ASC]|DESC])
+
+The partitioning of data involves the PARTITION BY keyword. With partitioning, the general format for a columnlist element that includes a ranking function is:
+Rank_Function() OVER (PARTITION BY expression_1
+ORDER BY expression_2 [[ASC]|DESC])
+
+In the previous examples, we had ignored the value of the Exchange column. With partitioning, we have the ability to separate, or partition, our data into two separate groups, based on the value of the Exchange column, which is either NYSE or NASDAQ. After the data is separated, the ranking functions are applied as seen previously.
+
+To illustrate, let’s revise the first query of the previous section that used the ROW_NUMBER function to rank the data, assigning a row number to each row based on the PE ratio. The original SQL statement was:
+SELECT
+ROW_NUMBER() OVER (ORDER BY PriceEarningsRatio) AS 'Row',
+StockSymbol AS 'Symbol',
+StockName AS 'Name',
+Exchange AS 'Exchange',
+PriceEarningsRatio AS 'PE Ratio'
+FROM Stocks
+ORDER BY PriceEarningsRatio
+
+In our revision, we’ll add the PARTITION BY keyword to the columnlist element with the ROW_NUMBER function. We’ll also rearrange the order of the columns and the ORDER BY clause so that the data appears in a more comprehensible layout. The new statement is:
+SELECT
+Exchange AS 'Exchange',
+ROW_NUMBER() OVER (PARTITION BY Exchange ORDER BY PriceEarningsRatio)
+AS 'Exchange Rank',
+StockSymbol AS 'Symbol',
+PriceEarningsRatio AS 'PE Ratio'
+FROM Stocks
+ORDER BY Exchange, PriceEarningsRatio
+
+
+The result is:
+
+Exchange             Exchange Rank             Symbol              PE Ratio
+NASDAQ                1                                        AAPL                    14
+NASDAQ                2                                        MSFT                   15
+NASDAQ                3                                        ORCL                   17
+NASDAQ                4                                        GOOG                  30
+NASDAQ                5                                        SBUX                   357
+NASDAQ                6                                        AMZN                  489
+NYSE                     1                                        KRFT                   12
+NYSE                     2                                        WMT                    15
+NYSE                     3                                        GE                       18
+NYSE                     4                                        MCD                    18
+NYSE                     5                                        MMM                  20
+NYSE                     6                                        DIS                      21
+NYSE                     7                                        KO                       21
+NYSE                     8                                        WBA                    24
+NYSE                     9                                        HSY                     26
+
+
+Notice that we also changed the column alias for the ROW_NUMBER function from “Row” to “Exchange Rank”. This was done because we now have two sets of data. It wouldn’t make sense to refer to this column as a row number, because we have two sequential sets of numbers. Note that the ORDER BY clause must correspond to the PARTITION BY and RANKING BY expressions in the ranking function. If the data is partitioned and ranked in one way and sorted in another way, the results might be difficult to comprehend.
+
+Remember that partitions are not the same as the GROUP BY clause seen earlier in this chapter. The usual purpose of a GROUP BY clause is to group data and then to apply aggregation functions to each of the groups. For example, one might wish to group by the Exchange
+column and then obtain the average PE for each of the groups. This would provide the average PE for both the NASDAQ and NYSE exchanges. In contrast, the concept of partitioning keeps the detailed data intact. Partitions are created merely to apply a ranking to individual rows within each partition. Although data is divided into groups for purposes of ranking, the details are maintained, and there is no aggregation involved.
+
+The preceding example illustrated the use of partitions with the ROW_NUMBER ranking function. The application of partitions to the other three ranking functions works in an identical manner. For example, if we wanted to partition the data based on the Exchange, and then show the quartile for each partition, the statement would be:
+SELECT
+Exchange AS 'Exchange',
+NTILE(4) OVER (PARTITION BY Exchange ORDER BY PriceEarningsRatio)
+AS 'Quartile',
+StockSymbol AS 'Symbol',
+PriceEarningsRatio AS 'PE Ratio'
+FROM Stocks
+ORDER BY Exchange, PriceEarningsRatio
+
+
+The output for this statement is:
+
+Exchange                Quartile                Symbol                 PE Ratio
+NASDAQ                   1                             AAPL                      14
+NASDAQ                   1                             MSFT                     15
+NASDAQ                   2                             ORCL                     17
+NASDAQ                   2                             GOOG                     30
+NASDAQ                   3                             SBUX                     357
+NASDAQ                   4                             AMZN                     489
+NYSE                        1                             KRFT                      12
+NYSE                        1                             WMT                       15
+NYSE                        1                             GE                          18
+NYSE                        2                             MCD                       18
+NYSE                        2                             MMM                     20
+NYSE                        3                             DIS                         21
+NYSE                        3                             KO                          21
+NYSE                        4                             WBA                       24
+NYSE                        4                             HSY                        26
+
+As expected, the data now shows a ranking of rows by quartile, for both NASDAQ and NYSE stocks. The examples of ranking functions and partitions given thus far are interesting, but a much
+more useful application of these techniques will be seen in Chapter 14, “Subqueries.” The ability to divide data into partitions and then apply a ranking to each partition means that we can specify a top n type of selection for each partition in a data set. For example, say that we want to select the largest order for each customer. We can partition the data by customer
+number, and then rank each row by the order amount. Ultimately, we want to select only one order per customer. This can be done by including a line such as the following in the query:
+ROW_NUMBER() OVER
+(PARTITION BY CustomerNumber ORDER BY OrderAmount) AS TheRow
+
+This would have the effect of creating a calculated field named TheRow that ranks the orders for each customer by OrderAmount. The order with the highest value would be assigned a
+value of 1. As you’ll see in Chapter 14, it is then possible to select from the results of the initial query, selecting only those rows where TheRow equals 1. This would give us the largest order for each customer. This technique can be applied in many similar situations. For example,
+we might want to see the most recent order for each customer or perhaps the most profitable customer in each city.
+
+
+Looking Ahead
+
+In this chapter, we covered several forms of aggregation, beginning with the simplest—that of eliminating duplicates. We then introduced a number of aggregate functions, which are
+a different class of functions from the scalar functions seen in Chapter 4. The real power of aggregate functions becomes apparent when they are used in conjunction with the GROUP BY keyword, which allows for the separation of data into groups. We also looked at the use of the HAVING clause, which allows you to apply group-level selection criteria to values in aggregate functions.
+
+We closed this chapter with two additional topics related to summation. The use of CASE expressions in the GROUP BY and HAVING clauses allows you to apply conditional logic grouping and group selection criteria. Finally, we covered ranking functions and partitioning, which are useful ways of organizing detailed data. Through the use of the PARTITION BY keyword, data can be separated into groups in conjunction with the ranking functions.
+
+Our next chapter, on subtotals and crosstabs, offers additional formatting options for aggregated values. Subtotals allow you to add summarized information to a presentation of detailed data. Crosstabs offer a new method of laying out data in a format that is more conducive to a clear display of aggregated data.
+10
+
+Subtotals and Crosstabs
+
+
+
+
+
+
+
+Keywords Introduced
+ROLLUP  •  GROUPING  •  CUBE  •  PIVOT  •  FOR
+
+The previous chapter provided numerous ways to add aggregation to a query. We now want to extend that discussion to cover the additional option of providing subtotals. When we aggregate data, we’re also removing the detailed data that lies below the summarized totals. The whole point of aggregation is to replace detailed data with a summarization. However, users sometimes want to see the detailed data, along with an occasional summary. This is where subtotals come in. Subtotals are typically provided via extra rows added in with the detailed data that summarize key columns.
+
+A second topic we’ll cover in this chapter has to do with how summarized data is displayed to the user. In the previous chapter, data was grouped together and then displayed to the user. Each row of data indicates the values being grouped, along with the summarized values. This is usually an adequate way of displaying data. But sometimes users prefer data in a crosstab
+format. The crosstab format is one in which groups are broken out into multiple columns. This has the effect of reducing the number of rows a user needs to look through. Crosstab layouts are typically employed by many reporting tools. A prime example of a crosstab layout is the Excel pivot table, which allows you to lay out data in both rows and columns. In this chapter, we’ll show how to create this effect with a SQL command.
+
+
+Adding Subtotals with ROLLUP
+In the previous chapter, we showed how to use the GROUP BY clause to group data together. Often when data is grouped together, some columns might be aggregated to provide a sum of values in that column. To revisit this scenario, let’s begin with the following data that shows the current inventory of a few products.
+
+InventoryID            Category              Subcategory             Product                                    Quantity
+1                               Furniture                Chair                            Red Armchair                             3
+2                               Furniture                Chair                            Green Armchair                         2
+3                               Furniture                Desk                            Blue Computer Desk                4
+4                               Paper                     Copy                            White Copy Paper                     5
+5                               Paper                     Copy                            Pink Copy Paper                        2
+6                               Paper                     Notebook                    White Notebook Paper             4
+
+
+In this example, each product is broken down by category and subcategory. For example, the Furniture category includes Chair and Desk subcategories. The following SELECT statement groups this data by Category and Subcategory, and sums the quantity for each group.
+SELECT Category, Subcategory,
+SUM(Quantity) AS 'Quantity' FROM Inventory
+GROUP BY Category, Subcategory
+ORDER BY Category, Subcategory
+
+The resulting output is:
+
+Category                 Subcategory           Quantity
+Furniture                  Chair                         5
+Furniture                  Desk                         4
+Paper                        Copy                         7
+Paper                        Notebook                 4
+
+
+So far, all is well. But what if we also want to see subtotals for each category and a final total at the end? In other words, in addition to the grouped data, we would like a subtotal row every time a category changes, and a final row at the end that sums all the quantities. This can be accomplished by use of a ROLLUP keyword in the GROUP BY clause, as follows:
+SELECT Category, Subcategory,
+SUM(Quantity) AS 'Quantity' FROM Inventory
+GROUP BY ROLLUP(Category, Subcategory)
+
+
+The keyword ROLLUP is an extension to the GROUP BY clause that creates subtotal and total rows. The output of the above statement is:
+
+Category                 Subcategory           Quantity
+Furniture                  Chair                         5
+Furniture                  Desk                         4
+Furniture                  NULL                         9
+Paper                        Copy                         7
+Paper                        Notebook                 4
+Paper                        NULL                         11
+NULL                         NULL                         20
+
+
+As seen, three subtotal and total rows have been added to the original four rows. These rows have the keyword NULL in either the Category or Subcategory columns. The first subtotal row
+is the third row, displaying a quantity of 9 for the Furniture category. The Subcategory is shown as NULL because we are showing only a subtotal for the category. The second of the subtotal rows is the sixth row, which summarizes the Paper category, indicating that there are 11 paper items. The final row is a total column that sums all items in all categories, indicating that we have 20 total items in inventory.
+
+Note that the NULL that appears in the output is somewhat different from the NULL values we’ve seen previously. In this case, the NULL is merely a placeholder that indicates that a ROLLUP has been applied.
+
+The previous statement did not include an ORDER BY clause. Without an ORDER BY, the subtotal and total rows always appear after each category. Let’s now add an ORDER BY to the statement to see the difference:
+SELECT Category, Subcategory,
+SUM(Quantity) AS 'Quantity' FROM Inventory
+GROUP BY ROLLUP(Category, Subcategory) ORDER BY Category, Subcategory
+
+The output is:
+
+Category                 Subcategory           Quantity
+NULL                         NULL                         20
+Furniture                  NULL                         9
+Furniture                  Chair                         5
+Furniture                  Desk                         4
+Paper                        NULL                         11
+Paper                        Copy                         7
+Paper                        Notebook                 4
+
+
+As you can see, the ORDER BY clause changes the location of the the subtotal and total rows. They now appear before rather than after each category. This is because NULL values are the lowest possible value, so they appear first in the sorted sequence.
+
+It’s plain to see that the use of the NULL values in the above examples is somewhat obtuse and difficult to interpret. We’ll now show how to convert those NULL values to something more meaningful. This is accomplished via a function called GROUPING. This is a special aggregate function that works in conjunction with the ROLLUP keyword. As will be seen in the next section, GROUPING also works with the CUBE keyword. The following example adds two columns that make use of the GROUPING function. To make things simpler, we’ll remove the ORDER BY clause.
+SELECT Category, Subcategory,
+SUM(Quantity) AS 'Quantity', GROUPING(Category) AS 'Category Grouping', GROUPING(Subcategory) AS 'Subcategory Grouping' FROM Inventory
+GROUP BY ROLLUP(Category, Subcategory)
+
+The output is:
+
+Category          Subcategory         Quantity         Category Grouping          Subcategory Grouping
+Furniture           Chair                       5                       0                                          0
+Furniture           Desk                        4                       0                                          0
+Furniture           NULL                       9                       0                                          1
+Paper                 Copy                        7                       0                                          0
+Paper                 Notebook                4                       0                                          0
+Paper                 NULL                       11                    0                                          1
+NULL                  NULL                       20                    1                                          1
+
+
+Let’s examine the output to see what the GROUPING function accomplishes. This function has a single argument, which is the name of the column to be examined, and it returns
+either a 0 or a 1. A 1 means that this row contains a subtotal or total, as specified by the same column in the ROLLUP in the GROUP BY clause. In this example, the ROLLUP is on Category and Subcategory. So the Grouping function on Subcategory returns a 1 if this row provides a subtotal for Subcategory. The function returns a 0 if it is not a subtotal row for the specified column. As you can see, the third row in the preceding output has a NULL in the Subcategory column, and a corresponding value of 1 in the Subcategory Grouping column.
+
+Now that we’ve see what the GROUPING function does, let’s put it to good use. In the next example, we’ll introduce a CASE statement to translate the result of the GROUPING function to a more meaningful label.
+
+
+SELECT
+ISNULL(Category,'') AS 'Category',
+ISNULL(Subcategory, '') AS 'Subcategory',
+SUM(Quantity) AS 'Quantity',
+CASE WHEN GROUPING(Category) = 1 then 'Grand Total'
+WHEN GROUPING(Subcategory) = 1 then 'Subtotal'
+ELSE ' ' END AS 'Subtotal/Total'
+FROM Inventory
+GROUP BY ROLLUP(Category, Subcategory)
+
+This produces the following output:
+
+Category               Subcategory               Quantity               Subtotal/Total
+Furniture                 Chair                             5
+Furniture                 Desk                             4
+Furniture                                                       9                             Subtotal
+Paper                       Copy                              7
+Paper                       Notebook                     4
+Paper                                                             11                          Subtotal
+20                          Grand Total
+
+
+The ISNULL function in the Category and Subcategory columns suppresses the printing of the word NULL. The CASE statement in the new Subtotal/Total column uses the GROUPING function to print either “Subtotal” or “Grand Total” in the column if the Quantity is a Subtotal or Grand Total.
+
+There’s still more that can be done to make the display a little more understandable. In the following example, we’ve moved the CASE statement to the first column.
+SELECT CASE
+WHEN GROUPING(Category) = 1 THEN 'GRAND TOTAL' WHEN GROUPING(Subcategory) = 1 THEN 'SUBTOTAL' ELSE ISNULL(Category,'') END AS 'Category', ISNULL(Subcategory, '') AS 'Subcategory', SUM(Quantity) AS 'Quantity'
+FROM Inventory
+GROUP BY ROLLUP(Category, Subcategory)
+
+Now the output is:
+
+Category               Subcategory            Quantity
+Furniture                 Chair                          5
+Furniture                 Desk                          4
+SUBTOTAL                                                  9
+Paper                       Copy                           7
+Paper                       Notebook                   4
+SUBTOTAL                                                  11
+GRAND TOTAL                                           20
+
+
+As seen, the CASE statement under the Category column prints the words SUBTOTAL or TOTAL, if the corresponding quantity is a subtotal or total. The GROUPING function is used to make this determination.
+
+
+Database Differences: MySQL
+MySQL has a slightly different format for the ROLLUP keyword. The equivalent of this SQL Server line:
+GROUP BY ROLLUP(Category, Subcategory)
+in MySQL is:
+GROUP BY Category, Subcategory WITH ROLLUP
+MySQL doesn’t allow an ORDER BY clause if WITH ROLLUP is used. Also, MySQL doesn’t support the GROUPING function.
+
+
+
+Adding Subtotals with CUBE
+
+Rollups work well in situations where the data has a hierarchical structure. In the previous example, there was a natural hierarchy from category to subcategory. As such, you can think of drilling down from category to subcategory. The ROLLUP keyword provides subtotals on each category and a total at the end.
+However, there are other situations in which the data is not hierarchical, but where we still want to add subtotal rows. To illustrate that scenario, let’s look at the following data.
+
+SalesDate               CustomerID              State               Channel                  SalesAmount
+4/1/2017               101                              NY                     Internet                    50
+4/1/2017               102                              NY                     Retail                        30
+4/1/2017               103                              VT                     Internet                    120
+4/2/2017               145                              VT                     Retail                        90
+4/2/2017               180                              NY                     Retail                        300
+4/2/2017               181                              VT                     Internet                    130
+4/2/2017               182                              NY                     Internet                    520
+4/2/2017               184                              NY                     Retail                        80
+
+
+This data shows sales by customer and date, indicating the state and channel of the sale. In this example, there are only two states, NY and VT, and two channels, Internet and retail. Let’s say that we’re interested in learning total sales by state and channel. Even though we have sales from multiple customers on multiple dates, we don’t have a need to aggregate by customer or date at this moment. We can view total sales by state and channel with this statement:
+
+
+SELECT State, Channel,
+SUM(SalesAmount) AS 'Sales Amount' FROM SalesSummary
+GROUP BY State, Channel
+ORDER BY State, Channel
+
+The resulting output is:
+
+State                       Channel                  Sales Amount
+NY                             Internet                    570
+NY                             Retail                        410
+VT                              Internet                    250
+VT                              Retail                        90
+
+
+So far, we’ve applied only a simple GROUP BY to obtain the aggregated sales amounts for each combination of state and channel. Now, let’s say that we want to see subtotal and total rows, similar to what we did previously with the furniture inventory data. The problem we face is that there isn’t a natural hierarchy between state and channel, as there was between category and subcategory. If we’re using subtotals, there’s no obvious way to indicate how the subtotals
+are to be calculated. In effect, we want to see subtotals for both state and channel, independent of each other.
+
+To accomplish this, we’ll use a new keyword, CUBE, similar to how we previously used
+ROLLUP. The following statement produces the desired result:
+
+SELECT State, Channel,
+SUM(SalesAmount) AS 'Sales Amount' FROM SalesSummary
+GROUP BY CUBE(State, Channel) ORDER BY State, Channel
+
+The output is:
+
+State                       Channel                  Sales Amount
+NULL                         NULL                         1320
+NULL                         Internet                    820
+NULL                         Retail                        500
+NY                             NULL                         980
+NY                             Internet                    570
+NY                             Retail                        410
+VT                              NULL                         340
+VT                              Internet                    250
+VT                              Retail                        90
+
+
+As with the previous example, the NULL values in the State and Channel columns indicate a subtotal or a grand total. The first row, with NULL values in both State and Channel is a grand total for all the data. The second and third rows, with NULL in the State column, show subtotals for the Channel column. For example, the second row indicates that there was a total
+of 820 in Internet sales. The fourth and seventh rows, with NULL in the Channel column, have subtotals for the State column. As seen, NY had a total of 980 in sales, and VT had 340 in sales.
+
+The use of the keyword CUBE is meant to express a multidimensional way of looking at the data. Whereas the ROLLUP keyword lets you drill down through data in a hierarchical fashion, the CUBE keyword allows for multiple dimensions. In this example, we can view subtotals by State or by Column.
+
+As before, identifying the subtotals and grand totals is tricky. Ideally, you want to eliminate all of the NULL values and indicate more precisely which rows are subtotals and grand totals. As with rollups, we can use the GROUPING function to determine which rows are subtotals. The following query adds two columns with the GROUPING information.
+SELECT State, Channel,
+SUM(SalesAmount) AS 'Sales Amount', GROUPING(State) AS 'State Grouping', GROUPING(Channel) AS 'Channel Grouping' FROM SalesSummary
+GROUP BY CUBE(State, Channel) ORDER BY State, Channel
+
+The output of this is:
+
+State            Channel             Sales Amount          State Grouping              Channel Grouping
+NULL             NULL                   1320                           1                                       1
+NULL             Internet               820                              1                                       0
+NULL             Retail                  500                              1                                       0
+NY                  NULL                   980                              0                                       1
+NY                  Internet               570                              0                                       0
+NY                  Retail                  410                              0                                       0
+VT                  NULL                   340                              0                                       1
+VT                  Internet               250                              0                                       0
+VT                  Retail                  90                                0                                       0
+
+
+We’re still not at a point where the output makes sense, but now we’re going to get clever and use the GROUPING function, along with a few other tricks, to make this output more presentable. We’ll execute the following statement, and then explain it after we’ve seen the output.
+
+
+SELECT
+ISNULL(State,' ') AS 'State',
+ISNULL(Channel, ' ') AS 'Channel',
+SUM(SalesAmount) AS 'Sales Amount',
+CASE WHEN GROUPING(State) = 1
+AND GROUPING(Channel) = 1 THEN 'Grand Total'
+WHEN GROUPING(State) = 1
+AND GROUPING(Channel) = 0 THEN 'Channel Subtotal'
+WHEN GROUPING(State) = 0
+AND GROUPING(Channel) = 1 THEN 'State Subtotal'
+ELSE ' ' END AS 'Subtotal/Total'
+FROM SalesSummary
+GROUP BY CUBE(State, Channel)
+ORDER BY
+CASE
+WHEN GROUPING(State) = 0 AND GROUPING(Channel) = 0 THEN 1
+WHEN GROUPING(State) = 0 AND GROUPING(Channel) = 1 THEN 2
+WHEN GROUPING(State) = 1 AND GROUPING(Channel) = 0 THEN 3
+ELSE 4
+END
+
+The output is:
+
+State                  Channel                  Sales Amount             Subtotal/Total
+NY                       Retail                        410
+VT                        Retail                        90
+NY                       Internet                    570
+VT                        Internet                    250
+NY                                                         980                                State Subtotal
+VT		340                                State Subtotal Internet                    820                                Channel Subtotal Retail	500                                Channel Subtotal
+1320                              Grand Total
+
+
+Let’s pause now to discuss how this output was produced. The first column uses a CASE statement to print the State label only if the row is not for a subtotal or grand total. Similarly, the second column does the same for the Channel label. The third column uses a SUM function to print the sales amount for that row. The fourth column uses a CASE statement to produce the Subtotal/Total label. As you can see, the CASE uses the GROUPING function to determine whether this is a State subtotal, a Channel subtotal, or a grand total. If it’s none of those, SQL prints a blank in that column. The GROUP BY clause uses the CUBE keyword to create subtotals for all of the combinations specified. Finally, we’ve used a CASE statement and the GROUPING function in the ORDER BY clause to make sure that the subtotals appear after the detail rows, and the grand total row appears at the very end.
+
+
+Database Differences: MySQL
+MySQL doesn’t support the CUBE keyword.
+
+
+Creating Crosstab Layouts
+
+The subtotal rows added with the ROLLUP and CUBE keywords provide additional aggregation possibilities for your queries. By displaying additional subtotal rows, we can view summary information along with the details. We now want to turn our attention to the way that summarized data is typically presented. We already encountered this statement that groups data by state and channel to provide an aggregated summary:
+SELECT State, Channel,
+SUM(SalesAmount) AS 'Sales Amount' FROM SalesSummary
+GROUP BY State, Channel
+ORDER BY State, Channel
+
+The output is:
+
+State                    Channel                     Sales Amount
+NY                          Internet                       570
+NY                          Retail                           410
+VT                           Internet                       250
+VT                           Retail                           90
+
+
+This data is perfectly understandable. We have four rows of data, in which each row gives an aggregated summary of a specific state and channel combination. For example, the first row provides the sum of sales over the Internet in NY. This is all well and good, but we now want to introduce an alternate way of displaying this same information. Using a new keyword called PIVOT, it’s possible to display this data as it would appear in an Excel pivot table, in what is
+commonly called a crosstab query. Using the PIVOT keyword, we can produce this output in the
+following layout:
+
+Channel                  NY                      VT
+Internet                    570                     250
+Retail                        410                     90
+
+
+Instead of four rows of data, we now have only two. This was accomplished by breaking down the state values into separate columns. This compact way of displaying data is referred to as
+a crosstab. If you’re familiar with Microsoft Excel, this is similar to what is seen in Excel pivot tables. We’ll discuss pivot tables in Chapter 20, but for now the main idea to remember is that pivot tables divide columns into four distinct areas: rows, columns, filters, and values. If this were a pivot table, we would have placed Channel in the rows area, State in the columns area, and Sales Amount in the values area.
+
+The virtue of the crosstab is that it is more compact and makes it easier to navigate through the data. For example, if we’re interested in finding retail sales in VT, we simply locate the Retail
+
+
+row and VT column and then find the intersection. With the traditional aggregated summary, we would need to scan the various rows until we locate the row with the desired Channel and State values.
+
+Let’s now see how the above crosstab output was accomplished. A query that creates this output is:
+SELECT * FROM
+(SELECT Channel, State, SalesAmount FROM SalesSummary) AS mainquery
+PIVOT (SUM(SalesAmount) FOR State IN ([NY], [VT])) AS pivotquery
+
+This is quite a bit more complex than anything we’ve seen previously. In a way, this is like combining two queries together—a topic that will be discussed in Chapters 13 and 14. In order to decipher this, we’ll need to break down the statement into its components. The portion of the second line of the query that’s within parentheses is:
+SELECT Channel, State, SalesAmount
+FROM SalesSummary
+
+This query selects all data for the three columns of interest in the SalesSummary table. The AS keyword that follows is used to provide an alias for the entire query. In this case, we’re calling it mainquery, which is an arbitrary name; we could have called it anything.
+
+The third line introduces the PIVOT operator. This keyword indicates that we will pivot on the data items that follow. This means that we want data to appear in a crosstab format. The first item listed is always an aggregation function. In this example, it is:
+SUM(SalesAmount)
+
+This indicates that we want to sum values in the SalesAmount column. The FOR keyword that follows separates the aggregation function from the field that we want to appear as separate columns in the pivot table. In this example, we want values for State to appear as separate columns. The IN keyword separates the column name from the values that we want to appear as column headers. The PIVOT operator requires us to explicitly state the values we want as column headers. In this example, those values are NY and VT. Note that SQL Server requires that these enumerated values be enclosed in brackets rather than the normal single quotes. Finally, we assign an alias to the entire PIVOT expression, which in this example is pivotquery. Like the mainquery alias, this is an entirely arbitrary name.
+
+To recap, we’ve seen that this statement has this general structure:
+
+SELECT * FROM
+(a SELECT query that produces the data) AS alias_for_source_query
+PIVOT (aggregation_function(column)
+FOR column_for_column_headers
+IN pivot_column_values)
+AS alias_for_pivot_table
+
+It might first appear that this was a lot of unnecessary extra work to produce a result that’s not significantly more useful than the original output. To better illustrate the value of the PIVOT
+
+
+operator, let’s now add another level of aggregation, the sales date, into the mix. Going back to non-crosstab queries, we can run this variation of the original query:
+SELECT SalesDate, State, Channel,
+SUM(SalesAmount) AS Total
+FROM SalesSummary
+GROUP BY SalesDate, State, Channel
+ORDER BY SalesDate, State, Channel
+
+As you can see, we have added SalesDate to the GROUP BY and ORDER BY clauses. The output is:
+
+SalesDate                    State                  Channel                  Total
+2017-04-01                   NY                       Internet                    50
+2017-04-01                   NY                       Retail                        30
+2017-04-01                   VT                        Internet                    120
+2017-04-02                   NY                       Internet                    520
+2017-04-02                   NY                       Retail                        380
+2017-04-02                   VT                        Internet                    130
+2017-04-02                   VT                        Retail                        90
+
+
+With an increased number of rows, this is a bit more difficult to interpret. For example, if we want to find the retail sales for NY on 4/2/2017, we’ll have to scan the rows until we find that the fifth row provides this information. Moreover, if we want to find retail sales from VT on
+4/1/2017, it might take some time to realize that there are no rows with that information. This is because our underlying data had no retail sales from VT on 4/1/2017.
+Using the PIVOT operator, we can produce this same data in a crosstab layout, making it easier to locate the desired data points. Our objective is to produce the data in this format:
+
+SalesDate                    Channel               NY                   VT
+2017-04-01                   Internet                 50                     120
+2017-04-01                   Retail                     30                     NULL
+2017-04-02                   Internet                 520                  130
+2017-04-02                   Retail                     380                  90
+
+
+This can be accomplished with the following PIVOT statement:
+
+SELECT * FROM
+(SELECT SalesDate, Channel, State, SalesAmount FROM SalesSummary)
+AS mainquery
+PIVOT (SUM(SalesAmount) FOR State IN ([NY], [VT])) AS pivotquery
+ORDER BY SalesDate
+
+We’ve made only two changes to the previous PIVOT statement. First, we added the SalesDate as a selected column in the mainquery portion of the statement. Second, we added an ORDER BY clause, which causes the rows to be sorted by date. Unlike before, we now have both the
+
+
+SalesDate and Channel fields in the rows area of the crosstab. The columns area still has the state, with each state listed in a separate column.
+
+Notice that we see a NULL value for retail sales for VT on 4/1/2017. This explicitly tells us that we had no such sales. This is a vast improvement over the traditional display of data, where it is more difficult to determine that fact.
+
+Also note that the order of fields in the mainquery SELECT is significant. In the query, we have SalesDate listed before Channel. This caused the SalesDate column to appear to the left of the Channel column. We could have easily switched the order of those two columns, as in the following:
+SELECT * FROM
+(SELECT Channel, SalesDate, State, SalesAmount FROM SalesSummary) AS mainquery
+PIVOT (SUM(SalesAmount) FOR State IN ([NY], [VT])) AS pivotquery
+ORDER BY Channel
+
+We also modified the column specified in the ORDER BY clause. The resulting output is:
+
+Channel                  SalesDate                    NY                   VT
+Internet                    2017-04-01                   50                     120
+Internet                    2017-04-02                   520                  130
+Retail                        2017-04-01                   30                     NULL Retail                        2017-04-02                   380                  90
+
+As you can see, the resulting output is somewhat different but has the same information. Once you have more than two data elements in a crosstab query, there are many ways to
+arrange the data. For example, we could have have chosen to put the Channel in the columns area rather than the State. This would look like:
+
+SalesDate                    State               Internet                Retail
+2017-04-01                   NY                     50                          30
+2017-04-01                   VT                     120                        NULL
+2017-04-02                   NY                     520                        380
+2017-04-02                   VT                     130                        90
+
+
+The statement that produces this layout is:
+
+SELECT * FROM
+(SELECT SalesDate, State, Channel, SalesAmount FROM SalesSummary) AS mainquery
+PIVOT (SUM(SalesAmount) FOR Channel IN ([Internet], [Retail])) AS pivotquery
+ORDER BY SalesDate
+
+The main change in this query is that we’ve specified Channel values in the pivotquery portion of the statement. This causes the Channel values, Internet and Retail, to be broken out as separate columns in the display.
