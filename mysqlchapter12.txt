@@ -1,0 +1,1774 @@
+CHAPTER 12
+
+Using Multiple Tables
+
+
+Introduction
+For the most part, recipes in earlier chapters have used single tables. But for any ap- plication of even moderate complexity, it’s likely that you’ll need to use multiple tables. Some questions simply cannot be answered using a single table, and the real power of a relational database comes into play when you start to combine the information from multiple sources. There are several reasons to use multiple tables:
+To combine rows from tables to obtain more comprehensive information than can be obtained from individual tables alone
+To hold intermediate results for a multiple-stage operation
+To modify rows in one table based on information from another
+A statement that uses multiple tables can be a join between tables, a subquery that nests one SELECT within another, or a union that combines the results of multiple SELECT statements. Subqueries have already been touched on in earlier chapters to some extent. In this chapter, the primary focus is on joins and unions, although subqueries occur on occasion as well. The following topics are covered here:
+Joining tables to find matches or mismatches between rows in different tables
+To solve such problems, you should know which types of joins apply. Inner joins show which rows in one table are matched by rows in another. Outer joins show matching rows, but they can also be used to find which rows in one table are not matched by rows in another.
+Comparing a table to itself
+Some problems require that you compare a table to itself. This is similar to per- forming a join between different tables, except that you must use table aliases to disambiguate table references.
+Using unions to combine result sets
+For some queries, the required information consists of multiple result sets, either selected from different tables or selected in different ways from the same table. To
+produce such a result, use a UNION that combines the result sets from multiple
+SELECT statements.
+Deleting unmatched rows
+If two related datasets have an imperfect relationship, you can determine which rows are unmatched and remove them if they are unwanted.
+Performing joins between tables that are not in the same database
+When you use multiple tables, they might come from the same database or from different databases. On occasion, you may even need to use tables that come from databases hosted by different MySQL servers. For the first two cases, you need to know how to refer to columns from the different tables, which may involve using table aliases or qualifying table names with a database name. In the third case, you can set up a FEDERATED table to enable one MySQL server to access a table hosted by another or open a connection to each server and combine the information from them yourself.
+The scripts that create the tables used in this chapter can be found in the tables directory. For scripts that implement some of the techniques discussed here, look in the joins and unions directories.
+
+Finding Rows in One Table That Match Rows in Another
+Problem
+You need to write a query that uses information from more than one table.
+
+Solution
+Use a join—that is, a query that lists multiple tables in its FROM clause and tells MySQL how to match information from them.
+
+Discussion
+The essential idea behind a join is that it combines rows in one table with rows in one or more other tables. Joins enable you to combine information from multiple tables when each table contains only part of the information in which you’re interested. Out- put rows from a join contain more information than rows from either table by itself.
+A complete join that produces all possible row combinations is called a Cartesian prod- uct. For example, joining each row in a 100-row table to each row in a 200-row table produces a result containing 100 × 200, or 20,000 rows. With larger tables, or joins between more than two tables, the result set for a Cartesian product can easily become immense. Because of that, and because you rarely want all the combinations anyway, a join normally includes an ON or USING clause that specifies how to join rows between tables. (This requires that each table have one or more columns of common information
+that can be used to link them together logically.) You can also include a WHERE clause that restricts which of the joined rows to select. Each of these clauses narrows the focus of the query.
+This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches between tables. Later recipes show how to identify mismatches between tables (Recipe 12.2) and how to compare a table to itself (Recipe 12.3). The examples assume that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
+CREATE TABLE artist (
+a_id INT UNSIGNED NOT NULL AUTO_INCREMENT, # artist ID
+name  VARCHAR(30) NOT NULL,	# artist name PRIMARY KEY (a_id),
+UNIQUE (name)
+);
+
+CREATE TABLE painting (
+a_id  INT UNSIGNED NOT NULL,	# artist ID p_id INT UNSIGNED NOT NULL AUTO_INCREMENT, # painting ID
+title VARCHAR(100) NOT NULL,	# title of painting
+state VARCHAR(2) NOT NULL,	# state where purchased
+price INT UNSIGNED,	# purchase price (dollars) INDEX (a_id),
+PRIMARY KEY (p_id)
+);
+You’ve just begun the collection, so the tables contain only the following rows:
+mysql> SELECT * FROM artist ORDER BY a_id;
++------+----------+
+| a_id | name	|
++------+----------+
+|	1 | Da Vinci |
+|	2 | Monet	|
+|	3 | Van Gogh |
+|	4 | Picasso |
+|	5 | Renoir	|
++------+----------+
+mysql> SELECT * FROM painting ORDER BY a_id, p_id;
++------+------+-------------------+-------+-------+
+| a_id | p_id | title	| state | price |
++------+------+-------------------+-------+-------+
+
++------+------+-------------------+-------+-------+
+The low values in the price column of the painting table betray the fact that your collection actually contains only cheap facsimiles, not the originals. Well, that’s all right: who can afford the originals?
+Each table contains partial information about your collection. For example, the artist table doesn’t tell you which paintings each artist produced, and the painting table lists artist IDs but not their names. To use the information in both tables, you can ask MySQL to show you various combinations of artists and paintings by writing a query that performs a join. A join names two or more tables after the FROM keyword. In the output column list, you can name columns from any or all the joined tables, or use expressions that are based on those columns, tbl_name .* to select all columns from a given table, or * to select all columns from all tables.
+The simplest join involves two tables and selects all columns from each. With no re- strictions, the join generates output for all combinations of rows (that is, the Cartesian product). The following complete join between the artist and painting tables shows this:
+mysql> SELECT * FROM artist, painting;
++------+----------+------+------+-------------------+-------+-------+
+| a_id | name	| a_id | p_id | title	| state | price |
++------+----------+------+------+-------------------+-------+-------+
+
++------+----------+------+------+-------------------+-------+-------+
+The statement output illustrates why a complete join generally is not useful: it produces a lot of output, and the result is not meaningful. Clearly, you’re not maintaining these tables to match every artist with every painting, which is what the preceding statement does. An unrestricted join in this case produces nothing of value.
+To answer questions meaningfully, you must combine the two tables in a way that produces only the relevant matches. Doing so is a matter of including appropriate join conditions. For example, to produce a list of paintings together with the artist names, you can associate rows from the two tables using a simple WHERE clause that matches up values in the artist ID column that is common to both tables and that serves as the link between them:
+mysql> SELECT * FROM artist, painting
+-> WHERE artist.a_id = painting.a_id;
++------+----------+------+------+-------------------+-------+-------+
+| a_id | name	| a_id | p_id | title	| state | price |
++------+----------+------+------+-------------------+-------+-------+
+
++------+----------+------+------+-------------------+-------+-------+
+The column names in the WHERE clause include table qualifiers to make it clear which a_id values to compare. The output indicates who painted each painting, and, con- versely, which paintings by each artist are in your collection.
+Another way to write the same join is to use INNER JOIN rather than the comma operator and indicate the matching conditions with an ON clause:
+mysql> SELECT * FROM artist INNER JOIN painting
+-> ON artist.a_id = painting.a_id;
++------+----------+------+------+-------------------+-------+-------+
+| a_id | name	| a_id | p_id | title	| state | price |
++------+----------+------+------+-------------------+-------+-------+
+
++------+----------+------+------+-------------------+-------+-------+
+In the special case that the matched columns have the same name in both tables and are compared using the = operator, you can use an INNER JOIN with a USING clause instead. This requires no table qualifiers, and each join column is named only once:
+mysql> SELECT * FROM artist INNER JOIN painting
+-> USING(a_id);
++------+----------+------+-------------------+-------+-------+
+| a_id | name	| p_id | title	| state | price |
++------+----------+------+-------------------+-------+-------+
+
++------+----------+------+-------------------+-------+-------+
+Note that when you write a query with a USING clause, SELECT * returns only one instance of each join column (a_id).
+Any of ON, USING, or WHERE can include comparisons, so how do you know which join conditions to put in each clause? As a rule of thumb, it’s conventional to use ON or USING to specify how to join the tables, and the WHERE clause to restrict which of the joined rows to select. For example, to join tables based on the a_id column, but select only rows for paintings obtained in Kentucky, use an ON (or USING) clause to match the rows in the two tables, and a WHERE clause to test the state column:
+mysql> SELECT * FROM artist INNER JOIN painting
+-> ON artist.a_id = painting.a_id
+-> WHERE painting.state = 'KY';
++------+----------+------+------+-------------------+-------+-------+
+| a_id | name	| a_id | p_id | title	| state | price |
++------+----------+------+------+-------------------+-------+-------+
+
++------+----------+------+------+-------------------+-------+-------+
+The preceding queries use SELECT * to select all columns. To be more selective about which columns a statement should display, provide a list that names only those columns in which you’re interested:
+mysql> SELECT artist.name, painting.title, painting.state, painting.price
+-> FROM artist INNER JOIN painting
+-> ON artist.a_id = painting.a_id
+-> WHERE painting.state = 'KY';
++----------+-------------------+-------+-------+
+| name	| title	| state | price |
++----------+-------------------+-------+-------+
+| Van Gogh | Starry Night	| KY	|	48 |
+| Van Gogh | The Potato Eaters | KY	|	67 |
++----------+-------------------+-------+-------+
+You’re not limited to two tables when writing joins. Suppose that you prefer to see complete state names rather than abbreviations in the preceding query result. The states table used in earlier chapters maps state abbreviations to names, so you can add it to the previous query to display names:
+mysql> SELECT artist.name, painting.title, states.name, painting.price
+-> FROM artist INNER JOIN painting INNER JOIN states
+-> ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
++----------+-------------------+----------+-------+
+| name	| title	| name	| price |
++----------+-------------------+----------+-------+
+
++----------+-------------------+----------+-------+
+Another common use of three-way joins is for enumerating many-to-many relation- ships. See Recipe 12.5 for an example.
+By including appropriate conditions in your joins, you can answer very specific ques- tions, such as the following:
+Which paintings did Van Gogh paint? To answer this question, use the a_id value to find matching rows, add a WHERE clause to restrict output to those rows that contain the artist name, and select the title from those rows:
+mysql> SELECT painting.title
+-> FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
+-> WHERE artist.name = 'Van Gogh';
++-------------------+
+| title	|
++-------------------+
+| Starry Night	|
+| The Potato Eaters |
+| The Rocks	|
++-------------------+
+Who painted the Mona Lisa? Again you use the a_id column to join the rows, but this time the WHERE clause restricts output to those rows that contain the title, and you select the artist name from those rows:
+mysql> SELECT artist.name
+-> FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
+-> WHERE painting.title = 'The Mona Lisa';
++----------+
+| name	|
++----------+
+| Da Vinci |
++----------+
+Which artists’ paintings did you purchase in Kentucky or Indiana? This is some- what similar to the previous statement, but it tests a different column (a_id) in the painting table to determine which rows to join with the artist table:
+mysql> SELECT DISTINCT artist.name
+-> FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
+-> WHERE painting.state IN ('KY','IN');
++----------+
+| name	|
++----------+
+| Da Vinci |
+| Van Gogh |
++----------+
+The statement also uses DISTINCT to display each artist name just once. Try it with- out DISTINCT and you’ll see that Van Gogh is listed twice; that’s because you obtained two Van Goghs in Kentucky.
+Joins can also be used with aggregate functions to produce summaries. For exam- ple, to find out how many paintings you have per artist, use this statement:
+mysql> SELECT artist.name, COUNT(*) AS 'number of paintings'
+-> FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
+-> GROUP BY artist.name;
++----------+---------------------+
+| name	| number of paintings |
++----------+---------------------+
+| Da Vinci |	2 |
+| Renoir	|	1 |
+| Van Gogh |	3 |
++----------+---------------------+
+A more elaborate statement might also show how much you paid for each artist’s paintings, in total and on average:
+mysql> SELECT artist.name,
+-> COUNT(*) AS 'number of paintings',
+-> SUM(painting.price) AS 'total price',
+-> AVG(painting.price) AS 'average price'
+-> FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
+-> GROUP BY artist.name;
++----------+---------------------+-------------+---------------+
+| name	| number of paintings | total price | average price |
++----------+---------------------+-------------+---------------+
+| Da Vinci |	2 |	121 |	60.5000 |
+| Renoir	|	1 |	64 |	64.0000 |
+| Van Gogh |	3 |	148 |	49.3333 |
++----------+---------------------+-------------+---------------+
+Note that the summary statements produce output only for those artists in the artist table for whom you actually have acquired paintings. (For example, Monet is listed in the artist table but is not present in the summary because you don’t have any of his paintings yet.) If you want the summary to include all artists, even if you have none of their paintings yet, you must use a different kind of join—specifically, an outer join:
+Joins written with the comma operator or INNER JOIN are inner joins, which means that they produce a result only for values in one table that match values in another table.
+An outer join can produce those matches as well, but also can show you which values in one table are missing from the other. Recipe 12.2 introduces outer joins.
+
+
+The tbl_name.col_name notation that qualifies a column name with a table name is always allowable in a join but can be shortened to just col_name if the name appears in only one of the joined tables. In that case, MySQL can determine without ambiguity which table the column comes from, and no table name qualifier is necessary. We can’t do that for the following join. Both tables have an a_id column, so the column reference is ambiguous:
+mysql> SELECT * FROM artist INNER JOIN painting ON a_id = a_id;
+ERROR 1052 (23000): Column 'a_id' in on clause is ambiguous
+By contrast, the following query is unambiguous. Each instance of a_id is qualified with the appropriate table name, only artist has a name column, and only painting has title and state columns:
+mysql> SELECT name, title, state FROM artist INNER JOIN painting
+-> ON artist.a_id = painting.a_id;
++----------+-------------------+-------+
+| name	| title	| state |
++----------+-------------------+-------+
+| Da Vinci | The Last Supper	| IN	|
+| Da Vinci | The Mona Lisa	| MI	|
+| Van Gogh | Starry Night	| KY	|
+| Van Gogh | The Potato Eaters | KY	|
+| Van Gogh | The Rocks	| IA	|
+| Renoir	| Les Deux Soeurs	| NE	|
++----------+-------------------+-------+
+To make the meaning of a statement clearer to human readers, it’s often useful to qualify column names even when that’s not strictly necessary as far as MySQL is concerned. I tend to use qualified names in join examples for that reason.
+If you don’t want to write complete table names when qualifying column references, give each table a short alias and refer to its columns using the alias. The following two statements are equivalent:
+SELECT artist.name, painting.title, states.name, painting.price FROM artist INNER JOIN painting INNER JOIN states
+ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
+
+SELECT a.name, p.title, s.name, p.price
+FROM artist AS a INNER JOIN painting AS p INNER JOIN states AS s ON a.a_id = p.a_id AND p.state = s.abbrev;
+In AS alias_name clauses, the AS is optional.
+For complicated statements that select many columns, aliases can save a lot of typing. In addition, aliases are not only convenient but necessary for some types of statements, as will become evident when we get to the topic of self-joins (Recipe 12.3).
+
+Finding Rows with No Match in Another Table
+Problem
+You want to find rows in one table that have no match in another. Or you want to produce a list on the basis of a join between tables, and you want the list to include an entry for every row in the first table, even when there are no matches in the second table.
+
+Solution
+Use an outer join—a LEFT JOIN or a RIGHT JOIN.
+
+Discussion
+Recipe 12.1 focused on inner joins, which are joins that find matches between two tables. However, the answers to some questions require determining which rows do not have a match (or, stated another way, which rows have values that are missing from the other table). For example, you might want to know which artists in the artist table you don’t yet have any paintings by. The same kind of question occurs in other contexts. Some examples:
+You’re working in sales. You have a list of potential customers, and another list of people who have placed orders. To focus your efforts on people who are not yet actual customers, you want to find people in the first list who are not in the second.
+You have one list of baseball players, and another list of players who have hit home runs, and you want to know which players in the first list have not hit a home run. The answer is determined by finding those players in the first list who are not in the second.
+For these types of questions, it’s necessary to use an outer join. Like an inner join, an outer join can find matches between tables. But unlike an inner join, an outer join can also determine which rows in one table have no match in another. Two types of outer join are LEFT JOIN and RIGHT JOIN.
+To see why outer joins are useful, let’s consider the problem of determining which artists in the artist table are missing from the painting table. At present, the tables are small, so it’s easy to examine them visually:
+mysql> SELECT * FROM artist ORDER BY a_id;
++------+----------+
+| a_id | name	|
++------+----------+
+|	1 | Da Vinci |
+|	2 | Monet	|
+|	3 | Van Gogh |
+|	4 | Picasso |
+|	5 | Renoir	|
++------+----------+
+mysql> SELECT * FROM painting ORDER BY a_id, p_id;
++------+------+-------------------+-------+-------+
+| a_id | p_id | title	| state | price |
++------+------+-------------------+-------+-------+
+
++------+------+-------------------+-------+-------+
+By looking at the tables, you can see that you have no paintings by Monet or Picasso (there are no painting rows with an a_id value of 2 or 4). But as you acquire more paintings and the tables get larger, it won’t be so easy to eyeball them and answer the question by inspection. Can you answer it using SQL? Sure, although first attempts at a solution generally look something like the following statement, which uses a not- equal condition to look for mismatches between the two tables:
+mysql> SELECT * FROM artist INNER JOIN painting
+-> ON artist.a_id != painting.a_id;
++------+----------+------+------+-------------------+-------+-------+
+| a_id | name	| a_id | p_id | title	| state | price |
++------+----------+------+------+-------------------+-------+-------+
+
+|	4 | Picasso |	5 |	6 | Les Deux Soeurs	| NE	|	64 |
++------+----------+------+------+-------------------+-------+-------+
+That output obviously is not correct. (For example, it falsely indicates that each painting was painted by several different artists.) The problem is that the statement produces a list of all combinations of values from the two tables in which the artist ID values aren’t the same, whereas what you really need is a list of values in artist that aren’t present at all in painting. The trouble here is that an inner join can only produce results based on combinations of values that are present in both tables. It can’t tell you anything about values that are missing from one of them.
+When faced with the problem of finding values in one table that have no match in (or that are missing from) another table, you should get in the habit of thinking, “Aha, that’s a LEFT JOIN problem.” A LEFT JOIN is one type of outer join: it’s similar to an inner join in that it attempts to match rows in the first (left) table with the rows in the second (right) table. But in addition, if a left table row has no match in the right table, a LEFT JOIN still produces a row—one in which all the columns from the right table are set to NULL. This means you can find values that are missing from the right table by looking for NULL. It’s easier to understand how this happens by working in stages. Begin with an inner join that displays matching rows:
+mysql> SELECT * FROM artist INNER JOIN painting
+-> ON artist.a_id = painting.a_id;
++------+----------+------+------+-------------------+-------+-------+
+| a_id | name	| a_id | p_id | title	| state | price |
++------+----------+------+------+-------------------+-------+-------+
+
++------+----------+------+------+-------------------+-------+-------+
+In this output, the first a_id column comes from the artist table and the second one comes from the painting table.
+Now compare that result with the output you get from a LEFT JOIN. A LEFT JOIN is written much like an INNER JOIN:
+mysql> SELECT * FROM artist LEFT JOIN painting
+-> ON artist.a_id = painting.a_id;
++------+----------+------+------+-------------------+-------+-------+
+| a_id | name	| a_id | p_id | title	| state | price |
++------+----------+------+------+-------------------+-------+-------+
+
+|	5 | Renoir	|	5 |	6 | Les Deux Soeurs	| NE	|	64 |
++------+----------+------+------+-------------------+-------+-------+
+The output is similar to that from the inner join, except that the LEFT JOIN also produces at least one output row for every artist row, including those that have no painting table match. For those output rows, all the columns from painting are set to NULL. These are rows that the inner join does not produce.
+Next, to restrict the output only to the nonmatched artist rows, add a WHERE clause that looks for NULL values in any painting column that cannot otherwise contain NULL. This filters out the rows that the inner join produces, leaving those produced only by the outer join:
+mysql> SELECT * FROM artist LEFT JOIN painting
+-> ON artist.a_id = painting.a_id
+-> WHERE painting.a_id IS NULL;
++------+---------+------+------+-------+-------+-------+
+| a_id | name	| a_id | p_id | title | state | price |
++------+---------+------+------+-------+-------+-------+
+|	2 | Monet	| NULL | NULL | NULL | NULL | NULL |
+|	4 | Picasso | NULL | NULL | NULL  | NULL  |  NULL |
++------+---------+------+------+-------+-------+-------+
+Finally, to show only the artist table values that are missing from the painting table, shorten the output column list to include only columns from the artist table. The result is that the LEFT JOIN lists those left-table rows containing a_id values that are not present in the right table:
+mysql> SELECT artist.* FROM artist LEFT JOIN painting
+-> ON artist.a_id = painting.a_id
+-> WHERE painting.a_id IS NULL;
++------+---------+
+| a_id | name	|
++------+---------+
+|	2 | Monet	|
+|	4 | Picasso |
++------+---------+
+A similar kind of operation can be used to report each left-table value along with an indicator as to whether it’s present in the right table. To do this, perform a LEFT JOIN that counts the number of times each left-table value occurs in the right table. A count of zero indicates that the value is not present. The following statement lists each artist from the artist table and shows whether you have any paintings by the artist:
+mysql> SELECT artist.name,
+-> IF(COUNT(painting.a_id)>0,'yes','no') AS 'in collection'
+-> FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
+-> GROUP   BY  artist.name;
++----------+---------------+
+| name	| in collection |
++----------+---------------+
+| Da Vinci | yes	|
+| Monet	| no	|
+| Picasso | no	|
+| Renoir	| yes	|
+| Van Gogh | yes	|
++----------+---------------+
+A RIGHT JOIN is another kind of outer join. It is like LEFT JOIN but reverses the roles of the left and right tables. Semantically, RIGHT JOIN forces the matching process to pro- duce a row from each table in the right table, even in the absence of a corresponding row in the left table. Syntactically, tbl1 LEFT JOIN tbl2 is equivalent to tbl2 RIGHT JOIN tbl1. This means that you would rewrite the preceding LEFT JOIN as follows to convert it to a RIGHT JOIN that produces the same results:
+mysql> SELECT artist.name,
+-> IF(COUNT(painting.a_id)>0,'yes','no') AS 'in collection'
+-> FROM painting RIGHT JOIN artist ON artist.a_id = painting.a_id
+-> GROUP   BY  artist.name;
++----------+---------------+
+| name	| in collection |
++----------+---------------+
+| Da Vinci | yes	|
+| Monet	| no	|
+| Picasso | no	|
+| Renoir	| yes	|
+| Van Gogh | yes	|
++----------+---------------+
+Elsewhere in this book, I’ll generally refer only to LEFT JOIN for brevity, but such refer- ences apply to RIGHT JOIN as well if you reverse the roles of the tables.
+
+
+See Also
+As shown in this section, LEFT JOIN is useful for finding values with no match in another table or for showing whether each value is matched. LEFT JOIN may also be used to
+produce a summary that includes all items in a list, even those for which there’s nothing to summarize. This is very common for characterizing the relationship between a master table and a detail table. For example, a LEFT JOIN can produce “total sales per customer” reports that list all customers, even those who haven’t bought anything during the summary period. (See Recipe 12.4 for information about master-detail lists.)
+You can also use LEFT JOIN to perform consistency checking when you receive two datafiles that are supposed to be related, and you want to determine whether they really are. (That is, you want to check the integrity of their relationship.) Import each file into a MySQL table, and then run a couple of LEFT JOIN statements to determine whether there are unattached rows in one table or the other—that is, rows that have no match in the other table. Recipe 12.13 discusses how to identify (and optionally delete) these unattached rows.
+
+Comparing a Table to Itself
+Problem
+You want to compare rows in a table to other rows in the same table. For example, you want to find all paintings in your collection by the artist who painted The Potato Eat- ers. Or you want to know which states listed in the states table joined the Union in the same year as New York. Or you want to know which states did not join the Union in the same year as any other state.
+
+Solution
+Problems that require comparing a table to itself involve an operation known as a self- join. It’s performed much like other joins, except that you must always use table aliases so that you can refer to the same table different ways within the statement.
+
+Discussion
+A special case of joining one table to another occurs when both tables are the same. This is called a self-join. Although many people find the idea confusing or strange to think about at first, it’s perfectly legal. It’s likely that you’ll find yourself using self-joins quite often because they are so important.
+A tip-off that you need a self-join is when you want to know which pairs of elements in a table satisfy some condition. For example, suppose that your favorite painting is The Potato Eaters, and you want to identify all the items in your collection that were done by the artist who painted it. Do so as follows:
+Identify the row in the painting table that contains the title The Potato Eaters, so that you can refer to its a_id value.
+Use the a_id value to match other rows in the table that have the same a_id value.
+Display the titles from those matching rows.
+The artist ID and painting titles that we begin with look like this:
+mysql> SELECT a_id, title FROM painting ORDER BY a_id;
++------+-------------------+
+| a_id | title	|
++------+-------------------+
+|	1 | The Last Supper	|
+|	1 | The Mona Lisa	|
+|	3 | Starry Night	|
+|	3 | The Potato Eaters |
+|	3 | The Rocks	|
+|	5 | Les Deux Soeurs	|
++------+-------------------+
+A two-step method for picking out the right titles without a join is to look up the artist’s ID with one statement and then use the ID in a second statement to select rows that match it:
+mysql> SELECT @id := a_id FROM painting WHERE title = 'The Potato Eaters';
++-------------+
+| @id := a_id |
++-------------+
+|	3 |
++-------------+
+mysql> SELECT title FROM painting WHERE a_id = @id;
++-------------------+
+| title	|
++-------------------+
+| Starry Night	|
+| The Potato Eaters |
+| The Rocks	|
++-------------------+
+A different solution that requires only a single statement is to use a self-join. The trick to this lies in figuring out the proper notation to use. First attempts at writing a state- ment that joins a table to itself often look something like this:
+mysql> SELECT title
+-> FROM painting INNER JOIN painting
+-> ON a_id = a_id;
+-> WHERE title = 'The Potato Eaters';
+ERROR 1066 (42000): Not unique table/alias: 'painting'
+The problem with that statement is that the column references are ambiguous. MySQL can’t tell which instance of the painting table any given column name refers to. The solution is to give at least one instance of the table an alias so that you can distinguish column references by using different table qualifiers. The following statement shows how to do this, using the aliases p1 and p2 to refer to the painting table different ways:
+mysql> SELECT p2.title
+-> FROM painting AS p1 INNER JOIN painting AS p2
+-> ON p1.a_id = p2.a_id
+-> WHERE p1.title = 'The Potato Eaters';
++-------------------+
+| title	|
++-------------------+
+| Starry Night	|
+| The Potato Eaters |
+| The Rocks	|
++-------------------+
+The statement output illustrates something typical of self-joins: when you begin with a reference value in one table instance (The Potato Eaters) to find matching rows in a second table instance (paintings by the same artist), the output includes the reference value. That makes sense: after all, the reference matches itself. If you want to find only other paintings by the same artist, explicitly exclude the reference value from the output:
+mysql> SELECT p2.title
+-> FROM painting AS p1 INNER JOIN painting AS p2
+-> ON p1.a_id = p2.a_id
+-> WHERE p1.title = 'The Potato Eaters' AND p2.title != 'The Potato Eaters';
++--------------+
+| title	|
++--------------+
+| Starry Night |
+| The Rocks	|
++--------------+
+A more general way to exclude the reference value without naming it literally is to specify that you don’t want output rows to have the same title as the reference, whatever that title happens to be:
+mysql> SELECT p2.title
+-> FROM painting AS p1 INNER JOIN painting AS p2
+-> ON p1.a_id = p2.a_id
+-> WHERE p1.title = 'The Potato Eaters' AND p2.title != p1.title
++--------------+
+| title	|
++--------------+
+| Starry Night |
+| The Rocks	|
++--------------+
+The preceding statements use comparisons of ID values to match rows in the two table instances, but any kind of value can be used. For example, to use the states table to answer the question “Which states joined the Union in the same year as New York?,” perform a temporal pairwise comparison based on the year part of the dates in the table’s statehood column:
+mysql> SELECT s2.name, s2.statehood
+-> FROM states AS s1 INNER JOIN states AS s2
+-> ON YEAR(s1.statehood) = YEAR(s2.statehood)
+-> WHERE s1.name = 'New York'
+-> ORDER BY s2.name;
++----------------+------------+
+| name	| statehood |
++----------------+------------+
+| Connecticut	| 1788-01-09 |
+| Georgia	| 1788-01-02 |
+| Maryland	| 1788-04-28 |
+| Massachusetts  | 1788-02-06 |
+| New Hampshire  | 1788-06-21 |
+| New York	| 1788-07-26 |
+| South Carolina | 1788-05-23 |
+| Virginia	| 1788-06-25 |
++----------------+------------+
+Here again, the reference value (New York) appears in the output. If you want to prevent that, add to the ON expression a term that explicitly excludes the reference:
+mysql> SELECT s2.name, s2.statehood
+-> FROM states AS s1 INNER JOIN states AS s2
+-> ON YEAR(s1.statehood) = YEAR(s2.statehood) AND s1.name != s2.name
+-> WHERE s1.name = 'New York'
+-> ORDER BY s2.name;
++----------------+------------+
+| name	| statehood |
++----------------+------------+
+| Connecticut	| 1788-01-09 |
+| Georgia	| 1788-01-02 |
+| Maryland	| 1788-04-28 |
+| Massachusetts  | 1788-02-06 |
+| New Hampshire  | 1788-06-21 |
+| South Carolina | 1788-05-23 |
+| Virginia	| 1788-06-25 |
++----------------+------------+
+Like the problem of finding other paintings by the painter of The Potato Eaters, the statehood problem can be solved by using a user-defined variable and two statements. That will always be true when you’re seeking matches for just one particular row in your table. Other problems require finding matches for several rows, in which case the two-statement method will not work. Suppose that you want to find each pair of states that joined the Union in the same year. In this case, the output potentially can include any pair of rows from the states table. There is no fixed reference value, so you cannot store the reference in a variable. A self-join is perfect for this problem:
+mysql> SELECT YEAR(s1.statehood) AS year,
+-> s1.name AS name1, s1.statehood AS statehood1,
+-> s2.name AS name2, s2.statehood AS statehood2
+-> FROM states AS s1 INNER JOIN states AS s2
+-> ON YEAR(s1.statehood) = YEAR(s2.statehood) AND s1.name != s2.name
+-> ORDER BY year, s1.name, s2.name;
++------+----------------+------------+----------------+------------+
+| year | name1	| statehood1 | name2	| statehood2 |
++------+----------------+------------+----------------+------------+
+
+
++------+----------------+------------+----------------+------------+
+The condition in the ON clause that requires state pair names not to be identical elimi- nates the trivially duplicate rows showing that each state joined the Union in the same year as itself. But you’ll notice that each remaining pair of states still appears twice. For example, there is one row that lists Delaware and New Jersey, and another that lists New Jersey and Delaware. This is often the case with self-joins: they produce pairs of rows that contain the same values, but for which the values are not in the same order. For techniques that eliminate these “near duplicates” from the query result, see Rec- ipe 14.5.
+Some self-join problems are of the “Which values are not matched by other rows in the table?” variety. An instance of this is the question “Which states did not join the Union in the same year as any other state?” Finding these states is a “nonmatch” problem, which is the type of problem that typically involves a LEFT JOIN. In this case, the solution uses a LEFT JOIN of the states table to itself:
+mysql> SELECT s1.name, s1.statehood
+-> FROM states AS s1 LEFT JOIN states AS s2
+-> ON YEAR(s1.statehood) = YEAR(s2.statehood) AND s1.name != s2.name
+-> WHERE s2.name IS NULL
+-> ORDER BY s1.name;
++----------------+------------+
+| name	| statehood |
++----------------+------------+
+
+| North Carolina | 1789-11-21 |
+| Ohio	| 1803-03-01 |
+| Oklahoma	| 1907-11-16 |
+| Oregon	| 1859-02-14 |
+| Rhode Island	| 1790-05-29 |
+| Tennessee	| 1796-06-01 |
+| Utah	| 1896-01-04 |
+| Vermont	| 1791-03-04 |
+| West Virginia  | 1863-06-20 |
+| Wisconsin	| 1848-05-29 |
++----------------+------------+
+For each row in the states table, the statement selects rows in which the state has a statehood value in the same year, not including that state itself. For rows having no such match, the LEFT JOIN forces the output to contain a row anyway, with all the s2 columns set to NULL. Those rows identify the states with no other state that joined the Union in the same year.
+
+Producing Master-Detail Lists and Summaries
+Problem
+Two related tables have a master-detail relationship, and you want to produce a list that shows each master row with its detail rows or a list that produces a summary of the detail rows for each master row.
+
+Solution
+This is a one-to-many relationship. The solution to this problem involves a join, but the type of join depends on the question you want answered. To produce a list con- taining only master rows for which some detail row exists, use an inner join based on the primary key in the master table. To produce a list that includes entries for all master rows, even those that have no detail rows, use an outer join.
+
+Discussion
+It’s often useful to produce a list from two related tables. For tables that have a master- detail or parent-child relationship, a given row in one table might be matched by several rows in the other. This recipe suggests some questions of this type that you can ask (and answer), using the artist and painting tables from earlier in the chapter.
+One form of master-detail question for these tables is, “Which artist painted each painting?” This is a simple inner join that matches each painting row to its corre- sponding artist row based on the artist ID values:
+mysql> SELECT artist.name, painting.title
+-> FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
+-> ORDER BY name, title;
++----------+-------------------+
+| name	| title	|
++----------+-------------------+
+| Da Vinci | The Last Supper	|
+| Da Vinci | The Mona Lisa	|
+| Renoir	| Les Deux Soeurs	|
+| Van Gogh | Starry Night	|
+| Van Gogh | The Potato Eaters |
+| Van Gogh | The Rocks	|
++----------+-------------------+
+An inner join suffices as long as you want to list only master rows that have detail rows. However, another form of master-detail question you can ask is, “Which paintings did each artist paint?” That question is similar but not quite identical. It will have a different answer if there are artists listed in the artist table that are not represented in the painting table, and the question requires a different statement to produce the proper answer. In that case, the join output should include rows in one table that have no match in the other. That’s a form of “find the nonmatching rows” problem that requires an outer join (Recipe 12.2). Thus, to list each artist row, whether there are any paint ing rows for it, use a LEFT JOIN:
+mysql> SELECT artist.name, painting.title
+-> FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
+-> ORDER BY name, title;
++----------+-------------------+
+| name	| title	|
++----------+-------------------+
+| Da Vinci | The Last Supper	|
+| Da Vinci | The Mona Lisa	|
+| Monet	| NULL	|
+| Picasso | NULL	|
+| Renoir	| Les Deux Soeurs	|
+| Van Gogh | Starry Night	|
+| Van Gogh | The Potato Eaters |
+| Van Gogh | The Rocks	|
++----------+-------------------+
+The rows in the result that have NULL in the title column correspond to artists that are listed in the artist table for whom you have no paintings.
+The same principles apply when producing summaries using master and detail tables. For example, to summarize your art collection by number of paintings per painter, you might ask, “How many paintings are there per artist in the painting table?” To find the answer based on artist ID, you can count up the paintings easily with this statement:
+mysql> SELECT a_id, COUNT(a_id) AS count FROM painting GROUP BY a_id;
++------+-------+
+| a_id | count |
++------+-------+
+|	1 |	2 |
+|	3 |	3 |
+|	5 |	1 |
++------+-------+
+Of course, that output is essentially meaningless unless you have all the artist ID num- bers memorized. To display the artists by name rather than ID, join the painting table to the artist table:
+mysql> SELECT artist.name AS painter, COUNT(painting.a_id) AS count
+-> FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
+-> GROUP BY artist.name;
++----------+-------+
+| painter  | count |
++----------+-------+
+| Da Vinci |	2 |
+| Renoir	|	1 |
+| Van Gogh |	3 |
++----------+-------+
+On the other hand, you might ask, “How many paintings did each artist paint?” This is the same question as the previous one (and the same statement answers it), as long as every artist in the artist table has at least one corresponding painting table row. But if you have artists in the artist table that are not yet represented by any paintings in your collection, they will not appear in the statement output. To produce a count- per-artist summary that includes even artists with no paintings in the painting table, use a LEFT JOIN:
+mysql> SELECT artist.name AS painter, COUNT(painting.a_id) AS count
+-> FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
+-> GROUP BY artist.name;
++----------+-------+
+| painter  | count |
++----------+-------+
+| Da Vinci |	2 |
+| Monet	|	0 |
+| Picasso |	0 |
+| Renoir	|	1 |
+| Van Gogh |	3 |
++----------+-------+
+Beware of a subtle error that is easy to make when writing that kind of statement. Suppose that you write the COUNT( ) function slightly differently, like so:
+mysql> SELECT artist.name AS painter, COUNT(*) AS count
+-> FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
+-> GROUP BY artist.name;
++----------+-------+
+| painter  | count |
++----------+-------+
+| Da Vinci |	2 |
+| Monet	|	1 |
+| Picasso |	1 |
+| Renoir	|	1 |
+| Van Gogh |	3 |
++----------+-------+
+Now every artist appears to have at least one painting. Why the difference? The cause of the problem is that the statement uses COUNT(*) rather than COUNT(painting.a_id). The way LEFT JOIN works for unmatched rows in the left table is that it generates a row with all the columns from the right table set to NULL. In the example, the right table is painting. The statement that uses COUNT(painting.a_id) works correctly, because COUNT
+( expr ) counts only non-NULL values. The statement that uses COUNT(*) works incor- rectly because it counts rows, even those containing NULL that correspond to missing artists.
+LEFT JOIN is suitable for other types of summaries as well. To produce additional col- umns showing the total and average values of the paintings for each artist in the artist table, use this statement:
+mysql> SELECT artist.name AS painter,
+-> COUNT(painting.a_id) AS 'number of paintings',
+-> SUM(painting.price) AS 'total price',
+-> AVG(painting.price) AS 'average price'
+-> FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
+-> GROUP BY artist.name;
++----------+---------------------+-------------+---------------+
+| painter  | number of paintings | total price | average price |
++----------+---------------------+-------------+---------------+
+
++----------+---------------------+-------------+---------------+
+Note that COUNT( ) is zero for artists that are not represented, but SUM( ) and AVG( ) are NULL. The latter two functions return NULL when applied to a set of values with no non- NULL values. To display a sum or average value of zero in that case, modify the statement to test the value of SUM( ) or AVG( ) with IFNULL( ):
+mysql> SELECT artist.name AS painter,
+-> COUNT(painting.a_id) AS 'number of paintings',
+-> IFNULL(SUM(painting.price),0) AS 'total price',
+-> IFNULL(AVG(painting.price),0) AS 'average price'
+-> FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
+-> GROUP BY artist.name;
++----------+---------------------+-------------+---------------+
+| painter  | number of paintings | total price | average price |
++----------+---------------------+-------------+---------------+
+
++----------+---------------------+-------------+---------------+
+
+Enumerating a Many-to-Many Relationship
+Problem
+You want to display a relationship between tables when rows in either table might be matched by multiple rows in the other table.
+Solution
+This is a many-to-many relationship. It requires a third table for associating your two primary tables and a three-way join to list the correspondences between them.
+
+Discussion
+The artist and painting tables used in earlier sections are related in a one-to-many relationship: a given artist may have produced many paintings, but each painting was created by only one artist. One-to-many relationships are relatively simple and the two tables in the relationship can be joined with a key that is common to both tables.
+Even simpler is the one-to-one relationship, which often is used to perform lookups that map one set of values to another. For example, the states table contains name and abbrev columns that list full state names and their corresponding abbreviations:
+mysql> SELECT name, abbrev FROM states;
++----------------+--------+
+| name	| abbrev |
++----------------+--------+
+
+This one-to-one relationship can be used to map state name abbreviations in the painting table, which contains a state column indicating the state in which each paint- ing was purchased. With no mapping, painting entries can be displayed like this:
+mysql> SELECT title, state FROM painting ORDER BY state;
++-------------------+-------+
+| title	| state |
++-------------------+-------+
+| The Rocks	| IA	|
+| The Last Supper	| IN	|
+| Starry Night	| KY	|
+| The Potato Eaters | KY	|
+| The Mona Lisa	| MI	|
+| Les Deux Soeurs	| NE	|
++-------------------+-------+
+If you want to see the full state names rather than abbreviations, exploit the one-to-one relationship that exists between the two that is enumerated in the states table. Join that table to the painting table as follows, using the abbreviation values that are com- mon to the two tables:
+mysql> SELECT painting.title, states.name AS state
+-> FROM painting INNER JOIN states ON painting.state = states.abbrev
+-> ORDER BY state;
++-------------------+----------+
+| title	| state	|
++-------------------+----------+
+| The Last Supper	| Indiana |
+| The Rocks	| Iowa	|
+| Starry Night	| Kentucky |
+| The Potato Eaters | Kentucky |
+| The Mona Lisa	| Michigan |
+| Les Deux Soeurs	| Nebraska |
++-------------------+----------+
+A more complex relationship between tables is the many-to-many relationship, which occurs when a row in one table may have many matches in the other, and vice versa. To illustrate such a relationship, this is the point at which database books typically devolve into the “parts and suppliers” problem. (A given part may be available through several suppliers; how can you produce a list showing which parts are available from which suppliers?) However, having seen that example far too many times, I prefer to use a different illustration. So, even though conceptually it’s really the same idea, let’s use the following scenario: you and a bunch of your friends are avid enthusiasts of euchre, a four-handed card game played with two teams of partners. Each year, you all get together, pair off, and run a friendly tournament. Naturally, to avoid controversy about how different players might remember the results of each tournament, you record the pairings and outcomes in a database. One way to store the results is with a table that is set up as follows, where for each tournament year, you record the team names, win-loss records, players, and player cities of residence:
+mysql> SELECT * FROM euchre ORDER BY year, wins DESC, player;
++----------+------+------+--------+----------+-------------+
+| team	| year | wins | losses | player	| player_city |
++----------+------+------+--------+----------+-------------+
+
++----------+------+------+--------+----------+-------------+
+As shown by the table, each team has multiple players, and each player has participated in multiple teams. The table captures the nature of this many-to-many relationship, but it’s also in nonnormal form, because each row unnecessarily stores quite a bit of repetitive information. (Information for each team is recorded multiple times, as is information about each player.) A better way to represent this many-to-many relation- ship is to use multiple tables:
+Store each team name, year, and record once in a table named euchre_team.
+Store each player name and city of residence once in a table named
+euchre_player.
+Create a third table, euchre_link, that stores team-player associations and serves as a link, or bridge, between the two primary tables. To minimize the information stored in this table, assign unique IDs to each team and player within their respec- tive tables, and store only those IDs in the euchre_link table.
+The resulting team and player tables look like this:
+mysql> SELECT * FROM euchre_team;
++----+----------+------+------+--------+
+| id | name	| year | wins | losses |
++----+----------+------+------+--------+
+|  1 | Kings	| 2005 |	10 |	2 |
+|  2 | Crowns	| 2005 |	7 |	5 |
+|  3 | Stars	| 2005 |	4 |	8 |
+|  4 | Sceptres | 2005 |	3 |	9 |
+|  5 | Kings	| 2006 |	8 |	4 |
+|  6 | Crowns	| 2006 |	9 |	3 |
+|  7 | Stars	| 2006 |	5 |	7 |
+|  8 | Sceptres | 2006 |	2 |	10 |
++----+----------+------+------+--------+
+mysql> SELECT * FROM euchre_player;
++----+----------+---------+
+| id | name	| city	|
++----+----------+---------+
+|  1 | Ben	| Cork	|
+|  2 | Billy	| York	|
+|  3 | Tony	| Derry	|
+|  4 | Melvin	| Dublin |
+|  5 | Franklin | Bath	|
+|  6 | Wallace  | Cardiff |
+|  7 | Nigel	| London |
+|  8 | Maurice | Leeds	|
++----+----------+---------+
+The euchre_link table associates teams and players as follows:
+mysql> SELECT * FROM euchre_link;
++---------+-----------+
+| team_id | player_id |
++---------+-----------+
+
+
++---------+-----------+
+To answer questions about the teams or players using these tables, you need to perform a three-way join, using the link table to relate the two primary tables to each other. Here are some examples:
+List all the pairings that show the teams and who played on them. This statement enumerates all the correspondences between the euchre_team and euchre_player tables and reproduces the information that was originally in the nonnormal euchre table:
+mysql> SELECT t.name, t.year, t.wins, t.losses, p.name, p.city
+-> FROM euchre_team AS t INNER JOIN euchre_link AS l
+-> INNER JOIN euchre_player AS p
+-> ON t.id = l.team_id AND p.id = l.player_id
+-> ORDER BY t.year, t.wins DESC, p.name;
++----------+------+------+--------+----------+---------+
+| name	| year | wins | losses | name	| city	|
++----------+------+------+--------+----------+---------+
+
++----------+------+------+--------+----------+---------+
+List the members for a particular team (the 2005 Crowns):
+mysql> SELECT p.name, p.city
+-> FROM euchre_team AS t INNER JOIN euchre_link AS l
+-> INNER JOIN euchre_player AS p
+-> ON t.id = l.team_id AND p.id = l.player_id
+-> AND t.name = 'Crowns' AND t.year = 2005;
++--------+--------+
+| name	| city	|
++--------+--------+
+| Tony	| Derry |
+| Melvin | Dublin |
++--------+--------+
+List the teams that a given player (Billy) has been a member of:
+mysql> SELECT t.name, t.year, t.wins, t.losses
+-> FROM euchre_team AS t INNER JOIN euchre_link AS l
+-> INNER JOIN euchre_player AS p
+-> ON t.id = l.team_id AND p.id = l.player_id
+-> WHERE p.name = 'Billy';
++----------+------+------+--------+
+| name	| year | wins | losses |
++----------+------+------+--------+
+| Kings	| 2005 |	10 |	2 |
+| Sceptres | 2006 |	2 |	10 |
++----------+------+------+--------+
+
+Finding Rows Containing Per-Group Minimum or Maximum Values
+Problem
+You want to find which row within each group of rows in a table contains the maximum or minimum value for a given column. For example, you want to determine the most expensive painting in your collection for each artist.
+
+Solution
+Create a temporary table to hold the per-group maximum or minimum values, and then join the temporary table with the original one to pull out the matching row for each group. If you prefer a single-query solution, use a subquery in the FROM clause rather than a temporary table.
+
+Discussion
+Many questions involve finding largest or smallest values in a particular table column, but it’s also common to want to know what the other values are in the row that contains the value. For example, when you are using the artist and painting tables, it’s possible to answer questions like “What is the most expensive painting in the collection, and who painted it?” One way to do this is to store the highest price in a user-defined variable and then use the variable to identify the row containing the price so that you can retrieve other columns from it:
+mysql> SET @max_price = (SELECT MAX(price) FROM painting);
+mysql> SELECT artist.name, painting.title, painting.price
+-> FROM artist INNER JOIN painting
+-> ON painting.a_id = artist.a_id
+-> WHERE painting.price = @max_price;
++----------+---------------+-------+
+| name	| title	| price |
++----------+---------------+-------+
+| Da Vinci | The Mona Lisa |	87 |
++----------+---------------+-------+
+The same thing can be done by creating a temporary table to hold the maximum price and then joining it with the other tables:
+mysql> CREATE TABLE tmp SELECT MAX(price) AS max_price FROM painting;
+mysql> SELECT artist.name, painting.title, painting.price
+-> FROM artist INNER JOIN painting INNER JOIN tmp
+-> ON painting.a_id = artist.a_id
+-> AND painting.price = tmp.max_price;
++----------+---------------+-------+
+| name	| title	| price |
++----------+---------------+-------+
+| Da Vinci | The Mona Lisa |	87 |
++----------+---------------+-------+
+The techniques of using a user-defined variable or a temporary table as just shown were illustrated originally in Recipe 8.5. Their use here is similar except that now we are applying them to multiple tables.
+On the face of it, using a temporary table and a join is just a more complicated way of answering the question than with a user-defined variable. Does this technique have any practical value? Yes, it does, because it leads to a more general technique for answering more difficult questions. The previous statements show information only for the single most expensive painting in the entire painting table. What if your question is, “What is the most expensive painting for each artist?” You can’t use a user-defined variable to answer that question, because the answer requires finding one price per artist, and a variable can hold only a single value at a time. But the technique of using a temporary table works well, because the table can hold multiple rows, and a join can find matches for all of them.
+To answer the question, select each artist ID and the corresponding maximum painting price into a temporary table. The table will contain not just the maximum painting price but the maximum within each group, where “group” is defined as “paintings by a given artist.” Then use the artist IDs and prices stored in the tmp table to match rows in the painting table, and join the result with the artist table to get the artist names:
+mysql> CREATE TABLE tmp
+-> SELECT a_id, MAX(price) AS max_price FROM painting GROUP BY a_id;
+mysql> SELECT artist.name, painting.title, painting.price
+-> FROM artist INNER JOIN painting INNER JOIN tmp
+-> ON painting.a_id = artist.a_id
+-> AND painting.a_id = tmp.a_id
+-> AND painting.price = tmp.max_price;
++----------+-------------------+-------+
+| name	| title	| price |
++----------+-------------------+-------+
+| Da Vinci | The Mona Lisa	|	87 |
+| Van Gogh | The Potato Eaters |	67 |
+| Renoir	| Les Deux Soeurs	|	64 |
++----------+-------------------+-------+
+To obtain the same result with a single statement, use a subquery in the FROM clause that retrieves the same rows contained in the temporary table:
+mysql> SELECT artist.name, painting.title, painting.price
+-> FROM artist INNER JOIN painting INNER JOIN
+-> (SELECT a_id, MAX(price) AS max_price FROM painting GROUP BY a_id)
+->	AS tmp
+-> ON painting.a_id = artist.a_id
+-> AND painting.a_id = tmp.a_id
+-> AND painting.price = tmp.max_price;
++----------+-------------------+-------+
+| name	| title	| price |
++----------+-------------------+-------+
+| Da Vinci | The Mona Lisa	|	87 |
+| Van Gogh | The Potato Eaters |	67 |
+| Renoir	| Les Deux Soeurs	|	64 |
++----------+-------------------+-------+
+Yet another way to answer maximum-per-group questions is to use a LEFT JOIN that joins a table to itself. The following statement identifies the highest-priced painting per artist ID (we are using IS NULL to select all the rows from p1 for which there is no row in p2 with a higher price):
+mysql> SELECT p1.a_id, p1.title, p1.price
+-> FROM  painting  AS  p1  LEFT  JOIN  painting  AS p2
+-> ON  p1.a_id  =  p2.a_id  AND   p1.price  <  p2.price
+-> WHERE p2.a_id IS NULL;
++------+-------------------+-------+
+| a_id | title	| price |
++------+-------------------+-------+
+|	1 | The Mona Lisa	|	87 |
+|	3 | The Potato Eaters |	67 |
+|	5 | Les Deux Soeurs	|	64 |
++------+-------------------+-------+
+To display artist names rather than ID values, join the result of the LEFT JOIN to the
+artist table:
+mysql> SELECT artist.name, p1.title, p1.price
+-> FROM  painting  AS  p1  LEFT  JOIN  painting  AS p2
+-> ON  p1.a_id  =  p2.a_id  AND   p1.price  <  p2.price
+-> INNER JOIN artist ON p1.a_id = artist.a_id
+-> WHERE p2.a_id IS NULL;
++----------+-------------------+-------+
+| name	| title	| price |
++----------+-------------------+-------+
+| Da Vinci | The Mona Lisa	|	87 |
+| Van Gogh | The Potato Eaters |	67 |
+| Renoir	| Les Deux Soeurs	|	64 |
++----------+-------------------+-------+
+The self–LEFT JOIN method is perhaps somewhat less intuitive than using a temporary table or a subquery.
+The techniques just shown work for other kinds of values, such as temporal values. Consider the driver_log table that lists drivers and trips that they’ve taken:
+mysql> SELECT name, trav_date, miles
+-> FROM driver_log
+-> ORDER BY name, trav_date;
++-------+------------+-------+
+| name  | trav_date  | miles |
++-------+------------+-------+
+| Ben	| 2006-08-29 |	131 |
+| Ben	| 2006-08-30 |	152 |
+| Ben	| 2006-09-02 |	79 |
+| Henry | 2006-08-26 |	115 |
+| Henry | 2006-08-27 |	96 |
+| Henry | 2006-08-29 |	300 |
+| Henry | 2006-08-30 |	203 |
+| Henry | 2006-09-01 |	197 |
+| Suzi  | 2006-08-29 |	391 |
+| Suzi  | 2006-09-02 |	502 |
++-------+------------+-------+
+One type of maximum-per-group problem for this table is “show the most recent trip for each driver.” It can be solved with a temporary table like this:
+mysql> CREATE TABLE tmp
+-> SELECT name, MAX(trav_date) AS trav_date
+-> FROM driver_log GROUP BY name;
+mysql> SELECT driver_log.name, driver_log.trav_date, driver_log.miles
+-> FROM driver_log INNER JOIN tmp
+-> ON driver_log.name = tmp.name AND driver_log.trav_date = tmp.trav_date
+-> ORDER BY driver_log.name;
++-------+------------+-------+
+| name  | trav_date  | miles |
++-------+------------+-------+
+| Ben	| 2006-09-02 |	79 |
+| Henry | 2006-09-01 |	197 |
+| Suzi  | 2006-09-02 |	502 |
++-------+------------+-------+
+You can also use a subquery in the FROM clause like this:
+mysql> SELECT driver_log.name, driver_log.trav_date, driver_log.miles
+-> FROM driver_log INNER JOIN
+-> (SELECT name, MAX(trav_date) AS trav_date
+-> FROM driver_log GROUP BY name) AS tmp
+-> ON driver_log.name = tmp.name AND driver_log.trav_date = tmp.trav_date
+-> ORDER BY driver_log.name;
++-------+------------+-------+
+| name  | trav_date  | miles |
++-------+------------+-------+
+| Ben	| 2006-09-02 |	79 |
+| Henry | 2006-09-01 |	197 |
+| Suzi  | 2006-09-02 |	502 |
++-------+------------+-------+
+Which technique is better: the temporary table or the subquery in the FROM clause? For small tables, there might not be much difference either way. If the temporary table or subquery result is large, a general advantage of the temporary table is that you can index it after creating it and before using it in a join.
+
+See Also
+This recipe shows how to answer maximum-per-group questions by selecting summary information into a temporary table and joining that table to the original one or by using a subquery in the FROM clause. These techniques have application in many contexts. One of them is calculation of team standings, where the standings for each group of teams are determined by comparing each team in the group to the team with the best record. Recipe 12.7 discusses how to do this.
+
+Computing Team Standings
+Problem
+You want to compute team standings from their win-loss records, including the games- behind (GB) values.
+
+Solution
+Determine which team is in first place, and then join that result to the original rows.
+
+Discussion
+Standings for sports teams that compete against each other typically are ranked ac- cording to who has the best win-loss record, and the teams not in first place are assigned a “games-behind” value indicating how many games out of first place they are. This section shows how to calculate those values. The first example uses a table containing a single set of team records to illustrate the logic of the calculations. The second example uses a table containing several sets of records (that is, the records for all teams in both divisions of a league, for both halves of the season). In this case, it’s necessary to use a join to perform the calculations independently for each group of teams.
+Consider the following table, standings1, which contains a single set of baseball team records (they represent the final standings for the Northern League in the year 1902):
+mysql> SELECT team, wins, losses FROM standings1
+-> ORDER BY wins-losses DESC;
++-------------+------+--------+
+| team	| wins | losses |
++-------------+------+--------+
+
+| Grand Forks |	28 |	26 |
+| Devils Lake |	19 |	31 |
+| Cavalier	|	15 |	32 |
++-------------+------+--------+
+The rows are sorted by the win-loss differential, which is how to place teams in order from first place to last place. But displays of team standings typically include each team’s winning percentage and a figure indicating how many games behind the leader all the other teams are. So let’s add that information to the output. Calculating the percentage is easy. It’s the ratio of wins to total games played and can be determined using this expression:
+wins / (wins + losses)
+This expression involves division by zero when a team has not played any games yet. For simplicity, I’ll assume a nonzero number of games, but if you want to handle this condition, generalize the expression as follows:
+IF(wins=0,0,wins/(wins+losses))
+This expression uses the fact that no division at all is necessary unless the team has won at least one game.
+Determining the games-behind value is a little trickier. It’s based on the relationship of the win-loss records for two teams, calculated as the average of two values:
+The number of games the second-place team must win to have the same number of wins as the first-place team
+The number of games the first-place team must lose to have the same number of losses as the second-place team
+For example, suppose two teams A and B have the following win-loss records:
++------+------+--------+
+| team | wins | losses |
++------+------+--------+
+| A	|	17 |	11 |
+| B	|	14 |	12 |
++------+------+--------+
+Here, team B has to win three more games, and team A has to lose one more game for the teams to be even. The average of three and one is two, thus B is two games behind
+A. Mathematically, the games-behind calculation for the two teams can be expressed like this:
+((winsA - winsB) + (lossesB - lossesA)) / 2
+With a little rearrangement of terms, the expression becomes:
+((winsA - lossesA) - (winsB - lossesB)) / 2
+The second expression is equivalent to the first, but it has each factor written as a single team’s win-loss differential, rather than as a comparison between teams. This makes it easier to work with, because each factor can be determined independently from a single
+team record. The first factor represents the first-place team’s win-loss differential, so if we calculate that value first, all the other teams GB values can be determined in relation to it.
+The first-place team is the one with the largest win-loss differential. To find that value and save it in a variable, use this statement:
+mysql> SET @wl_diff = (SELECT MAX(wins-losses) FROM standings1);
+
+Then use the differential as follows to produce team standings that include winning percentage and GB values:
+mysql> SELECT team, wins AS W, losses AS L,
+-> wins/(wins+losses) AS PCT,
+-> (@wl_diff - (wins-losses)) / 2 AS GB
+-> FROM standings1
+-> ORDER BY wins-losses DESC, PCT DESC;
++-------------+------+------+--------+---------+
+| team	| W	| L	| PCT	| GB	|
++-------------+------+------+--------+---------+
+| Winnipeg	|	37 |	20 | 0.6491 |  0.0000 |
+| Crookston	|	31 |	25 | 0.5536 |  5.5000 |
+| Fargo	|	30 |	26 | 0.5357 |  6.5000 |
+| Grand Forks |	28 |	26 | 0.5185 |  7.5000 |
+| Devils Lake |	19 |	31 | 0.3800 | 14.5000 |
+| Cavalier	|	15 |	32 | 0.3191 | 17.0000 |
++-------------+------+------+--------+---------+
+There are a couple of minor formatting issues that can be addressed at this point. Typ- ically, standings listings display percentages to three decimal places, and the GB value to one decimal place (with the exception that the GB value for the first-place team is displayed as -). To display n decimal places, TRUNCATE( expr , n ) can be used. To display the GB value for the first-place team appropriately, put the expression that calculates the GB column within a call to IF( ) that maps 0 to a dash:
+mysql> SELECT team, wins AS W, losses AS L,
+-> TRUNCATE(wins/(wins+losses),3) AS PCT,
+-> IF(@wl_diff = wins-losses,
+->	'-',TRUNCATE((@wl_diff - (wins-losses))/2,1)) AS GB
+-> FROM standings1
+-> ORDER BY wins-losses DESC, PCT DESC;
++-------------+------+------+-------+------+
+| team	| W	| L	| PCT	| GB	|
++-------------+------+------+-------+------+
+| Winnipeg	|	37 |	20 | 0.649 | -	|
+| Crookston	|	31 |	25 | 0.553 | 5.5 |
+| Fargo	|	30 |	26 | 0.535 | 6.5 |
+| Grand Forks |	28 |	26 | 0.518 | 7.5 |
+| Devils Lake |	19 |	31 | 0.380 | 14.5 |
+| Cavalier	|	15 |	32 | 0.319 | 17.0 |
++-------------+------+------+-------+------+
+These statements order the teams by win-loss differential, using winning percentage as a tie-breaker in case there are teams with the same differential value. It would be simpler just to sort by percentage, of course, but then you wouldn’t always get the correct ordering. It’s a curious fact that a team with a lower winning percentage can actually be higher in the standings than a team with a higher percentage. (This generally occurs early in the season, when teams may have played highly disparate numbers of games, relatively speaking.) Consider the case in which two teams, A and B, have the following rows:
++------+------+--------+
+| team | wins | losses |
++------+------+--------+
+| A	|	4 |	1 |
+| B	|	2 |	0 |
++------+------+--------+
+Applying the GB and percentage calculations to these team records yields the following result, in which the first-place team actually has a lower winning percentage than the second-place team:
++------+------+------+-------+------+
+| team | W	| L	| PCT	| GB	|
++------+------+------+-------+------+
+| A	|	4 |	1 | 0.800 | -	|
+| B	|	2 |	0 | 1.000 | 0.5 |
++------+------+------+-------+------+
+The standings calculations shown thus far can be done without a join. They involve only a single set of team records, so the first-place team’s win-loss differential can be stored in a variable. A more complex situation occurs when a dataset includes several sets of team records. For example, the 1997 Northern League had two divisions (Eastern and Western). In addition, separate standings were maintained for the first and second halves of the season, because season-half winners in each division played each other for the right to compete in the league championship. The following table, standings2, shows what these rows look like, ordered by season half, division, and win-loss differential:
+mysql> SELECT half, division, team, wins, losses FROM standings2
+-> ORDER BY half, division, wins-losses DESC;
++------+----------+-----------------+------+--------+
+| half | division | team	| wins | losses |
++------+----------+-----------------+------+--------+
+
+
++------+----------+-----------------+------+--------+
+Generating the standings for these rows requires computing the GB values separately for each of the four combinations of season half and division. Begin by calculating the win-loss differential for the first-place team in each group and saving the values into a separate firstplace table:
+mysql> CREATE TABLE firstplace
+-> SELECT half, division, MAX(wins-losses) AS wl_diff
+-> FROM standings2
+-> GROUP BY half, division;
+
+Then join the firstplace table to the original standings, associating each team record with the proper win-loss differential to compute its GB value:
+mysql> SELECT wl.half, wl.division, wl.team, wl.wins AS W, wl.losses AS L,
+-> TRUNCATE(wl.wins/(wl.wins+wl.losses),3) AS PCT,
+-> IF(fp.wl_diff = wl.wins-wl.losses,
+->	'-',TRUNCATE((fp.wl_diff - (wl.wins-wl.losses)) / 2,1)) AS GB
+-> FROM standings2 AS wl INNER JOIN firstplace AS fp
+-> ON wl.half = fp.half AND wl.division = fp.division
+-> ORDER BY wl.half, wl.division, wl.wins-wl.losses DESC, PCT DESC;
++------+----------+-----------------+------+------+-------+------+
+| half | division | team	| W	| L	| PCT	| GB	|
++------+----------+-----------------+------+------+-------+------+
+
++------+----------+-----------------+------+------+-------+------+
+That output is somewhat difficult to read, however. To make it easier to understand, you’d likely execute the statement from within a program and reformat its results to display each set of team records separately. Here’s some Perl code that does that by beginning a new output group each time it encounters a new group of standings. The
+code assumes that the join statement has just been executed and that its results are available through the statement handle $sth:
+my ($cur_half, $cur_div) = ("", "");
+while (my ($half, $div, $team, $wins, $losses, $pct, $gb)
+= $sth->fetchrow_array ())
+{
+if ($cur_half ne $half || $cur_div ne $div) # new group of standings?
+{
+# print standings header and remember new half/division values print "\n$div Division, season half $half\n";
+printf "%-20s %3s %3s %5s %s\n", "Team", "W", "L", "PCT", "GB";
+$cur_half = $half;
+$cur_div = $div;
+}
+printf "%-20s %3d %3d %5s %s\n", $team, $wins, $losses, $pct, $gb;
+}
+The reformatted output looks like this:
+
+
+This code comes from the script calc_standings.pl in the joins directory of the recipes distribution. That directory also contains a PHP script, calc_standings.php, that pro- duces output in the form of HTML tables, which you might prefer for generating standings in a web environment.
+Using a Join to Fill or Identify Holes in a List
+Problem
+You want to produce a summary for each of several categories, but some of them are not represented in the data to be summarized. Consequently, the summary has missing categories.
+
+Solution
+Create a reference table that lists each category and produce the summary based on a LEFT JOIN between the list and the table containing your data. Then every category in the reference table will appear in the result, even those not present in the data to be summarized.
+
+Discussion
+When you run a summary query, normally it produces entries only for the values that are actually present in the data. Let’s say you want to produce a time-of-day summary for the rows in the mail table. That table looks like this:
+mysql> SELECT * FROM mail;
++---------------------+---------+---------+---------+---------+---------+
+| t	| srcuser | srchost | dstuser | dsthost | size	|
++---------------------+---------+---------+---------+---------+---------+
+| 2006-05-11 10:15:08 | barb	| saturn  | tricia | mars	|	58274 |
+| 2006-05-12 12:48:13 | tricia | mars	| gene	| venus	| 194925 |
+| 2006-05-12 15:02:49 | phil	| mars	| phil	| saturn |	1048 |
+| 2006-05-13 13:59:18 | barb	| saturn  | tricia | venus	|	271 |
+| 2006-05-14 09:31:37 | gene	| venus	| barb	| mars	|	2291 |
+| 2006-05-14 11:52:17 | phil	| mars	| tricia | saturn |	5781 |
+...
+To determine how many messages were sent for each hour of the day, use the following statement:
+mysql> SELECT HOUR(t) AS hour, COUNT(HOUR(t)) AS count
+-> FROM mail GROUP BY hour;
++------+-------+
+| hour | count |
++------+-------+
+
+|	22 |	1 |
+|	23 |	1 |
++------+-------+
+Here, the summary category is hour of the day. However, the summary is “incomplete” in the sense that it includes entries only for those hours of the day represented in the mail table. To produce a summary that includes all hours of the day, even those during which no messages were sent, create a reference table that lists each category (that is, each hour):
+mysql> CREATE TABLE ref (h INT);
+mysql> INSERT INTO ref (h)
+-> VALUES(0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),
+-> (12),(13),(14),(15),(16),(17),(18),(19),(20),(21),(22),(23);
+
+Then join the reference table to the mail table using a LEFT JOIN:
+mysql> SELECT ref.h AS hour, COUNT(mail.t) AS count
+-> FROM ref LEFT JOIN mail ON ref.h = HOUR(mail.t)
+-> GROUP BY hour;
++------+-------+
+| hour | count |
++------+-------+
+
++------+-------+
+Now the summary includes an entry for every hour of the day because the LEFT JOIN forces the output to include a row for every row in the reference table, regardless of the contents of the mail table.
+The example just shown uses the reference table with a LEFT JOIN to fill in holes in the category list. It’s also possible to use the reference table to detect holes in the dataset— that is, to determine which categories are not present in the data to be summarized. The following statement shows those hours of the day during which no messages were sent by looking for reference rows for which no mail table rows have a matching cate- gory value:
+mysql> SELECT ref.h AS hour
+-> FROM ref LEFT JOIN mail ON ref.h = HOUR(mail.t)
+-> WHERE mail.t IS NULL;
++------+
+| hour |
++------+
+
++------+
+Reference tables that contain a list of categories are quite useful for summary state- ments, but creating such tables manually is mind-numbing and error-prone. You might find it preferable to write a script that uses the endpoints of the range of category values to generate the reference table for you. In essence, this type of script acts as an iterator that generates a row for each value in the range. The following Perl script, make_date_list.pl, shows an example of this approach. It creates a reference table con- taining a row for every date in a particular date range. It also indexes the table so that it will be fast in large joins.
+#!/usr/bin/perl
+# make_date_list.pl - create a table with an entry for every date in # a given date range. The table can be used in a LEFT JOIN when
+# producing a summary, to make sure that every date appears in the # summary, regardless of whether the data to be summarized actually # contains any values for a given day.
+# Usage: make_date_list.pl db_name tbl_name col_name min_date max_date use strict;
+use warnings; use DBI;
+
+# ... process command-line options (not shown) ...
+
+# Check number of arguments
+@ARGV == 5 or die "$usage\n";
+my ($db_name, $tbl_name, $col_name, $min_date, $max_date) = @ARGV; # ... connect to database (not shown) ...
+# Determine the number of days spanned by the date range.
+
+my $days = $dbh->selectrow_array (qq{ SELECT DATEDIFF(?,?) + 1 },
+undef, $max_date, $min_date);
+
+print "Minimum date: $min_date\n"; print "Maximum date: $max_date\n";
+print "Number of days spanned by range: $days\n"; die "Date range is too small\n" if $days < 1;
+
+# Drop table if it exists, and then recreate it
+
+$dbh->do ("DROP TABLE IF EXISTS $db_name.$tbl_name");
+$dbh->do (qq{
+CREATE TABLE $db_name.$tbl_name
+($col_name DATE NOT NULL, PRIMARY KEY ($col_name))
+});
+# Populate table with each date in the date range my $sth = $dbh->prepare (qq{
+INSERT INTO $db_name.$tbl_name ($col_name) VALUES(? + INTERVAL ? DAY)
+});
+foreach my $i (0 .. $days-1)
+{
+$sth->execute ($min_date, $i);
+}
+Reference tables generated by make_date_list.pl can be used for per-date summaries or to find dates not represented in the table. Suppose that you want to summarize the driver_log table to determine how many drivers were on the road each day. The table has these rows:
+mysql> SELECT * FROM driver_log ORDER BY rec_id;
++--------+-------+------------+-------+
+| rec_id | name  | trav_date  | miles |
++--------+-------+------------+-------+
+
++--------+-------+------------+-------+
+A simple summary looks like this:
+mysql> SELECT trav_date, COUNT(trav_date) AS drivers
+-> FROM driver_log GROUP BY trav_date;
++------------+---------+
+| trav_date  | drivers |
++------------+---------+
+
++------------+---------+
+However, that summary does not show dates when no drivers were active. To generate a complete summary that includes the missing dates, use make_date_list.pl. From the simple summary just shown, we can tell the minimum and maximum dates, so generate a reference table named ref with a date column d that spans those dates:
+% make_date_list.pl cookbook ref d 2006-08-26 2006-09-02
+Minimum date: 2006-08-26
+Maximum date: 2006-09-02
+Number of days spanned by range: 8
+After creating the reference table, use it in the following statement to generate the complete summary:
+mysql> SELECT ref.d, COUNT(driver_log.trav_date) AS drivers
+-> FROM ref LEFT JOIN driver_log ON ref.d = driver_log.trav_date
+-> GROUP BY d;
++------------+---------+
+| d	| drivers |
++------------+---------+
+
++------------+---------+
+This second summary includes additional rows that show those dates when no drivers were active. To list only those no-driver dates, use this statement:
+mysql> SELECT ref.d
+-> FROM ref LEFT JOIN driver_log ON ref.d = driver_log.trav_date
+-> WHERE driver_log.trav_date IS NULL
+-> ORDER BY d;
++------------+
+| d	|
++------------+
+| 2006-08-28 |
+| 2006-08-31 |
++------------+
+Calculating Successive-Row Differences
+Problem
+You have a table containing successive cumulative values in its rows, and you want to compute the differences between pairs of successive rows.
+
+Solution
+Use a self-join that matches up pairs of adjacent rows and calculates the differences between members of each pair.
+
+Discussion
+Self-joins are useful when you have a set of absolute (or cumulative) values that you want to convert to relative values representing the differences between successive pairs of rows. For example, if you take an automobile trip and write down the total miles traveled at each stopping point, you can compute the difference between successive points to determine the distance from one stop to the next. Here is such a table that shows the stops for a trip from San Antonio, Texas to Madison, Wisconsin. Each row shows the total miles driven as of each stop:
+mysql> SELECT seq, city, miles FROM trip_log ORDER BY seq;
++-----+------------------+-------+
+| seq | city	| miles |
++-----+------------------+-------+
+
++-----+------------------+-------+
+A self-join can convert these cumulative values to successive differences that represent the distances from each city to the next. The following statement shows how to use the sequence numbers in the rows to match pairs of successive rows and compute the differences between each pair of mileage values:
+mysql> SELECT t1.seq AS seq1, t2.seq AS seq2,
+-> t1.city AS city1, t2.city AS city2,
+-> t1.miles AS miles1, t2.miles AS miles2,
+-> t2.miles-t1.miles AS dist
+-> FROM trip_log AS t1 INNER JOIN trip_log AS t2
+-> ON t1.seq+1 = t2.seq
+-> ORDER BY t1.seq;
++------+------+------------------+------------------+--------+--------+------+
+| seq1 | seq2 | city1	| city2	| miles1 | miles2 | dist |
++------+------+------------------+------------------+--------+--------+------+
+|	1 |	2 | San Antonio, TX | Dallas, TX	|	0 |	263 | 263 |
+
++------+------+------------------+------------------+--------+--------+------+
+The presence of the seq column in the trip_log table is important for calculating suc- cessive difference values. It’s needed for establishing which row precedes another and matching each row n with row n +1. The implication is that a table should include a sequence column that has no gaps if you want to perform relative-difference calcula- tions from absolute or cumulative values. If the table contains a sequence column but there are gaps, renumber it. If the table contains no such column, add one. Recipes
+11.5 and 11.10 describe how to perform these operations.
+A somewhat more complex situation occurs when you compute successive differences for more than one column and use the results in a calculation. The following table, player_stats, shows some cumulative numbers for a baseball player at the end of each month of his season. ab indicates the total at-bats, and h the total hits the player has had as of a given date. (The first row indicates the starting point of the player’s season, which is why the ab and h values are zero.)
+mysql> SELECT id, date, ab, h, TRUNCATE(IFNULL(h/ab,0),3) AS ba
+-> FROM player_stats ORDER BY id;
++----+------------+-----+----+-------+
+| id | date	| ab | h | ba	|
++----+------------+-----+----+-------+
+|  1 | 2006-04-30 |	0 |  0 | 0.000 |
+|  2 | 2006-05-31 |  38 | 13 | 0.342 |
+|  3 | 2006-06-30 | 109 | 31 | 0.284 |
+|  4 | 2006-07-31 | 196 | 49 | 0.250 |
+|  5 | 2006-08-31 | 304 | 98 | 0.322 |
++----+------------+-----+----+-------+
+The last column of the query result also shows the player’s batting average as of each date. This column is not stored in the table but is easily computed as the ratio of hits to at-bats. The result provides a general idea of how the player’s hitting performance changed over the course of the season, but it doesn’t give a very informative picture of how the player did during each individual month. To determine that, it’s necessary to calculate relative differences between pairs of rows. This is easily done with a self-join that matches each row n with row n +1 to calculate differences between pairs of at-bats and hits values. These differences enable computation of batting average during each month:
+mysql> SELECT
+-> t1.id AS id1, t2.id AS id2,
+-> t2.date,
+-> t1.ab AS ab1, t2.ab AS ab2,
+-> t1.h AS h1, t2.h AS h2,
+-> t2.ab-t1.ab AS abdiff,
+-> t2.h-t1.h AS hdiff,
+->  TRUNCATE(IFNULL((t2.h-t1.h)/(t2.ab-t1.ab),0),3)     AS     ba
+-> FROM  player_stats  AS  t1  INNER  JOIN  player_stats  AS  t2
+-> ON t1.id+1 = t2.id
+-> ORDER BY t1.id;
++-----+-----+------------+-----+-----+----+----+--------+-------+-------+
+| id1 | id2 | date	| ab1 | ab2 | h1 | h2 | abdiff | hdiff | ba	|
++-----+-----+------------+-----+-----+----+----+--------+-------+-------+
+
++-----+-----+------------+-----+-----+----+----+--------+-------+-------+
+These results show much more clearly than the original table that the player started off well but had a slump in the middle of the season, particularly in July. They also indicate just how strong his performance was in August.
+
+Finding Cumulative Sums and Running Averages
+Problem
+You have a set of observations measured over time and want to compute the cumulative sum of the observations at each measurement point. Or you want to compute a running average at each point.
+
+Solution
+Use a self-join to produce the sets of successive observations at each measurement point, and then apply aggregate functions to each set of values to compute its sum or average.
+
+Discussion
+Recipe 12.9 illustrates how a self-join can produce relative values from absolute values. A self-join can do the opposite as well, producing cumulative values at each successive stage of a set of observations. The following table shows a set of rainfall measurements taken over a series of days. The values in each row show the observation date and the amount of precipitation in inches:
+mysql> SELECT date, precip FROM rainfall ORDER BY date;
++------------+--------+
+| date	| precip |
++------------+--------+
+| 2006-06-01 |	1.50 |
+| 2006-06-02 |	0.00 |
+| 2006-06-03 |	0.50 |
+| 2006-06-04 |	0.00 |
+| 2006-06-05 |	1.00 |
++------------+--------+
+To calculate cumulative rainfall for a given day, add that day’s precipitation value with the values for all the previous days. For example, determine the cumulative rainfall as of 2006-06-03 like this:
+mysql> SELECT SUM(precip) FROM rainfall WHERE date <= '2006-06-03';
++-------------+
+| SUM(precip) |
++-------------+
+|	2.00 |
++-------------+
+If you want the cumulative figures for all days that are represented in the table, it would be tedious to compute the value for each of them separately. A self-join can do this for all days with a single statement. Use one instance of the rainfall table as a reference, and determine for the date in each row the sum of the precip values in all rows occurring up through that date in another instance of the table. The following statement shows the daily and cumulative precipitation for each day:
+mysql> SELECT t1.date, t1.precip AS 'daily precip',
+-> SUM(t2.precip) AS 'cum. precip'
+-> FROM rainfall AS t1 INNER JOIN rainfall AS t2
+-> ON t1.date >= t2.date
+-> GROUP BY t1.date;
++------------+--------------+-------------+
+| date	| daily precip | cum. precip |
++------------+--------------+-------------+
+
++------------+--------------+-------------+
+The self-join can be extended to display the number of days elapsed at each date, as well as the running averages for amount of precipitation each day:
+mysql> SELECT t1.date, t1.precip AS 'daily precip',
+-> SUM(t2.precip) AS 'cum. precip',
+-> COUNT(t2.precip) AS 'days elapsed',
+-> AVG(t2.precip) AS 'avg. precip'
+-> FROM rainfall AS t1 INNER JOIN rainfall AS t2
+-> ON t1.date >= t2.date
+-> GROUP BY t1.date;
++------------+--------------+-------------+--------------+-------------+
+| date	| daily precip | cum. precip | days elapsed | avg. precip |
++------------+--------------+-------------+--------------+-------------+
+
++------------+--------------+-------------+--------------+-------------+
+In the preceding statement, the number of days elapsed and the precipitation running averages can be computed easily using COUNT( ) and AVG( ) because there are no missing days in the table. If missing days are allowed, the calculation becomes more compli- cated, because the number of days elapsed for each calculation no longer will be the same as the number of rows. You can see this by deleting the rows for the days that had no precipitation to produce a couple of “holes” in the table:
+mysql> DELETE FROM rainfall WHERE precip = 0;
+mysql> SELECT date, precip FROM rainfall ORDER BY date;
++------------+--------+
+| date	| precip |
++------------+--------+
+| 2006-06-01 |	1.50 |
+| 2006-06-03 |	0.50 |
+| 2006-06-05 |	1.00 |
++------------+--------+
+Deleting those rows doesn’t change the cumulative sum or running average for the dates that remain, but it does change how they must be calculated. If you try the self-join again, it yields incorrect results for the days-elapsed and average precipitation columns:
+mysql> SELECT t1.date, t1.precip AS 'daily precip',
+-> SUM(t2.precip) AS 'cum. precip',
+-> COUNT(t2.precip) AS 'days elapsed',
+-> AVG(t2.precip) AS 'avg. precip'
+-> FROM rainfall AS t1 INNER JOIN rainfall AS t2
+-> ON t1.date >= t2.date
+-> GROUP BY t1.date;
++------------+--------------+-------------+--------------+-------------+
+| date	| daily precip | cum. precip | days elapsed | avg. precip |
++------------+--------------+-------------+--------------+-------------+
+| 2006-06-01 |	1.50 |	1.50 |	1 |	1.500000 |
+| 2006-06-03 |	0.50 |	2.00 |	2 |	1.000000 |
+| 2006-06-05 |	1.00 |	3.00 |	3 |	1.000000 |
++------------+--------------+-------------+--------------+-------------+
+To fix the problem, it’s necessary to determine the number of days elapsed a different way. Take the minimum and maximum date involved in each sum and calculate a days- elapsed value from them using the following expression:
+DATEDIFF(MAX(t2.date),MIN(t2.date)) + 1
+That value must be used for the days-elapsed column and for computing the running averages. The resulting statement is as follows:
+mysql> SELECT t1.date, t1.precip AS 'daily precip',
+-> SUM(t2.precip) AS 'cum. precip',
+->  DATEDIFF(MAX(t2.date),MIN(t2.date))   +   1   AS   'days elapsed',
+-> SUM(t2.precip)  /  (DATEDIFF(MAX(t2.date),MIN(t2.date))  +  1)
+-> AS 'avg. precip'
+-> FROM rainfall AS t1 INNER JOIN rainfall AS t2
+-> ON t1.date >= t2.date
+-> GROUP BY t1.date;
++------------+--------------+-------------+--------------+-------------+
+| date	| daily precip | cum. precip | days elapsed | avg. precip |
++------------+--------------+-------------+--------------+-------------+
+| 2006-06-01 |	1.50 |	1.50 |	1 |	1.500000 |
+| 2006-06-03 |	0.50 |	2.00 |	3 |	0.666667 |
+| 2006-06-05 |	1.00 |	3.00 |	5 |	0.600000 |
++------------+--------------+-------------+--------------+-------------+
+As this example illustrates, calculation of cumulative values from relative values re- quires only a column that enables rows to be placed into the proper order. (For the rainfall table, that’s the date column.) Values in the column need not be sequential, or even numeric. This differs from calculations that produce difference values from cumulative values (Recipe 12.9), which require that a table have a column that contains an unbroken sequence.
+The running averages in the rainfall examples are based on dividing cumulative pre- cipitation sums by number of days elapsed as of each day. When the table has no gaps, the number of days is the same as the number of values summed, making it easy to find successive averages. When rows are missing, the calculations become more complex. What this demonstrates is that it’s necessary to consider the nature of your data and calculate averages appropriately. The next example is conceptually similar to the pre- vious ones in that it calculates cumulative sums and running averages, but it performs the computations yet another way.
+The following table shows a marathon runner’s performance at each stage of a 26- kilometer run. The values in each row show the length of each stage in kilometers and how long the runner took to complete the stage. In other words, the values pertain to intervals within the marathon and thus are relative to the whole:
+mysql> SELECT stage, km, t FROM marathon ORDER BY stage;
++-------+----+----------+
+| stage | km | t	|
++-------+----+----------+
+|	1 |  5 | 00:15:00 |
+|	2 |  7 | 00:19:30 |
+|	3 |  9 | 00:29:20 |
+|	4 |  5 | 00:17:50 |
++-------+----+----------+
+To calculate cumulative distance in kilometers at each stage, use a self-join that looks like this:
+mysql> SELECT t1.stage, t1.km, SUM(t2.km) AS 'cum. km'
+-> FROM marathon AS t1 INNER JOIN marathon AS t2
+-> ON t1.stage >= t2.stage
+-> GROUP BY t1.stage;
++-------+----+---------+
+| stage | km | cum. km |
++-------+----+---------+
+|	1 | 5 |	5 |
+|	2 | 7 |	12 |
+|	3 | 9 |	21 |
+|	4 | 5 |	26 |
++-------+----+---------+
+Cumulative distances are easy to compute because they can be summed directly. The calculation for accumulating time values is a little more involved. It’s necessary to con- vert times to seconds, total the resulting values, and convert the sum back to a time value. To compute the runner’s average speed at the end of each stage, take the ratio of cumulative distance over cumulative time. Putting all this together yields the fol- lowing statement:
+mysql> SELECT t1.stage, t1.km, t1.t,
+-> SUM(t2.km) AS 'cum. km',
+-> SEC_TO_TIME(SUM(TIME_TO_SEC(t2.t))) AS 'cum. t',
+-> SUM(t2.km)/(SUM(TIME_TO_SEC(t2.t))/(60*60)) AS 'avg. km/hour'
+-> FROM marathon AS t1 INNER JOIN marathon AS t2
+-> ON t1.stage >= t2.stage
+-> GROUP BY t1.stage;
++-------+----+----------+---------+----------+--------------+
+| stage | km | t	| cum. km | cum. t	| avg. km/hour |
++-------+----+----------+---------+----------+--------------+
+
++-------+----+----------+---------+----------+--------------+
+We can see from this that the runner’s average pace increased a little during the second stage of the race, but then (presumably as a result of fatigue) decreased thereafter.
+
+Using a Join to Control Query Output Order
+Problem
+You want to sort a statement’s output using a characteristic of the output that cannot be specified using ORDER BY . For example, you want to sort a set of rows by subgroups, putting first those groups with the most rows and last those groups with the fewest rows. But “number of rows in each group” is not a property of individual rows, so you can’t use it for sorting.
+
+Solution
+Derive the ordering information and store it in an auxiliary table. Then join the original table to the auxiliary table, using the auxiliary table to control the sort order.
+
+Discussion
+Most of the time when you sort a query result, you use an ORDER BY clause that names which column or columns to use for sorting. But sometimes the values you want to sort by aren’t present in the rows to be sorted. This is the case when you want to use group characteristics to order the rows. The following example uses the rows in the driver_log table to illustrate this. The table contains these rows:
+mysql> SELECT * FROM driver_log ORDER BY rec_id;
++--------+-------+------------+-------+
+| rec_id | name  | trav_date  | miles |
++--------+-------+------------+-------+
+
++--------+-------+------------+-------+
+The preceding statement sorts the rows using the ID column, which is present in the rows. But what if you want to display a list and sort it on the basis of a summary value not present in the rows? That’s a little trickier. Suppose that you want to show each driver’s rows by date, but place those drivers who drive the most miles first. You can’t do this with a summary query, because then you wouldn’t get back the individual driver rows. But you can’t do it without a summary query, either, because the summary values are required for sorting. The way out of the dilemma is to create another table con- taining the summary value per driver and then join it to the original table. That way you can produce the individual rows and also sort them by the summary values.
+To summarize the driver totals into another table, do this:
+mysql> CREATE TABLE tmp
+-> SELECT name, SUM(miles) AS driver_miles FROM driver_log GROUP BY name;
+
+This produces the values we need to put the names in the proper total-miles order:
+mysql> SELECT * FROM tmp ORDER BY driver_miles DESC;
++-------+--------------+
+| name  | driver_miles |
++-------+--------------+
+| Henry |	911 |
+| Suzi |	893 |
+| Ben	|	362 |
++-------+--------------+
+Then use the name values to join the summary table to the driver_log table, and use the driver_miles values to sort the result. The following statement shows the mileage totals in the result. That’s only to clarify how the values are being sorted. It’s not actually necessary to display them; they’re needed only for the ORDER BY clause.
+mysql> SELECT tmp.driver_miles, driver_log.*
+-> FROM driver_log INNER JOIN tmp
+-> ON driver_log.name = tmp.name
+-> ORDER BY tmp.driver_miles DESC, driver_log.trav_date;
++--------------+--------+-------+------------+-------+
+| driver_miles | rec_id | name  | trav_date  | miles |
++--------------+--------+-------+------------+-------+
+
++--------------+--------+-------+------------+-------+
+To avoid using the temporary table, select the same rows using a subquery in the
+FROM clause:
+mysql> SELECT tmp.driver_miles, driver_log.*
+-> FROM driver_log INNER JOIN
+-> (SELECT name, SUM(miles) AS driver_miles
+-> FROM driver_log GROUP BY name) AS tmp
+-> ON driver_log.name = tmp.name
+-> ORDER BY tmp.driver_miles DESC, driver_log.trav_date;
++--------------+--------+-------+------------+-------+
+| driver_miles | rec_id | name  | trav_date  | miles |
++--------------+--------+-------+------------+-------+
+
++--------------+--------+-------+------------+-------+
+
+Combining Several Result Sets in a Single Query
+Problem
+You want to select rows from several tables, or several sets of rows from a single table
+—all as a single result set.
+
+Solution
+Use a UNION operation to combine multiple SELECT results into one.
+
+Discussion
+A join is useful for combining columns from different tables side by side. It’s not so useful when you want a result set that includes a set of rows from several tables, or
+multiple sets of rows from the same table. These are instances of the type of operation for which a UNION is useful. A UNION enables you to run several SELECT statements and combine their results. That is, rather than running multiple queries and receiving mul- tiple result sets, you receive a single result set.
+Suppose that you have two tables that list prospective and actual customers, and a third that lists vendors from whom you purchase supplies, and you want to create a single mailing list by merging names and addresses from all three tables. UNION provides a way to do this. Assume that the three tables have the following contents:
+mysql> SELECT * FROM prospect;
++---------+-------+------------------------+
+| fname	| lname | addr	|
++---------+-------+------------------------+
+| Peter	| Jones | 482 Rush St., Apt. 402 |
+| Bernice | Smith | 916 Maple Dr.	|
++---------+-------+------------------------+
+mysql> SELECT * FROM customer;
++-----------+------------+---------------------+
+| last_name | first_name | address	|
++-----------+------------+---------------------+
+| Peterson | Grace	| 16055 Seminole Ave. |
+| Smith	| Bernice	| 916 Maple Dr.	|
+| Brown	| Walter	| 8602 1st St.	|
++-----------+------------+---------------------+
+mysql> SELECT * FROM vendor;
++-------------------+---------------------+
+| company	| street	|
++-------------------+---------------------+
+| ReddyParts, Inc.  | 38 Industrial Blvd. |
+| Parts-to-go, Ltd. | 213B Commerce Park. |
++-------------------+---------------------+
+The tables have columns that are similar but not identical. prospect and customer use different names for the first name and last name columns, and the vendor table includes only a single name column. None of that matters for UNION; all you need to do is make sure to select the same number of columns from each table, and in the same order. The following statement illustrates how to select names and addresses from the three tables all at once:
+mysql> SELECT fname, lname, addr FROM prospect
+-> UNION
+-> SELECT first_name, last_name, address FROM customer
+-> UNION
+-> SELECT company, '', street FROM vendor;
++-------------------+----------+------------------------+
+| fname	| lname	| addr	|
++-------------------+----------+------------------------+
+| Peter	| Jones	| 482 Rush St., Apt. 402 |
+| Bernice	| Smith	| 916 Maple Dr.	|
+| Grace	| Peterson | 16055 Seminole Ave.	|
+| Walter	| Brown	| 8602 1st St.	|
+| ReddyParts, Inc. |	| 38 Industrial Blvd.	|
+| Parts-to-go, Ltd. |	| 213B Commerce Park.	|
++-------------------+----------+------------------------+
+The column names in the result set are taken from the names of the columns retrieved by the first SELECT statement. Notice that, by default, a UNION eliminates duplicates; Bernice Smith appears in both the prospect and customer tables, but only once in the final result. If you want to select all rows, including duplicates, follow each UNION key- word with ALL:
+mysql> SELECT fname, lname, addr FROM prospect
+-> UNION ALL
+-> SELECT first_name, last_name, address FROM customer
+-> UNION ALL
+-> SELECT company, '', street FROM vendor;
++-------------------+----------+------------------------+
+| fname	| lname	| addr	|
++-------------------+----------+------------------------+
+| Peter	| Jones	| 482 Rush St., Apt. 402 |
+| Bernice	| Smith	| 916 Maple Dr.	|
+| Grace	| Peterson | 16055 Seminole Ave.	|
+| Bernice	| Smith	| 916 Maple Dr.	|
+| Walter	| Brown	| 8602 1st St.	|
+| ReddyParts, Inc. |	| 38 Industrial Blvd.	|
+| Parts-to-go, Ltd. |	| 213B Commerce Park.	|
++-------------------+----------+------------------------+
+Because it’s necessary to select the same number of columns from each table, the SELECT for the vendor table (which has just one name column) retrieves a dummy (emp- ty) last name column. Another way to select the same number of columns is to combine the first and last name columns from the prospect and customer tables into a single column:
+mysql> SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect
+-> UNION
+-> SELECT CONCAT(last_name,', ',first_name), address FROM customer
+-> UNION
+-> SELECT company, street FROM vendor;
++-------------------+------------------------+
+| name	| addr	|
++-------------------+------------------------+
+| Jones, Peter	| 482 Rush St., Apt. 402 |
+| Smith, Bernice	| 916 Maple Dr.	|
+| Peterson, Grace	| 16055 Seminole Ave.	|
+| Brown, Walter	| 8602 1st St.	|
+| ReddyParts, Inc.  | 38 Industrial Blvd.	|
+| Parts-to-go, Ltd. | 213B Commerce Park.	|
++-------------------+------------------------+
+To sort the result set, place each SELECT statement within parentheses and add an ORDER BY clause after the final one. Any columns specified by name in the ORDER BY should refer to the column names used in the first SELECT, because those are the names used for the columns in the result set. For example, to sort by name, do this:
+mysql> (SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect)
+-> UNION
+-> (SELECT CONCAT(last_name,', ',first_name), address FROM customer)
+-> UNION
+-> (SELECT company, street FROM vendor)
+-> ORDER BY name;
++-------------------+------------------------+
+| name	| addr	|
++-------------------+------------------------+
+| Brown, Walter	| 8602 1st St.	|
+| Jones, Peter	| 482 Rush St., Apt. 402 |
+| Parts-to-go, Ltd. | 213B Commerce Park.	|
+| Peterson, Grace	| 16055 Seminole Ave.	|
+| ReddyParts, Inc.  | 38 Industrial Blvd.	|
+| Smith, Bernice	| 916 Maple Dr.	|
++-------------------+------------------------+
+It’s possible to ensure that the results from each SELECT appear consecutively, although you must generate an extra column to use for sorting. Enclose each SELECT within pa- rentheses, add a sort-value column to each one, and place an ORDER BY at the end that sorts using that column:
+mysql> (SELECT 1 AS sortval, CONCAT(lname,', ',fname) AS name, addr
+-> FROM prospect)
+-> UNION
+-> (SELECT 2 AS sortval, CONCAT(last_name,', ',first_name) AS name, address
+-> FROM customer)
+-> UNION
+-> (SELECT 3 AS sortval, company, street FROM vendor)
+-> ORDER BY sortval;
++---------+-------------------+------------------------+
+| sortval | name	| addr	|
++---------+-------------------+------------------------+
+|	1 | Jones, Peter	| 482 Rush St., Apt. 402 |
+|	1 | Smith, Bernice	| 916 Maple Dr.	|
+|	2 | Peterson, Grace	| 16055 Seminole Ave.	|
+|	2 | Smith, Bernice	| 916 Maple Dr.	|
+|	2 | Brown, Walter	| 8602 1st St.	|
+|	3 | ReddyParts, Inc.  | 38 Industrial Blvd.	|
+|	3 | Parts-to-go, Ltd. | 213B Commerce Park.	|
++---------+-------------------+------------------------+
+If you also want the rows within each SELECT sorted, include a secondary sort column in the ORDER BY clause. The following query sorts by name within each SELECT:
+mysql> (SELECT 1 AS sortval, CONCAT(lname,', ',fname) AS name, addr
+-> FROM prospect)
+-> UNION
+-> (SELECT 2 AS sortval, CONCAT(last_name,', ',first_name) AS name, address
+-> FROM customer)
+-> UNION
+-> (SELECT 3 AS sortval, company, street FROM vendor)
+-> ORDER BY sortval, name;
++---------+-------------------+------------------------+
+| sortval | name	| addr	|
++---------+-------------------+------------------------+
+|	1 | Jones, Peter	| 482 Rush St., Apt. 402 |
+|	1 | Smith, Bernice	| 916 Maple Dr.	|
+|	2 | Brown, Walter	| 8602 1st St.	|
+|	2 | Peterson, Grace	| 16055 Seminole Ave.	|
+|	2 | Smith, Bernice	| 916 Maple Dr.	|
+|	3 | Parts-to-go, Ltd. | 213B Commerce Park.	|
+|	3 | ReddyParts, Inc.  | 38 Industrial Blvd.	|
++---------+-------------------+------------------------+
+Similar syntax can be used for LIMIT as well. That is, you can limit the result set as a whole with a trailing LIMIT clause, or for individual SELECT statements. Typically, LIMIT is combined with ORDER BY. Suppose that you want to select a lucky prizewinner for some kind of promotional giveaway. To select a single winner at random from the combined results of the three tables, do this:
+mysql> (SELECT CONCAT(lname,', ',fname) AS name, addr FROM prospect)
+-> UNION
+-> (SELECT CONCAT(last_name,', ',first_name), address FROM customer)
+-> UNION
+-> (SELECT company, street FROM vendor)
+-> ORDER BY RAND() LIMIT 1;
++-----------------+---------------------+
+| name	| addr	|
++-----------------+---------------------+
+| Peterson, Grace | 16055 Seminole Ave. |
++-----------------+---------------------+
+To select a single winner from each table and combine the results, do this instead:
+mysql> (SELECT CONCAT(lname,', ',fname) AS name, addr
+-> FROM prospect ORDER BY RAND() LIMIT 1)
+-> UNION
+-> (SELECT CONCAT(last_name,', ',first_name), address
+-> FROM customer ORDER BY RAND() LIMIT 1)
+-> UNION
+-> (SELECT company, street
+-> FROM vendor ORDER BY RAND() LIMIT 1);
++------------------+---------------------+
+| name	| addr	|
++------------------+---------------------+
+| Smith, Bernice	| 916 Maple Dr.	|
+| ReddyParts, Inc. | 38 Industrial Blvd. |
++------------------+---------------------+
+If that result surprises you (“Why didn’t it pick three rows?”), remember that Bernice is listed in two tables and that UNION eliminates duplicates. If the first and second SELECT statements each happen to pick Bernice, one instance will be eliminated and the final result will have only two rows. (If there are no duplicates among the three tables, the statement will always return three rows.) You could of course assure three rows in all cases by using UNION ALL.
+Identifying and Removing Mismatched or Unattached Rows
+Problem
+You have two datasets that are related, but possibly imperfectly so. You want to de- termine whether there are records in either dataset that are “unattached” (not matched by any record in the other dataset), and perhaps remove them if so. This might occur, for example, when you receive data from an external source and must check it to verify its integrity.
+
+Solution
+Use a LEFT JOIN to identify unmatched values in each table. If there are any and you want to get rid of them, use a multiple-table DELETE statement. It’s also possible to identify or remove nonmatching rows by using NOT IN subqueries.
+
+Discussion
+Inner joins are useful for identifying relationships, and outer joins are useful for iden- tifying the lack of relationship. This property of outer joins is valuable when you have datasets that are supposed to be related but for which the relationship might be imperfect.
+Mismatches between datasets can occur if you receive two datafiles from an external source that are supposed to be related but for which the integrity of the relationship actually is imperfect. It can also occur as an anticipated consequence of a deliberate action. Suppose that an online discussion board uses a parent table that lists discussion topics and a child table that rows the articles posted for each topic. If you purge the child table of old article rows, that may result in any given topic row in the parent table no longer having any children. If so, the lack of recent postings for the topic indicates that it is probably dead and that the parent row in the topic table can be deleted, too. In such a situation, you delete a set of child rows with the explicit recognition that the operation may strand parent rows and cause them to become eligible for being deleted as well.
+However you arrive at the point where related tables have unmatched rows, you can analyze and modify them using SQL statements. Specifically, restoring their relation- ship is a matter of identifying the unattached rows and then deleting them:
+To identify unattached rows, use a LEFT JOIN, because this is a “find unmatched rows” problem. (See Recipe 12.2 for information about LEFT JOIN.)
+To delete rows that are unmatched, use a multiple-table DELETE statement that specifies which rows to remove using a similar LEFT JOIN.
+The presence of unmatched data is useful to know about because you can alert whoever gave you the data. This may be a signal of a flaw in the data collection method that must be corrected. For example, with sales data, a missing region might mean that some regional manager didn’t report in and that the omission was overlooked.
+The following example shows how to identify and remove mismatched rows using two datasets that describe sales regions and volume of sales per region. One dataset contains the ID and location of each sales region:
+mysql> SELECT * FROM sales_region ORDER BY region_id;
++-----------+------------------------+
+| region_id | name	|
++-----------+------------------------+
+|	1 | London, United Kingdom |
+|	2 | Madrid, Spain	|
+|	3 | Berlin, Germany	|
+|	4 | Athens, Greece	|
++-----------+------------------------+
+The other dataset contains sales volume figures. Each row contains the amount of sales for a given quarter of a year and indicates the sales region to which the row applies:
+mysql> SELECT * FROM sales_volume ORDER BY region_id, year, quarter;
++-----------+------+---------+--------+
+| region_id | year | quarter | volume |
++-----------+------+---------+--------+
+
++-----------+------+---------+--------+
+A little visual inspection reveals that neither table is fully matched by the other. Sales regions 2 and 4 are not represented in the sales volume table, and the sales volume table contains rows for region 5, which is not in the sales region table. But we don’t want to check the tables by inspection. We want to find unmatched rows by using SQL state- ments that do the work for us.
+Mismatch identification is a matter of using outer joins. For example, to find sales regions for which there are no sales volume rows, use the following LEFT JOIN:
+mysql> SELECT sales_region.region_id AS 'unmatched region row IDs'
+-> FROM sales_region LEFT JOIN sales_volume
+->	ON sales_region.region_id = sales_volume.region_id
+-> WHERE sales_volume.region_id IS NULL;
++--------------------------+
+| unmatched region row IDs |
++--------------------------+
+|	2 |
+|	4 |
++--------------------------+
+Conversely, to find sales volume rows that are not associated with any known region, reverse the roles of the two tables:
+mysql> SELECT sales_volume.region_id AS 'unmatched volume row IDs'
+-> FROM sales_volume LEFT JOIN sales_region
+->	ON sales_volume.region_id = sales_region.region_id
+-> WHERE sales_region.region_id IS NULL;
++--------------------------+
+| unmatched volume row IDs |
++--------------------------+
+|	5 |
+|	5 |
++--------------------------+
+In this case, an ID appears more than once in the list if there are multiple volume rows for a missing region. To see each unmatched ID only once, use SELECT DISTINCT:
+mysql> SELECT DISTINCT sales_volume.region_id AS 'unmatched volume row IDs'
+-> FROM sales_volume LEFT JOIN sales_region
+->	ON sales_volume.region_id = sales_region.region_id
+-> WHERE sales_region.region_id IS NULL
++--------------------------+
+| unmatched volume row IDs |
++--------------------------+
+|	5 |
++--------------------------+
+To get rid of unmatched rows, you can use their IDs in a multiple-table DELETE state- ment. To construct the proper multiple-table DELETE statement for removing unmatch- ed rows from a table, just take the SELECT statement that you use to identify those rows, and replace the stuff leading up to the FROM keyword with DELETE tbl_name. For example, the SELECT that identifies childless parents looks like this:
+SELECT sales_region.region_id AS 'unmatched region row IDs' FROM sales_region LEFT JOIN sales_volume
+ON sales_region.region_id = sales_volume.region_id WHERE sales_volume.region_id IS NULL;
+The corresponding DELETE looks like this:
+DELETE sales_region
+FROM sales_region LEFT JOIN sales_volume
+ON sales_region.region_id = sales_volume.region_id WHERE sales_volume.region_id IS NULL;
+Conversely, the statement to identify parentless children is as follows:
+SELECT sales_volume.region_id AS 'unmatched volume row IDs' FROM sales_volume LEFT JOIN sales_region
+ON sales_volume.region_id = sales_region.region_id WHERE sales_region.region_id IS NULL;
+And the corresponding DELETE statement removes them:
+DELETE sales_volume
+FROM sales_volume LEFT JOIN sales_region
+ON sales_volume.region_id = sales_region.region_id WHERE sales_region.region_id IS NULL;
+You can also identify or delete mismatched rows by using NOT IN subqueries. The state- ments to display or remove sales_region rows that match no sales_volume rows look like this:
+SELECT region_id AS 'unmatched region row IDs' FROM sales_region
+WHERE region_id NOT IN (SELECT region_id FROM sales_volume);
+
+DELETE FROM sales_region
+WHERE region_id NOT IN (SELECT region_id FROM sales_volume);
+The statements to identify or delete mismatched sales_volume rows are similar but have the roles of the tables reversed:
+SELECT region_id AS 'unmatched volume row IDs' FROM sales_volume
+WHERE region_id NOT IN (SELECT region_id FROM sales_region);
+
+DELETE FROM sales_volume
+WHERE region_id NOT IN (SELECT region_id FROM sales_region);
+
+
+Performinga Join Between Tablesin Different Databases
+Problem
+You want to use tables in a join, but they’re not located in the same database.
+
+Solution
+Use database name qualifiers to tell MySQL where to find the tables.
+Discussion
+Sometimes it’s necessary to perform a join on two tables that are located in different databases. To do this, qualify table and column names sufficiently so that MySQL knows what you’re referring to. Thus far, we have used the artist and painting tables with the implicit understanding that both are in the cookbook database, which means that we can simply refer to the tables without specifying any database name when cookbook is the default database. For example, the following statement uses the two tables to associate artists with their paintings:
+SELECT artist.name, painting.title FROM artist INNER JOIN painting ON artist.a_id = painting.a_id;
+But suppose instead that artist is in the db1 database and painting is in the db2 data- base. To indicate this, qualify each table name with a prefix that specifies which database it’s in. The fully qualified form of the join looks like this:
+SELECT db1.artist.name, db2.painting.title FROM db1.artist INNER JOIN db2.painting ON db1.artist.a_id = db2.painting.a_id;
+If there is no default database, or it is neither db1 nor db2, it’s necessary to use this fully qualified form. If the default database is either db1 or db2, you can dispense with the corresponding qualifiers. For example, if the default database is db1, you can omit the db1 qualifiers:
+SELECT artist.name, db2.painting.title FROM artist INNER JOIN db2.painting ON artist.a_id = db2.painting.a_id;
+Conversely, if the default database is db2, no db2 qualifiers are necessary:
+SELECT db1.artist.name, painting.title FROM db1.artist INNER JOIN painting ON db1.artist.a_id = painting.a_id;
+
+Using Different MySQL Servers Simultaneously
+Problem
+You want to execute a statement that uses tables located in databases that are hosted by different MySQL servers.
+
+Solution
+Set up a FEDERATED table, which enables one MySQL server to access a table hosted by another MySQL server. Other approaches are to open separate connections to each server and combine the information from the two tables yourself, or to copy one of the
+tables from one server to the other so that you can work with both tables using a single server.
+
+Discussion
+Throughout this chapter, we have assumed that all the tables involved in a multiple- table operation are managed by a single MySQL server. If this assumption is invalid, the tables become more difficult to work with because a connection to a MySQL server enables you to directly access only tables hosted by that server. However, MySQL sup- ports a FEDERATED storage engine that enables you to remotely access tables that are hosted by another MySQL server. For a FEDERATED table, the local MySQL server takes on the role of a client that connects to another MySQL server so that it can access the remote table on your behalf and make its contents appear to be local.
+Here is an example that illustrates the problem, using the artist and painting tables. Suppose that you want to find the names of paintings by Da Vinci. This requires de- termining the ID for Da Vinci in the artist table and matching it to rows in the painting table. If both tables are located within the same database, you can identify the paintings by using the following statement to perform a join between the tables:
+mysql> SELECT painting.title
+-> FROM artist INNER JOIN painting
+-> ON artist.a_id = painting.a_id
+-> WHERE artist.name = 'Da Vinci';
++-----------------+
+| title	|
++-----------------+
+| The Last Supper |
+| The Mona Lisa	|
++-----------------+
+Now suppose that the painting table is not available on the MySQL server to which we normally connect but is located remotely on another MySQL server. We can access the remote table as though it is local by creating a FEDERATED table that is defined to have the same structure as the remote table. The CREATE TABLE statement for the FEDERATED table must include table options to specify the FEDERATED storage engine and a connection string that tells our server how to connect to the remote server and locate the table. Recipe 12.1 shows the original structure of the painting table. To set up a corresponding FEDERATED table, define it like this:
+CREATE TABLE fed_painting (
+a_id  INT UNSIGNED NOT NULL,	# artist ID p_id INT UNSIGNED NOT NULL AUTO_INCREMENT, # painting ID
+title VARCHAR(100) NOT NULL,	# title of painting
+state VARCHAR(2) NOT NULL,	# state where purchased
+price INT UNSIGNED,	# purchase price (dollars) INDEX (a_id),
+PRIMARY KEY (p_id)
+)
+ENGINE = FEDERATED
+CONNECTION = 'mysql://cbuser:cbpass@remote.example.com/cookbook/painting';
+The CONNECTION string used here has the following format:
+mysql://user_name:pass_val@host_name/db_name/tbl_name
+
+In other words, the remote server host is remote.example.com, the MySQL username and password are cbuser and cbpass, and the table is named painting in the cookbook database. Adjust the parameters in the connection string as necessary for your network. After creating the FEDERATED table, you can use it to access the remote table as though it were local. For example, to perform the join described earlier in this section, write it as shown here:
+mysql> SELECT fed_painting.title
+-> FROM artist INNER JOIN fed_painting
+-> ON artist.a_id = fed_painting.a_id
+-> WHERE artist.name = 'Da Vinci';
++-----------------+
+| title	|
++-----------------+
+| The Last Supper |
+| The Mona Lisa	|
++-----------------+
+Currently, FEDERATED tables can be used to access only other MySQL servers, not servers for other database engines.
+
+In MySQL 5.0 binary distributions, the FEDERATED storage engine is not enabled unless you use a MySQL-Max server. In MySQL 5.1, FEDERATED is enabled by default in binary distributions. If you compile MySQL from source (for either version), use the --with-federated-stor age-engine configuration option to enable FEDERATED support.
+
+Another approach to joining tables that are hosted by different servers is to write a program that simulates a join:
+Open a separate connection to each database server.
+Run a loop that fetches artist IDs and names from the server that manages the
+artist table.
+Each time through the loop, use the current artist ID to construct a statement that looks for painting table rows that match the artist ID value. Send the statement to the server that manages the painting table. As you retrieve painting titles, display them along with the current artist name.
+This technique enables simulation of a join between tables located on any two servers. Incidentally, it also can be used when you need to work with tables that are hosted by
+different types of database engines. (For example, you can simulate a join between a MySQL table and a PostgreSQL table this way.)
+A third approach is to copy one of the tables from one server to the other. Then you can work with both tables using the same server, which enables you to perform a proper join between them. See Recipe 10.16 for information on copying tables between servers.
+
+Referring to Join Output Column Names in Programs
+Problem
+You need to process the result of a join from within a program, but the column names in the result set aren’t unique.
+
+Solution
+Revise the query using column aliases so that each column has a unique name, or refer to the columns by position.
+
+Discussion
+Joins typically retrieve columns from related tables, so it’s not unusual for columns selected from different tables to have the same names. Consider the following join that shows the items in your art collection (originally seen in Recipe 12.1). For each painting, it displays artist name, painting title, the state in which you acquired the item, and how much it cost:
+mysql> SELECT artist.name, painting.title, states.name, painting.price
+-> FROM artist INNER JOIN painting INNER JOIN states
+-> ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
++----------+-------------------+----------+-------+
+| name	| title	| name	| price |
++----------+-------------------+----------+-------+
+| Da Vinci | The Last Supper	| Indiana |	34 |
+| Da Vinci | The Mona Lisa	| Michigan |	87 |
+| Van Gogh | Starry Night	| Kentucky |	48 |
+| Van Gogh | The Potato Eaters | Kentucky |	67 |
+| Van Gogh | The Rocks	| Iowa	|	33 |
+| Renoir	| Les Deux Soeurs	| Nebraska |	64 |
++----------+-------------------+----------+-------+
+The statement is written using table qualifiers for each output column. Nevertheless, the column names in the output are not distinct because MySQL doesn’t include table names in the column headings. If you’re processing the result of the join from within one of your own programs and fetching rows into a data structure that references col- umn values by name, nonunique column names can cause some values to become inaccessible. The following Perl script fragment illustrates the difficulty:
+$stmt = qq{
+SELECT artist.name, painting.title, states.name, painting.price FROM artist INNER JOIN painting INNER JOIN states
+ON artist.a_id = painting.a_id AND painting.state = states.abbrev
+};
+$sth = $dbh->prepare ($stmt);
+$sth->execute ();
+# Determine the number of columns in result set rows two ways: # - Check the NUM_OF_FIELDS statement handle attribute
+# - Fetch a row into a hash and see how many keys the hash contains
+$count1 = $sth->{NUM_OF_FIELDS};
+$ref = $sth->fetchrow_hashref ();
+$count2 = keys (%{$ref});
+print "The statement is: $stmt\n";
+print "According to NUM_OF_FIELDS, the result set has $count1 columns\n"; print "The column names are: " . join sort (",", @{$sth->{NAME}})) . "\n"; print "According to the row hash size, the result set has $count2 columns\n"; print "The column names are: " . join sort (",", @{$sth->{NAME}})) . "\n";
+The script issues the statement and then determines the number of columns in the result, first by checking the NUM_OF_FIELDS attribute and then by fetching a row into a hash and counting the number of hash keys. Executing this script results in the fol- lowing output:
+According to NUM_OF_FIELDS, the result set has 4 columns The column names are: name,name,title,price
+According to the row hash size, the result set has 3 columns The column names are: name,price,title
+There is a problem here: the column counts don’t match. The second count is 3 (not
+4) because the nonunique column names cause multiple column values to be mapped onto the same hash element. As a result of these hash-key collisions, some of the values are lost. To solve this problem, make the column names unique by supplying aliases. For example, the statement can be rewritten like this:
+SELECT
+artist.name AS painter, painting.title, states.name AS state, painting.price
+FROM artist INNER JOIN painting INNER JOIN states
+ON artist.a_id = painting.a_id AND painting.state = states.abbrev
+If you make that change and rerun the script, its output becomes:
+According to NUM_OF_FIELDS, the result set has 4 columns The column names are: painter,price,state,title
+According to the row hash size, the result set has 4 columns The column names are: painter,price,state,title
+Now the two column counts are the same, which indicates that no values are lost when fetching into a hash.
+Another way to address the problem that requires no column renaming is to fetch the row into something other than a hash. For example, you can fetch the row into an array and refer to the columns by ordinal position within the array:
+while (my @val = $sth->fetchrow_array ())
+{
+print "painter: $val[0], title: $val[1], "
+. "state: $val[2], price: $val[3]\n";
+}
+The name-clash problem just described might have different solutions in other lan- guages. For example, the problem doesn’t occur in quite the same way in Python scripts that use the MySQLdb module. Suppose that you retrieve a row using a dictionary, Python’s analog to a Perl hash (Recipe 2.4). In this case, MySQLdb notices clashing column names and places them in the dictionary using a key consisting of the table name and column name. Thus, for the following statement, the dictionary keys would be name, title, states.name, and price:
+SELECT artist.name, painting.title, states.name, painting.price FROM artist INNER JOIN painting INNER JOIN states
+ON artist.a_id = painting.a_id AND painting.state = states.abbrev
+That means column values won’t get lost. Unfortunately, it’s still necessary to be aware of nonunique names. If you try to refer to column values using just the column names, you won’t get the results you expect for those names that are reported with a leading table name. This problem does not occur if you use aliases to make each column name unique because the dictionary entries will have the names that you assign.
