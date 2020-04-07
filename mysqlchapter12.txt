@@ -1002,6 +1002,8 @@ The reformatted output looks like this:
 
 
 This code comes from the script calc_standings.pl in the joins directory of the recipes distribution. That directory also contains a PHP script, calc_standings.php, that pro- duces output in the form of HTML tables, which you might prefer for generating standings in a web environment.
+
+
 Using a Join to Fill or Identify Holes in a List
 Problem
 You want to produce a summary for each of several categories, but some of them are not represented in the data to be summarized. Consequently, the summary has missing categories.
@@ -1547,6 +1549,7 @@ mysql> (SELECT CONCAT(lname,', ',fname) AS name, addr
 | ReddyParts, Inc. | 38 Industrial Blvd. |
 +------------------+---------------------+
 If that result surprises you (“Why didn’t it pick three rows?”), remember that Bernice is listed in two tables and that UNION eliminates duplicates. If the first and second SELECT statements each happen to pick Bernice, one instance will be eliminated and the final result will have only two rows. (If there are no duplicates among the three tables, the statement will always return three rows.) You could of course assure three rows in all cases by using UNION ALL.
+
 Identifying and Removing Mismatched or Unattached Rows
 Problem
 You have two datasets that are related, but possibly imperfectly so. You want to de- termine whether there are records in either dataset that are “unattached” (not matched by any record in the other dataset), and perhaps remove them if so. This might occur, for example, when you receive data from an external source and must check it to verify its integrity.
@@ -1639,7 +1642,7 @@ DELETE FROM sales_volume
 WHERE region_id NOT IN (SELECT region_id FROM sales_region);
 
 
-Performinga Join Between Tablesin Different Databases
+Performing a Join Between Tablesin Different Databases
 Problem
 You want to use tables in a join, but they’re not located in the same database.
 
