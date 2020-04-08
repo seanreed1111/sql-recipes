@@ -1782,7 +1782,7 @@ SELECT * FROM housewares;
 | BTH00415JP | lavatory         |
 +------------+------------------+
 ```
-## This is not necessarily a good way to store complex ID values, and later we’ll consider how to represent them using separate columns. But for now, asSUMe that the values must be stored as just shown. If you want to sort rows from this table based on the id values, just use the entire column value:
+## This is not necessarily a good way to store complex ID values, and later we’ll consider how to represent them using separate columns. But for now, assume that the values must be stored as just shown. If you want to sort rows from this table based on the id values, just use the entire column value:
 
 ```sql
 SELECT * FROM housewares ORDER BY id;
@@ -2068,7 +2068,7 @@ WITH ROLLUP;
 ## You want to find totals, averages, and other aggregate figures, as well as subtotals in various dimensions for a report. You want to achieve this with as few statements as possible, preferably just one, rather than HAVING to issue separate statements to get each intermediate subtotal along the way.
 
 ## Solution
-## You can calculate subtotals or other intermediate aggregates in SQL using the `CUBE`, `ROLLUP` and `grouping sets` features. For this recipe, we’ll asSUMe some real-world requirements. We want to find average and total (SUMmed) salary figures by department and job category, and show meaningful higher-level averages and subtotals at the department level (regardless of job category), as well as a grand total and company-wide average for the whole organization.
+## You can calculate subtotals or other intermediate aggregates in SQL using the `CUBE`, `ROLLUP` and `grouping sets` features. For this recipe, we’ll assume some real-world requirements. We want to find average and total (SUMmed) salary figures by department and job category, and show meaningful higher-level averages and subtotals at the department level (regardless of job category), as well as a grand total and company-wide average for the whole organization.
 
 ```sql
 SELECT 
@@ -2249,66 +2249,77 @@ HAVING COUNT(*) = 1;
 
 ---
 
-# Accessing Values FROM Subsequent or Preceding Rows
+# Accessing Values From Subsequent or Preceding Rows
 ## Problem
 ## You would like to query data to produce an ordered result, but you want to include calculations based on preceding and following rows in the result set. For instance, you want to perform calculations on event- style data based on events that occurred earlier and later in time.
 
 ## Solution
 ## SQL supports the `LAG` and `LEAD` analytical functions to provide access to multiple rows in a table or expression, utilizing preceding/following logic—and you won’t need to resort to joining the source data to itself. Our recipe assumes you are trying to tackle the business problem of visualizing the trend in hiring of staff over time. The `LAG` function can be used to see which employee’s hiring followed another, and also to calculate the elapsed time between hiring.
 
-SELECT first_name, last_name, hire_date,
-LAG(hire_date, 1, '01-JUN-1987') over (ORDER BY hire_date) as Prev_Hire_Date, hire_date - LAG(hire_date, 1, '01-JUN-1987') over (ORDER BY hire_date)
-as Days_BETWEEN_Hires FROM employee
+```sql
+SELECT 
+    first_name, 
+    last_name, 
+    hire_date,
+    LAG(hire_date, 1, '01-JUN-1987') OVER (ORDER BY hire_date) AS Prev_Hire_Date, 
+    hire_date - LAG(hire_date, 1, '01-JUN-1987') OVER (ORDER BY hire_date) as Days_Between_Hires 
+FROM employee
 ORDER BY hire_date;
+```
 
 ## Our query returns 107 rows, linking the employee in the order they were hired (though not necessarily preserving the implicit sort for display or other purposes), and showing the time delta BETWEEN each joining the organization.
 
-How It Works
-The LAG and LEAD functions are like most other analytical and windowing functions in that they operate once the base non-analytic portion of the query is complete. SQL performs a second pass over the intermediate result set to apply any analytical predicates. In effect, the non-analytic components are evaluated first, as if this query had been run.
-SELECT first_name, last_name, hire_date
--- placeholder for Prev_Hire_Date,
--- placehodler for Days_BETWEEN_Hires FROM employee;
-The results at this point would look like this if you could see them:
+## How It Works
+## The `LAG` and `LEAD` functions are like most other analytical and windowing functions in that they operate once the base non-analytic portion of the query is complete. SQL performs a second pass over the intermediate result set to apply any analytical predicates. In effect, the non-analytic components are evaluated first, as if this query had been run.
 
+## The analytic function(s) are then processed, providing the results you’ve seen. Our recipe uses the `LAG` function to compare the current row of results with a preceding row. The general format is the best way to understand LAG, and has the following form.
 
-FIRST_NAME LAST_NAME HIRE_DATE PREV_HIRE DAYS_BETWEEN
+> `LAG` (column or expression, preceding row offset, default for first row)
 
+## The column or expression is mostly self-explanatory, as this is the table data or computed result over which you want `LAG` to operate. The preceding row offset portion indicates the relative row prior to the current row the `LAG` should act against. In our case, the value ‘1’ means the row that is one row before the current row. The default for `LAG` indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We’ve chosen the arbitrary date of 01-JUN-1987 as a notional date on which the organization was founded. You could use any date, date calculation, or date-returning function here. SQL will supply a NULL value if you don’t specify the first row’s precedent value.
+## The `OVER` analytic clause then dictates the order of data against which to apply the analytic function,and any partitioning of the data into windows or subsets (not shown in this recipe). Astute readers will realize that this means our recipe could have included a general ORDER BY clause that sorted the data for presentation in a different order from the hire_date ordering used for the `LAG` function. This gives you the most flexibility to handle general ordering and analytic `LAG` and `LEAD`  in different ways for the same statement. We’ll show an example of this later in this chapter. And remember, you should never rely on the implicit sorting that analytic functions use. This can and will change in the future, so you are best advised to always include ORDER BY for sorting whereever explicitly required.
+## The `LEAD`  function works in a nearly identical fashion to LAG, but instead tracks following rows rather than preceding ones. We could rewrite our recipe to show hires along with the HIRE_DATE of the next employee, and a similar elapsed-time window between their employment dates, as in this SELECT statement.
 
-The analytic function(s) are then processed, providing the results you’ve seen. Our recipe uses the LAG function to compare the current row of results with a preceding row. The general format is the best way to understand LAG, and has the following form.
-LAG (column or expression, preceding row offset, default for first row)
-
-The column or expression is mostly self-explanatory, as this is the table data or computed result over which you want LAG to operate. The preceding row offset portion indicates the relative row prior to the current row the LAG should act against. In our case, the value ‘1’ means the row that is one row before the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We’ve chosen the arbitrary date of 01-JUN-1987 as a notional date on which the organization was founded. You could use any date, date calculation, or date-returning function here. SQL will supply a NULL value if you don’t specify the first row’s precedent value.
-The OVER analytic clause then dictates the order of data against which to apply the analytic function,
-and any partitioning of the data into windows or subsets (not shown in this recipe). Astute readers will realize that this means our recipe could have included a general ORDER BY clause that sorted the data for presentation in a different order FROM the HIRE_DATE ordering used for the LAG function. This gives you the most flexibility to handle general ordering and analytic LAG and lead in different ways for the same statement. We’ll show an example of this later in this chapter. And remember, you should never rely on the implicit sorting that analytic functions use. This can and will change in the future, so you are best advised to always include ORDER BY for sorting WHEREver explicitly required.
-The LEAD function works in a nearly identical fashion to LAG, but instead tracks following rows rather than preceding ones. We could rewrite our recipe to show hires along with the HIRE_DATE of the next employee, and a similar elapsed-time window BETWEEN their employment dates, as in this SELECT statement.
-SELECT first_name, last_name, hire_date,
-lead(hire_date, 1, sysdate) over (ORDER BY hire_date) as Next_Hire_Date, lead(hire_date, 1, sysdate) over (ORDER BY hire_date) - hire_date
-as Days_BETWEEN_Hires FROM employee;
-
-The pattern of dates is very intuitive now that you’ve seen the LAG example. With LEAD, the key difference is the effect of the default value in the third parameter.
-
-In contrast to LAG, WHERE the default provides a notional starting point for the first row’s comparison, LEAD uses the default value to provide a hypothetical end point for the last row in the forward-looking chain. In this recipe, we are comparing how many days have elapsed BETWEEN employee being hired. It makes sense for us to compare the last employee hired (in this case, Sundita Kumar) with the current date using the SYSDATE function. This is a quick and easy finishing flourish to calculate the days that have elapsed since hiring the last employee.
----
-2-12. Assigning Ranking Values to Rows in a Query Result
-Problem
-The results FROM a query need to be allocated an ordinal number representing their positions in the result. You do not want to have to insert and track these numbers in the source data.
-
-Solution
-SQL provides the RANK analytic function to generate a ranking number for rows in a result set. RANK is applied as a normal OLAP-style function to a column or derived expression. For the purposes of this recipe, we’ll asSUMe that the business would like to rank employee by salary, FROM highest-paid down. The following SELECT statement uses the rank function to assign these values.
-
-SELECT employee_id, salary, rank() over (ORDER BY salary desc) as Salary_Rank FROM employee;
-
-Our query produces results FROM the highest earner at 24000 per month, right down to the employee in 107th place earning 2100 per month, as these abridged results show.
-
-How It Works
-RANK acts like any other analytic function, operating in a second pass over the result set once non- analytic processing is complete. In this recipe, the EMPLOYEE_ID and SALARY values are SELECTed (there are no WHERE predicates to filter the table’s data, so we get everyone employed in the organization). The analytic phase then orders the results in descending ORDER BY salary, and computes the rank value on the results starting at 1.
-Note carefully how the RANK function has handled equal values. Two employee with salary of 17000
-are given equal rank of 2. The next employee, at 14000, has a rank of 4. This is known as sparse ranking, WHERE tied values “conSUMe” place holders. In practical terms, this means that our equal second-place holders conSUMe both second and third place, and the next available rank to provide is 4.
-You can use an alternative to sparse ranking called dense ranking. SQL supports this using the
-DENSE_RANK analytical function. Observe what happens to the recipe when we switch to dense ranking.
-SELECT employee_id, salary, dense_rank() over (ORDER BY salary desc) as Salary_Rank
+```sql
+SELECT 
+    first_name, 
+    last_name, 
+    hire_date,
+    LEAD(hire_date, 1, NOW()::date) OVER (ORDER BY hire_date) AS Next_Hire_Date, 
+    LEAD(hire_date, 1, NOW()::date) over (ORDER BY hire_date) - hire_date AS Days_BETWEEN_Hires 
 FROM employee;
-We now see the “missing” consecutive rank values.
+```
+
+## The pattern of dates is very intuitive now that you’ve seen the `LAG` example. With `LEAD`, the key difference is the effect of the default value in the third parameter.
+
+In contrast to `LAG`, where the default provides a notional starting point for the first row’s comparison, `LEAD`  uses the default value to provide a hypothetical end point for the last row in the forward-looking chain. In this recipe, we are comparing how many days have elapsed between employee being hired. It makes sense for us to compare the last employee hired (in this case, Sundita Kumar) with the current date using `NOW()::date` function. This is a quick and easy finishing flourish to calculate the days that have elapsed since hiring the last employee.
+---
+# Assigning Ranking Values to Rows in a Query Result
+## Problem
+## The results from a query need to be allocated an ordinal number representing their positions in the result. You do not want to have to insert and track these numbers in the source data.
+
+## Solution
+## SQL provides the `RANK` analytic function to generate a ranking number for rows in a result set. `RANK` is applied as a normal OLAP-style function to a column or derived expression. For the purposes of this recipe, we’ll assume that the business would like to `RANK` employee by salary, from highest-paid down. The following `SELECT` statement uses the `RANK` function to assign these values.
+
+```sql
+SELECT 
+    employee_id, 
+    salary, 
+    RANK() OVER (ORDER BY salary DESC) AS Salary_RANK 
+FROM employee;
+```
+
+## Our query produces results FROM the highest earner at 24000 per month, right down to the employee in 107th place earning 2100 per month, as these abridged results show.
+
+## How It Works
+## `RANK` acts like any other analytic function, operating in a second pass over the result set once non- analytic processing is complete. In this recipe, the EMPLOYEE_ID and SALARY values are selected (there are no WHERE predicates to filter the table’s data, so we get everyone employed in the organization). The analytic phase then orders the results in descending ORDER BY salary, and computes the `RANK` value on the results starting at 1.
+## Note carefully how the `RANK` function has handled equal values. Two employee with salary of 17000 are given equal `RANK` of 2. The next employee, at 14000, has a `RANK` of 4. This is known as sparse ranking, WHERE tied values “consume” place holders. In practical terms, this means that our equal second-place holders conSUMe both second and third place, and the next available `RANK` to provide is 4.
+## You can use an alternative to sparse ranking called dense ranking. SQL supports this using the `DENSE_RANK` analytical function. Observe what happens to the recipe when we switch to dense ranking.
+
+```sql
+SELECT employee_id, salary, dense_RANK() over (ORDER BY salary desc) as Salary_Rank
+FROM employee;
+We now see the “missing” consecutive `RANK` values.
 
 ---
 2-13. Finding First and Last Values within a Group
@@ -2318,7 +2329,7 @@ You want to calculate and display aggregate information like minimum and maximum
 
 Solution
 SQL provides the analytic functions FIRST and LAST to calculate the leading and ending values in any ordered sequence. Importantly, these do not require grouping to be used, unlike explicit aggregate functions such as MIN and MAX that work without OLAP features.
-For our recipe, we’ll asSUMe the problem is a concrete one of displaying an employee’s salary, alongside the minimum and maximum salaries paid to the employee’s peers in their department. This SELECT statement does the work.
+For our recipe, we’ll assume the problem is a concrete one of displaying an employee’s salary, alongside the minimum and maximum salaries paid to the employee’s peers in their department. This SELECT statement does the work.
 
 SELECT department_id, first_name, last_name, MIN(salary)
 over (partition by department_id) "MINSal", salary,
@@ -2362,7 +2373,7 @@ All of that text is to generate our result column, the ROLLINGQTRAVERAGE. Breaki
 The OVER clause starts by instructing SQL to perform the calculations based on the order of the formatted ORDER_DATE field—that’s what ORDER BY TO_CHAR(ORDER_DATE, 'MM') achieves—effectively ordering the calculations by the values 02 to 12 (remember, there’s no data for January 1999 in the database). Finally, and most importantly, the ROWS element tells SQL the size of the window of rows over which it should calculate the driving OLAP aggregate functions. In our case, that means over how many months should the ORDER_TOTAL values be SUMmed and then averaged. Our recipe instructs SQL to use the results FROM the third-last row through to the current row. This is one interpretation of three-
 month rolling average, though technically it’s actually generating an average over four months. If what you want is really a three-month average —the last two months plus the current month—you’d change the ROWS BETWEEN element to read
 rows BETWEEN 2 preceding and current row
-This brings up an interesting point. This recipe asSUMes you want a rolling average computed over historic data. But some business requirements call for a rolling window to track trends based on data not only prior to a point in time, but also after that point. For instance, we might want to use a three-month window but base it on the previous, current, and following months. The next version of the recipe
+This brings up an interesting point. This recipe assumes you want a rolling average computed over historic data. But some business requirements call for a rolling window to track trends based on data not only prior to a point in time, but also after that point. For instance, we might want to use a three-month window but base it on the previous, current, and following months. The next version of the recipe
 shows exactly this ability of the windowing function, with the key changes in bold.
 
 SELECT to_char(order_date, 'MM') as OrderMonth, SUM(order_total) as MonthTotal, AVG(SUM(order_total)) over (ORDER BY to_char(order_date, 'MM')
@@ -2376,7 +2387,7 @@ Our output changes as you’d expect, as the monthly ORDER_TOTAL values are now 
 
 
 
-11 rows SELECTed.
+11 rows selected.
 The newly designated AVGTREND value is calculated as described, using both preceding and following rows. Both our original recipe and this modified version are rounded out with a WHERE clause to SELECT only data FROM the OE.ORDERS table for the year 1999. We GROUP BY the derived month number so that our traditional SUM of ORDER_TOTAL in the second field of the results aggregates correctly, and finish up ordering logically by the month number.
 
 ---
@@ -2434,7 +2445,7 @@ Patrick Sully
 Our DELETE has succeeded, based on finding duplicates for a subset of columns only.
 
 How It Works
-Our recipe uses both the ROW_NUMBER OLAP function and SQL’s internal ROWID value for uniquely identifying rows in a table. The query starts with exactly the kind of DELETE syntax you’d asSUMe.
+Our recipe uses both the ROW_NUMBER OLAP function and SQL’s internal ROWID value for uniquely identifying rows in a table. The query starts with exactly the kind of DELETE syntax you’d assume.
 
 delete FROM employee WHERE rowid in
 (… nested subqueries here …)
@@ -2445,14 +2456,14 @@ which looks like this.
 SELECT first_name, last_name, rowid, row_number() over
 (partition by first_name, last_name ORDER BY employee_id) staff_row
 FROM employee
-We’ve intentionally added the columns FIRST_NAME and LAST_NAME to this innermost subquery to make the recipe understandable as we work through its logic. Strictly speaking, these are superfluous to the logic, and the innermost subquery could be written without them to the same effect. If we execute just this innermost query (with the extra columns SELECTed for clarity), we see these results.
+We’ve intentionally added the columns FIRST_NAME and LAST_NAME to this innermost subquery to make the recipe understandable as we work through its logic. Strictly speaking, these are superfluous to the logic, and the innermost subquery could be written without them to the same effect. If we execute just this innermost query (with the extra columns selected for clarity), we see these results.
 
 
 
 
 
 
-110 rows SELECTed.
+110 rows selected.
 All 110 staff FROM the employee table have their FIRST_NAME, LAST_NAME and ROWID returned. The ROW_NUMBER() function then works over sets of FIRST_NAME and LAST_NAME driven by the PARTITION BY instruction. This means that for every unique FIRST_NAME and LAST_NAME, ROW_NUMBER will start a running count of rows we’ve aliased as STAFF_ROW. When a new FIRST_NAME and LAST_NAME combination is observed, the STAFF_ROW counter resets to 1.
 In this way, the first Janette King has a STAFF_ROW value of 1, the second Janette King entry has a STAFF_ROW value of 2, and if there were a third and fourth such repeated name, they’d have STAFF_ROW values of 3 and 4 respectively. With our identically-named staff now numbered, we move to the next
 outermost subSELECT, which queries the results FROM above.
@@ -2485,10 +2496,10 @@ Problem
 You want to find all gaps in the sequence of numbers or in dates and times in your data. The gaps could be in dates recorded for a given action, or in some other data with a logically consecutive nature.
 
 Solution
-SQL’s LAG and LEAD OLAP functions let you compare the current row of results with a preceding row. The general format of LAG looks like this
-LAG (column or expression, preceding row offset, default for first row)
+SQL’s `LAG` and `LEAD`  OLAP functions let you compare the current row of results with a preceding row. The general format of `LAG` looks like this
+`LAG` (column or expression, preceding row offset, default for first row)
 
-The column or expression is the value to be compared with LAGging (preceding) values. The preceding row offset indicates how many rows prior to the current row the LAG should act against. We’ve used ‘1’ in the following listing to mean the row one prior to the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We instruct SQL to use 0 as the default anchor value, to handle the case WHERE we look for the day prior to the first of the month.
+The column or expression is the value to be compared with LAGging (preceding) values. The preceding row offset indicates how many rows prior to the current row the `LAG` should act against. We’ve used ‘1’ in the following listing to mean the row one prior to the current row. The default for `LAG` indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We instruct SQL to use 0 as the default anchor value, to handle the case WHERE we look for the day prior to the first of the month.
 The WITH query alias approach can be used in almost all situations WHERE a subquery is used, to
 relocate the subquery details ahead of the main query. This aids readability and refactoring of the code if required at a later date.
 This recipe looks for gaps in the sequence of days on which orders were made for the month of November 1999:
@@ -2505,7 +2516,7 @@ The results indicate that after an order was recorded on the first of the month,
 
 How It Works
 The query starts by using the WITH clause to name a subquery with an alias in an out-of-order fashion. The subquery is then referenced with an alias, in this case SALESDAYS.
-The SALESDAYS subquery calculates two fields. First, it uses the EXTRACT function to return the numeric day value FROM the ORDER_DATE date field, and labels this data as NEXT_SALE. The LAG OLAP function is then used to calculate the number for the day in the month (again using the EXTRACT method) of the ORDER_DATE of the preceding row in the results, which becomes the PREV_SALE result value. This makes more sense when you visualize the output of just the subquery SELECT statement
+The SALESDAYS subquery calculates two fields. First, it uses the EXTRACT function to return the numeric day value FROM the ORDER_DATE date field, and labels this data as NEXT_SALE. The `LAG` OLAP function is then used to calculate the number for the day in the month (again using the EXTRACT method) of the ORDER_DATE of the preceding row in the results, which becomes the PREV_SALE result value. This makes more sense when you visualize the output of just the subquery SELECT statement
 
 SELECT extract(day FROM order_date) next_sale, LAG(extract(day FROM order_date),1,0)
 over (ORDER BY extract(day FROM order_date)) prev_sale FROM oe.orders
@@ -2536,7 +2547,7 @@ The approach to take is largely a question of style and readability. We prefer t
 
 Querying data FROM SQL tables is probably the most common task you will perform as a developer or data analyst, and maybe even as a DBA—though probably not as the ETL (Extraction, Transformation, and Loading) tool expert. Quite often, you may query only one table for a small subset of rows, but sooner or later you will have to join multiple tables together. That’s the beauty of a relational database, WHERE the access paths to the data are not fixed: you can join tables that have common columns, or even tables that do not have common columns (at your own peril!).
 In this chapter we’ll cover solutions for joining two or more tables and retrieving the results based on the existence of desired rows in both tables (equi-join), rows that may exist only in one table or the other (left or right outer joins), or joining two tables together and including all rows FROM both tables, matching WHERE possible (full outer joins).
-But wait, there’s more! SQL (and the SQL language standard) contains a number of constructs that help you retrieve rows FROM tables based on the existence of the same rows in another table with the same column values for the SELECTed rows in a query. These constructs include the INTERSECT, UNION, UNION ALL, and MINUS operators. The results FROM queries using these operators can in some cases be obtained using the standard table-join syntax, but if you’re working with more than just a couple of columns, the query becomes unwieldy, hard to read, and hard to maintain.
+But wait, there’s more! SQL (and the SQL language standard) contains a number of constructs that help you retrieve rows FROM tables based on the existence of the same rows in another table with the same column values for the selected rows in a query. These constructs include the INTERSECT, UNION, UNION ALL, and MINUS operators. The results FROM queries using these operators can in some cases be obtained using the standard table-join syntax, but if you’re working with more than just a couple of columns, the query becomes unwieldy, hard to read, and hard to maintain.
 You may also need to update rows in one table based on matching or non-matching values in another table, so we’ll provide a couple of recipes on correlated queries and correlated updates using the IN/EXISTS SQL constructs as well.
 Of course, no discussion of table manipulation would be complete without delving into the unruly
 child of the query world, the Cartesian join. There are cases WHERE you want to join two or more tables without a join condition, and we’ll give you a recipe for that scenario.
@@ -2619,7 +2630,7 @@ full outer join departments using(department_id)
 ;
 
 
-123 rows SELECTed
+123 rows selected
 
 
 Note The OUTER keyword is optional when using a FULL, LEFT, or RIGHT join. It does add documentation value to your query, making it clear that mismatched rows FROM one or both tables will be in the results.
@@ -2656,7 +2667,7 @@ Discussion
 The essential idea behind a join is that it combines rows in one table with rows in one or more other tables. Joins enable you to combine information FROM multiple tables when each table contains only part of the information in which you’re interested. Out- put rows FROM a join contain more information than rows FROM either table by itself.
 A complete join that produces all possible row combinations is called a Cartesian prod- uct. For example, joining each row in a 100-row table to each row in a 200-row table produces a result containing 100 × 200, or 20,000 rows. With larger tables, or joins BETWEEN more than two tables, the result set for a Cartesian product can easily become immense. Because of that, and because you rarely want all the combinations anyway, a join normally includes an ON or USING clause that specifies how to join rows BETWEEN tables. (This requires that each table have one or more columns of common information
 that can be used to link them together logically.) You can also include a WHERE clause that restricts which of the joined rows to SELECT. Each of these clauses narrows the focus of the query.
-This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches BETWEEN tables. Later recipes show how to identify mismatches BETWEEN tables (Recipe 12.2) and how to compare a table to itself (Recipe 12.3). The examples asSUMe that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
+This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches BETWEEN tables. Later recipes show how to identify mismatches BETWEEN tables (Recipe 12.2) and how to compare a table to itself (Recipe 12.3). The examples assume that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
 CREATE TABLE artist (
 a_id INT UNSIGNED NOT NULL AUTO_INCREMENT, # artist ID
 name  VARCHAR(30) NOT NULL, # artist name PRIMARY KEY (a_id),
@@ -3527,7 +3538,7 @@ ORDER BY wins-losses DESC;
 +-------------+------+--------+
 The rows are sorted by the win-loss differential, which is how to place teams in order FROM first place to last place. But displays of team standings typically include each team’s winning percentage and a figure indicating how many games behind the leader all the other teams are. So let’s add that information to the output. Calculating the percentage is easy. It’s the ratio of wins to total games played and can be deterMINed using this expression:
 wins / (wins + losses)
-This expression involves division by zero when a team has not played any games yet. For simplicity, I’ll asSUMe a nonzero number of games, but if you want to handle this condition, generalize the expression as follows:
+This expression involves division by zero when a team has not played any games yet. For simplicity, I’ll assume a nonzero number of games, but if you want to handle this condition, generalize the expression as follows:
 IF(wins=0,0,wins/(wins+losses))
 This expression uses the fact that no division at all is necessary unless the team has won at least one game.
 DeterMINing the games-behind value is a little trickier. It’s based on the relationship of the win-loss records for two teams, calculated as the average of two values:
@@ -3626,7 +3637,7 @@ ORDER BY wl.half, wl.division, wl.wins-wl.losses DESC, PCT DESC;
 
 +------+----------+-----------------+------+------+-------+------+
 That output is somewhat difficult to read, however. To make it easier to understand, you’d likely execute the statement FROM within a program and reformat its results to display each set of team records separately. Here’s some Perl code that does that by beginning a new output group each time it encounters a new group of standings. The
-code asSUMes that the join statement has just been executed and that its results are available through the statement handle $sth:
+code assumes that the join statement has just been executed and that its results are available through the statement handle $sth:
 my ($cur_half, $cur_div) = ("", "");
 while (my ($half, $div, $team, $wins, $losses, $pct, $gb)
 = $sth->fetchrow_array ())
@@ -4047,7 +4058,7 @@ Use a UNION operation to combine multiple SELECT results into one.
 Discussion
 A join is useful for combining columns FROM different tables side by side. It’s not so useful when you want a result set that includes a set of rows FROM several tables, or
 multiple sets of rows FROM the same table. These are instances of the type of operation for which a UNION is useful. A UNION enables you to run several SELECT statements and combine their results. That is, rather than running multiple queries and receiving mul- tiple result sets, you receive a single result set.
-Suppose that you have two tables that list prospective and actual customers, and a third that lists vendors FROM whom you purchase supplies, and you want to create a single mailing list by merging names and addresses FROM all three tables. UNION provides a way to do this. AsSUMe that the three tables have the following contents:
+Suppose that you have two tables that list prospective and actual customers, and a third that lists vendors FROM whom you purchase supplies, and you want to create a single mailing list by merging names and addresses FROM all three tables. UNION provides a way to do this. assume that the three tables have the following contents:
 SELECT * FROM prospect;
 +---------+-------+------------------------+
 | fname | lname | addr  |
@@ -4329,7 +4340,7 @@ Solution
 Revise the query using column aliases so that each column has a unique name, or refer to the columns by position.
 
 Discussion
-Joins typically retrieve columns FROM related tables, so it’s not unusual for columns SELECTed FROM different tables to have the same names. Consider the following join that shows the items in your art collection (originally seen in Recipe 12.1). For each painting, it displays artist name, painting title, the state in which you acquired the item, and how much it cost:
+Joins typically retrieve columns FROM related tables, so it’s not unusual for columns selected FROM different tables to have the same names. Consider the following join that shows the items in your art collection (originally seen in Recipe 12.1). For each painting, it displays artist name, painting title, the state in which you acquired the item, and how much it cost:
 SELECT artist.name, painting.title, states.name, painting.price
 FROM artist INNER JOIN painting INNER JOIN states
 ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
@@ -4428,7 +4439,7 @@ Use the MINUS set operator. The MINUS operator will return all rows in the first
 
 
 and you need to find employee in the employee table who have not yet received bonuses. Use the MINUS
-operator as follows to compare three SELECTed columns FROM two tables:
+operator as follows to compare three selected columns FROM two tables:
 SELECT employee_id, last_name, first_name FROM employee MINus
 SELECT employee_id, last_name, first_name FROM employee_bonus
 ;
@@ -4457,7 +4468,7 @@ WHERE employee_id = 178
 ;
 
 
-1 rows SELECTed
+1 rows selected
 To ensure that each employee will attend a holiday party, convert all NULL department codes in the
 employee table to department 110 (Accounting) in the query as follows:
 SELECT employee_id, first_name, last_name, d.department_id, department_name FROM employee e join departments d
@@ -4469,7 +4480,7 @@ on nvl(e.department_id,110) = d.department_id
 
 
 
-107 rows SELECTed
+107 rows selected
 
 How It Works
 Mapping columns with NULLs to non-NULL values in a join condition to avoid using an OUTER JOIN might still have performance problems, since the index on employee.DEPARTMENT_ID will not be used during the join (primarily because NULL columns are not indexed). You can address this new problem by using a function-based index (FBI). An FBI creates an index on an expression, and may use that index if the expression appears in a join condition or a WHERE clause. Here is how to create an FBI on the DEPARTMENT_ID column:
@@ -4495,7 +4506,7 @@ table contains UNIT_PRICE and QUANTITY columns as follows:
 SELECT * FROM order_items;
 
 
-665 rows SELECTed
+665 rows selected
 To provide a line-item total in the query results, add an expression that multiplies unit price by quantity, as follows:
 SELECT order_id, line_item_id, product_id,
 unit_price, quantity, unit_price*quantity line_total_price FROM order_items;
@@ -4526,7 +4537,7 @@ SELECT employee_id, last_name || ', ' || first_name full_name, email FROM employ
 
 
 
-107 rows SELECTed
+107 rows selected
 The query concatenates the last name, a comma, and the first name into a single string, aliased as FULL_NAME in the results. If your platform’s character set does not support using || as a concatenation operator (as some IBM mainframe character sets do), or you might soon migrate your SQL to such a platform, you can make your code more platform-independent by using the CONCAT functions instead:
 
 SELECT employee_id, concat(concat(last_name,', '),first_name) full_name, email FROM employee
@@ -4617,7 +4628,7 @@ WHERE order_id in (2458,2397,2355,2356)
 ;
 
 
-4 rows SELECTed
+4 rows selected
 The older DECODE statement is the most basic of the SQL functions that converts one set of values to another; you can convert numeric codes to human-readable text values or vice versa, as we do in the previous solutions. DECODE has been available in SQL since the earliest releases. DECODE has a variable number of arguments, but the arguments can be divided into three groups:
 The column or expression to be translated
 One or more pairs of values; the first value is the existing value and the second is the translated value
@@ -4641,7 +4652,7 @@ Results for a business report are sorted by department manager, but you need to 
 
 Solution
 SQL provides two extensions to the ORDER BY clause to enable SQL developers to treat NULL values separately FROM the known data, allowing any NULL entries to sort explicitly to the beginning or end of the results.
-For our recipe, we’ll asSUMe that the report desired is based on the department names and manager identifiers FROM the department table. This SQL SELECTs this data and uses the NULLS FIRST option to explicitly control NULL handling.
+For our recipe, we’ll assume that the report desired is based on the department names and manager identifiers FROM the department table. This SQL SELECTs this data and uses the NULLS FIRST option to explicitly control NULL handling.
 
 SELECT department_name, manager_id FROM department
 ORDER BY manager_id NULLs first;
@@ -4695,7 +4706,7 @@ In order to produce a concise result in one query, you need to change the column
 
 Solution
 For circumstances WHERE you need to conditionally branch or alternate BETWEEN source data, SQL provides the CASE statement. CASE mimics the traditional switch or case statement found in many programMINg languages like C or Java.
-To bring focus to our example, we’ll asSUMe our problem is far more tangible and straightforward. We want to find the date employee in the shipping department (with the DEPARTMENT_ID of 50) started their current job. We know their initial hire date with the firm is tracked in the HIRE_DATE column on the employee table, but if they’ve had a promotion or changed roles, the date when they commenced their new position can be inferred FROM the END_DATE of their previous position in the HR.JOB_HISTORY table. We need to branch BETWEEN HIRE_DATE or END_DATE for each employee of the shipping department accordingly, as shown in the next SQL statement.
+To bring focus to our example, we’ll assume our problem is far more tangible and straightforward. We want to find the date employee in the shipping department (with the DEPARTMENT_ID of 50) started their current job. We know their initial hire date with the firm is tracked in the HIRE_DATE column on the employee table, but if they’ve had a promotion or changed roles, the date when they commenced their new position can be inferred FROM the END_DATE of their previous position in the HR.JOB_HISTORY table. We need to branch BETWEEN HIRE_DATE or END_DATE for each employee of the shipping department accordingly, as shown in the next SQL statement.
 
 SELECT e.employee_id, case
 when old.job_id IS NULL then e.hire_date else old.end_date end
@@ -4742,7 +4753,7 @@ While querying some data, you need to sort by an optional value, and WHERE that 
 
 Solution
 SQL supports the use of almost all of its expressions and functions in the ORDER BY clause. This includes the ability to use the CASE statement and simple and complex functions like arithmetic operators to dynamically control ordering. For our recipe, we’ll tackle a situation WHERE we want to show employee ordered by highest-paid to lowest-paid.
-For those with a commission, we want to asSUMe the commission is earned but don’t want to actually calculate and show this value; we simply want to order on the implied result. The following SQL leverages the CASE statement in the ORDER BY clause to conditionally branch sorting logic for those with and without a COMMISSION_PCT value.
+For those with a commission, we want to assume the commission is earned but don’t want to actually calculate and show this value; we simply want to order on the implied result. The following SQL leverages the CASE statement in the ORDER BY clause to conditionally branch sorting logic for those with and without a COMMISSION_PCT value.
 
 SELECT employee_id, last_name, salary, commission_pct FROM employee
 ORDER BY case
@@ -4811,7 +4822,7 @@ UNIT_PRICE
 43
 482.9
 …
-665 rows SELECTed.
+665 rows selected.
 Based on those results, our outer SELECT statement compares each LIST_PRICE FROM the OE.PRODUCTION_INFORMATION table with every item in the list, as we are using the ALL expression. If the LIST_PRICE is greater than all of the returned values, the expression resolves to true, and the product is included in the results. WHERE even one of the UNIT_PRICE values returned exceeds the LIST_PRICE of an item, the expression is false and that row is discarded FROM further consideration.
 If you review that logic, you’ll realize this is not a precise calculation of every item that didn’t sell for full price. Rather, it’s just a quick approximation, though one that shows off the ALL technique quite well.
 The alternatives SOME and ANY, which are effectively synonyms, resolve the true/false deterMINation based on only needing one item in the subSELECT to satisfy the SOME/ANY condition. SQL will happily
