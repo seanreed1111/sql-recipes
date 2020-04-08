@@ -472,14 +472,14 @@ SELECT COUNT(DISTINCT HOUR(t)) FROM mail;
 ---
 
 ## Problem
-## You want to know the values for other columns in the row that contains a MINimum or MAXimum value.
+## You want to know the values for other columns in the row that contains a minimum or maximum value.
 
 
 ## Solution
 ## Use two statements and a user-defined variable. Or use a subquery. Or use a join.
 
 ## Discussion
-## MIN( ) and MAX( ) find the endpoints of a range of values, but sometimes when finding a MINimum or MAXimum value, you’re also interested in other values FROM the row in which the value occurs. For example, you can find the largest state population like this:
+## MIN( ) and MAX( ) find the endpoints of a range of values, but sometimes when finding a minimum or maximum value, you’re also interested in other values FROM the row in which the value occurs. For example, you can find the largest state population like this:
 
 ```sql
 SELECT MAX(population) FROM states;
@@ -600,7 +600,7 @@ Output
 | tricia |  2394482 | 2006-05-14 17:03:01 |
 +---------+-----------+---------------------+
 ```
-## You can GROUP BY multiple columns and display a MAXimum for each combination of values in those columns. This query finds the size of the largest message sent between each pair of sender and recipient values listed in the mail table:
+## You can GROUP BY multiple columns and display a maximum for each combination of values in those columns. This query finds the size of the largest message sent BETWEEN each pair of sender and recipient values listed in the mail table:
 
 ```sql
 SELECT 
@@ -786,7 +786,7 @@ GROUP BY
 +---------+---+-------+---------+---------+---------+
 ```
 
-## COUNT( ) is somewhat different with regard to NULL values than the other aggregate functions. Like other aggregate functions, COUNT( expr ) counts only non-NULL values, but COUNT(*) counts rows, regardless of their content. You can see the difference between the forms of COUNT( ) like this:
+## COUNT( ) is somewhat different with regard to NULL values than the other aggregate functions. Like other aggregate functions, COUNT( expr ) counts only non-NULL values, but COUNT(*) counts rows, regardless of their content. You can see the difference BETWEEN the forms of COUNT( ) like this:
 
 ```sql
 SELECT 
@@ -936,7 +936,7 @@ HAVING COUNT(travel_date) > 1;
 | 2006-09-02 |  2 |
 +------------+------------------+
 ```
-## This technique works for combinations of values, too. For example, to find message sender/recipient pairs between whom only one message was sent, look for combinations that occur only once in the mail table:
+## This technique works for combinations of values, too. For example, to find message sender/recipient pairs BETWEEN whom only one message was sent, look for combinations that occur only once in the mail table:
 ```sql
 SELECT sender, recipient
 FROM mail
@@ -1053,7 +1053,7 @@ COUNT(*) AS 'number of states'
 FROM states GROUP BY 'MAX population (millions)';
 ```
 
-## That still isn’t correct. The MAXimum state population was 35,893,799, which should go into a category for 40 million, not one for 35 million. The problem here is that the category-generating expression groups values toward the lower bound of each category. To group values toward the upper bound instead, use the following technique. For categories of size n, you can place a value x into the proper category using this expression: FLOOR((x+(n-1))/n)
+## That still isn’t correct. The maximum state population was 35,893,799, which should go into a category for 40 million, not one for 35 million. The problem here is that the category-generating expression groups values toward the lower bound of each category. To group values toward the upper bound instead, use the following technique. For categories of size n, you can place a value x into the proper category using this expression: FLOOR((x+(n-1))/n)
 ## So the final form of our query looks like this:
 ```sql
 -- This is correct
@@ -1193,7 +1193,7 @@ LIMIT 1;
 +--------+-------+
 | M       |    8 |
 +--------+-------+
-## But eight state names also begin with N. If you need to know *all* of most-frequent values when there may be more than one of them, find the MAXimum count first, and then SELECT those values with a count that matches the MAXimum:
+## But eight state names also begin with N. If you need to know *all* of most-frequent values when there may be more than one of them, find the maximum count first, and then SELECT those values with a count that matches the maximum:
 SET @MAX = (SELECT COUNT(*) FROM states
 GROUP BY LEFT(name,1) ORDER BY COUNT(*) DESC LIMIT 1);
 
@@ -1222,7 +1222,7 @@ HAVING
 | N      | 8     |
 +--------+-------+
 ```
-## Alternatively, put the MAXimum-count calculation in a subquery and combine the statements into one:
+## Alternatively, put the maximum-count calculation in a subquery and combine the statements into one:
 ```sql
 SELECT 
     LEFT(name,1) AS letter, 
@@ -1308,7 +1308,7 @@ GROUP BY department_id;
 
 # Grouping Data by Multiple Fields
 ## Problem
-## You need to report data grouped by multiple values simultaneously. For example, an HR department may need to report on MINimum, average, and MAXimum SALARY by DEPARTMENT_ID and JOB_ID.
+## You need to report data grouped by multiple values simultaneously. For example, an HR department may need to report on minimum, average, and maximum SALARY by DEPARTMENT_ID and JOB_ID.
 
 ## Solution
 ## GROUP BY capabilities extend to an arbitrary number of columns and expressions, so we can extend the previous recipe to encompass our new grouping requirements. We know what we want aggregated: the SALARY value aggregated three different ways. That leaves the DEPARTMENT_ID and JOB_ID to be grouped. We also want our results ordered so we can see different JOB_ID values in the same department in context, FROM highest SALARY to lowest. The next SQL statement achieves this by adding the necessary criteria to the GROUP BY and ORDER BY clauses.
@@ -1474,7 +1474,7 @@ SELECT * FROM mail;
 ...
 ```
 ## Suppose that you want to retrieve rows for “big” mail messages (defined as those larger than 50,000 bytes), but you want them to be displayed and sorted by sizes in terms of kilobytes, not bytes. In this case, the values to sort are calculated by an expression: FLOOR((size+1023)/1024)
-## Wondering about the +1023 in the FLOOR( ) expression? That’s there so that size values group to the nearest upper boundary of the 1024-byte categories. Without it, the values `GROUP BY` lower boundaries (for example, a 2047-byte message would be reported as having a size of 1 kilobyte rather than 2).
+## Wondering about the +1023 in the FLOOR( ) expression? That’s there so that size values group to the nearest upper boundary of the 1024-byte categories. Without it, the values `GROUP BY` lower boundaries (for example, a 2047-byte message would be reported as HAVING a size of 1 kilobyte rather than 2).
 ## There are two ways to use an expression for sorting query results. First, you can put the expression directly in the `ORDER BY` clause:
 
 ```sql
@@ -1507,66 +1507,89 @@ ORDER BY
     kilobytes;
 ```
 
-## Although you can write the ORDER BY clause either way, there are at least two reasons you might prefer to use the alias method:
-## It’s easier to write the alias in the ORDER BY clause than to repeat the (rather cum- bersome) expression—and if you change one, you’ll need to change the other.
-## The alias may be useful for display purposes, to provide a more meaningful column label. Note how the third column heading for the second of the two preceding queries is more meaningful.
+## Although you can write the `ORDER BY` clause either way, there are at least two reasons you might prefer to use the alias method:
+## It’s easier to write the alias in the `ORDER BY` clause than to repeat the (rather cumbersome) expression and if you change one, you’ll need to change the other. The alias may be useful for display purposes, to provide a more meaningful column label. Note how the third column heading for the second of the two preceding queries is more meaningful.
+
+---
 
 # Displaying One Set of Values While Sorting by Another
 ## Problem
 ## You want to sort a result set using values that you’re not selecting.
 
-Solution
-That’s not a problem. You can use columns in the ORDER BY clause that don’t appear in the output column list.
+## Solution
+## That’s not a problem. You can use columns in the `ORDER BY` clause that don’t appear in the output column list.
 
-Discussion
-ORDER BY is not limited to sorting only those columns named in the output column list. It can sort using values that are “hidden” (that is, not displayed in the query output). This technique is commonly used when you have values that can be represented dif- ferent ways and you want to display one type of value but sort by another. For example, you may want to display mail message sizes not in terms of bytes, but as strings such as 103K for 103 kilobytes. You can convert a byte count to that kind of value using this expression:
-CONCAT(FLOOR((size+1023)/1024),'K')
-However, such values are strings, so they sort lexically, not numerically. If you use them for sorting, a value such as 96K sorts after 2339K, even though it represents a smaller number:
+## Discussion
+## `ORDER BY` is not limited to sorting only those columns named in the output column list. It can sort using values that are “hidden” (that is, not displayed in the query output). This technique is commonly used when you have values that can be represented dif- ferent ways and you want to display one type of value but sort by another. For example, you may want to display mail message sizes not in terms of bytes, but as strings such as 103K for 103 kilobytes. You can convert a byte count to that kind of value using this expression:`CONCAT(FLOOR((size+1023)/1024),'K')`
+## However, such values are strings, so they sort lexically, not numerically. If you use them for sorting, a value such as 96K sorts after 2339K, even though it represents a smaller number:
+
+```sql
 SELECT t, sender,
 CONCAT(FLOOR((size+1023)/1024),'K') AS size_in_K
 FROM mail WHERE size > 50000
 ORDER BY size_in_K;
+```
 +---------------------+---------+-----------+
-| t | sender | size_in_K |
+| t                   | sender  | size_in_K |
 +---------------------+---------+-----------+
-| 2006-05-12 12:48:13 | tricia | 191K   |
-| 2006-05-14 17:03:01 | tricia | 2339K  |
-| 2006-05-11 10:15:08 | barb    | 57K   |
-| 2006-05-14 14:42:21 | barb    | 96K   |
-| 2006-05-15 10:25:52 | gene    | 976K  |
+| 2006-05-12 12:48:13 | tricia  | 191K      |
+| 2006-05-14 17:03:01 | tricia  | 2339K     |
+| 2006-05-11 10:15:08 | barb    | 57K       |
+| 2006-05-14 14:42:21 | barb    | 96K       |
+| 2006-05-15 10:25:52 | gene    | 976K      |
 +---------------------+---------+-----------+
-To achieve the desired output order, display the string, but use the actual numeric size for sorting:
+
+## To achieve the desired output order, display the string, but use the actual numeric size for sorting:
+
+```sql
 SELECT t, sender,
 CONCAT(FLOOR((size+1023)/1024),'K') AS size_in_K
 FROM mail WHERE size > 50000
 ORDER BY size;
+```
+```
 +---------------------+---------+-----------+
-| t | sender | size_in_K |
+| t                   | sender  | size_in_K |
 +---------------------+---------+-----------+
-| 2006-05-11 10:15:08 | barb    | 57K   |
-| 2006-05-14 14:42:21 | barb    | 96K   |
-| 2006-05-12 12:48:13 | tricia | 191K   |
-| 2006-05-15 10:25:52 | gene    | 976K  |
-| 2006-05-14 17:03:01 | tricia | 2339K  |
+| 2006-05-11 10:15:08 | barb    |     57K   |
+| 2006-05-14 14:42:21 | barb    |     96K   |
+| 2006-05-12 12:48:13 | tricia |      191K  |
+| 2006-05-15 10:25:52 | gene    |     976K  |
+| 2006-05-14 17:03:01 | tricia |     2339K  |
 +---------------------+---------+-----------+
-Displaying values as strings but sorting them as numbers also can bail you out of some otherwise difficult situations. Members of sports teams typically are assigned a jersey number, which normally you might think should be stored using a numeric column. Not so fast! Some players like to have a jersey number of zero (0), and some like double- zero (00). If a team happens to have players with both numbers, you cannot represent them using a numeric column, because both values will be treated as the same number. The way out of the problem is to store jersey numbers as strings:
+```
+## Displaying values as strings but sorting them as numbers also can bail you out of some otherwise difficult situations. Members of sports teams typically are assigned a jersey number, which normally you might think should be stored using a numeric column. Not so fast! Some players like to have a jersey number of zero (0), and some like double-zero (00). If a team happens to have players with both numbers, you cannot represent them using a numeric column, because both values will be treated as the same number. The way out of the problem is to store jersey numbers as strings:
+
+```sql
 CREATE TABLE roster (
-name    CHAR(30),   # player name jersey_num CHAR(3)    # jersey number
+name CHAR(30),   # player name 
+jersey_num CHAR(3)    # jersey number
 );
-Then the jersey numbers will display the same way you enter them, and 0 and 00 will be treated as distinct values. Unfortunately, although representing numbers as strings solves the problem of distinguishing 0 and 00, it introduces a different problem. Suppose that a team has the following players:
+```
+## Then the jersey numbers will display the same way you enter them, and 0 and 00 will be treated as distinct values. Unfortunately, although representing numbers as strings solves the problem of distinguishing 0 and 00, it introduces a different problem. Suppose that a team has the following players:
+
+```sql
 SELECT name, jersey_num FROM roster;
+```
+```
 +-----------+------------+
-| name  | jersey_num |
+| name      | jersey_num |
 +-----------+------------+
-| Lynne | 29    |
-| Ella  | 0 |
-| Elizabeth | 100   |
-| Nancy | 00    |
-| Jean  | 8 |
-| Sherry    | 47    |
+| Lynne     | 29         |
+| Ella      | 0          |
+| Elizabeth | 100        |
+| Nancy     | 00         |
+| Jean      | 8          |
+| Sherry    | 47         |
 +-----------+------------+
-The problem occurs when you try to sort the team members by jersey number. If those numbers are stored as strings, they’ll sort lexically, and lexical order often differs FROM numeric order. That’s certainly true for the team in question:
+```
+
+## The problem occurs when you try to sort the team members by jersey number. If those numbers are stored as strings, they’ll sort lexically, and lexical order often differs FROM numeric order. That’s certainly true for the team in question:
+
+```sql
 SELECT name, jersey_num FROM roster ORDER BY jersey_num;
+```
+```
 +-----------+------------+
 | name  | jersey_num |
 +-----------+------------+
@@ -1577,8 +1600,18 @@ SELECT name, jersey_num FROM roster ORDER BY jersey_num;
 | Sherry    | 47    |
 | Jean  | 8 |
 +-----------+------------+
-The values 100 and 8 are out of place. But that’s easily solved. Display the string values, but use the numeric values for sorting. To accomplish this, add zero to the jer sey_num values to force a string-to-number conversion:
-SELECT name, jersey_num FROM roster ORDER BY jersey_num+0;
+```
+
+## The values 100 and 8 are out of place. But that’s easily solved. Display the string values, but use the numeric values for sorting. To accomplish this, add zero to the jersey_num values to force a string-to-number conversion:
+
+```sql
+-- this might not work??
+SELECT 
+    name, 
+    jersey_num 
+FROM roster 
+ORDER BY jersey_num+0;
+```
 +-----------+------------+
 | name  | jersey_num |
 +-----------+------------+
@@ -1589,12 +1622,16 @@ SELECT name, jersey_num FROM roster ORDER BY jersey_num+0;
 | Sherry    | 47    |
 | Elizabeth | 100   |
 +-----------+------------+
-The technique of displaying one value but sorting by another is also useful when you want to display composite values that are formed FROM multiple columns but that don’t sort the way you want. For example, the mail table lists message senders using separate sender and srchost values. If you want to display message senders FROM the mail table as email addresses in sender@srchost format with the username first, you can construct those values using the following expression:
-CONCAT(sender,'@',srchost)
-However, those values are no good for sorting if you want to treat the hostname as more significant than the username. Instead, sort the results using the underlying col- umn values rather than the displayed composite values:
+
+## The technique of displaying one value but sorting by another is also useful when you want to display composite values that are formed FROM multiple columns but that don’t sort the way you want. For example, the mail table lists message senders using separate sender and srchost values. If you want to display message senders FROM the mail table as email addresses in sender@srchost format with the username first, you can construct those values using the following expression: `CONCAT(sender,'@',srchost)`
+## However, those values are no good for sorting if you want to treat the hostname as more significant than the username. Instead, sort the results using the underlying column values rather than the displayed composite values:
+
+```sql
 SELECT t, CONCAT(sender,'@',srchost) AS sender, size
 FROM mail WHERE size > 50000
 ORDER BY srchost, sender;
+```
+```
 +---------------------+---------------+---------+
 | t | sender    | size  |
 +---------------------+---------------+---------+
@@ -1604,9 +1641,15 @@ ORDER BY srchost, sender;
 | 2006-05-14 17:03:01 | tricia@saturn | 2394482 |
 | 2006-05-14 14:42:21 | barb@venus  |   98151 |
 +---------------------+---------------+---------+
-The same idea commonly is applied to sorting people’s names. Suppose that you have a table names that contains last and first names. To display rows sorted by last name first, the query is straightforward when the columns are displayed separately:
+```
+
+## The same idea commonly is applied to sorting people’s names. Suppose that you have a table names that contains last and first names. To display rows sorted by last name first, the query is straightforward when the columns are displayed separately:
+
+```sql
 SELECT last_name, first_name FROM name
 ORDER BY last_name, first_name;
+```
+```
 +-----------+------------+
 | last_name | first_name |
 +-----------+------------+
@@ -1616,34 +1659,45 @@ ORDER BY last_name, first_name;
 | White | Devon |
 | White | Rondell   |
 +-----------+------------+
-If instead you want to display each name as a single string composed of the first name, a space, and the last name, you can begin the query like this:
-SELECT CONCAT(first_name,' ',last_name) AS full_name FROM name ...
-But then how do you sort the names so they come out in the last name order? The answer is to display the composite names, but refer to the constituent values in the ORDER BY clause:
+```
+
+## If instead you want to display each name as a single string composed of the first name, a space, and the last name, you can begin the query like this:
+`SELECT CONCAT(first_name,' ',last_name) AS full_name FROM name` ...
+But then how do you sort the names so they come out in the last name order? The answer is to display the composite names, but refer to the constituent values in the `ORDER BY` clause:
+
+```sql
 SELECT CONCAT(first_name,' ',last_name) AS full_name
 FROM name
 ORDER BY last_name, first_name;
+```
+```
 +---------------+
-| full_name |
+| full_name     |
 +---------------+
-| Vida Blue |
+| Vida Blue     |
 | Kevin Brown   |
-| Pete Gray |
+| Pete Gray     |
 | Devon White   |
 | Rondell White |
 +---------------+
-
+```
 
 ---
-Sorting by Calendar Day
-Problem
-You want to sort by day of the calendar year.
 
-Solution
-Sort using the month and day of date values, ignoring the year.
+# Sorting by Calendar Day
+## Problem
+## You want to sort by day of the calendar year.
 
-Discussion
-Sorting in calendar order differs FROM sorting by date. You need to ignore the year part of the dates and sort using only the month and day to order rows in terms of WHERE they fall during the calendar year. Suppose that you have an event table that looks like this when values are ordered by actual date of occurrence:
+## Solution
+## Sort using the month and day of date values, ignoring the year.
+
+## Discussion
+## Sorting in calendar order differs from sorting by date. You need to ignore the year part of the dates and sort using only the month and day to order rows in terms of where they fall during the calendar year. Suppose that you have an event table that looks like this when values are ordered by actual date of occurrence:
+
+```sql
 SELECT  date,  description  FROM  event  ORDER  BY date;
+```
+```
 +------------+-------------------------------------+
 | date  | description   |
 +------------+-------------------------------------+
@@ -1658,260 +1712,229 @@ SELECT  date,  description  FROM  event  ORDER  BY date;
 | 1958-01-31 | Explorer 1 launch date   |
 | 1989-11-09 | Opening of the Berlin Wall   |
 +------------+-------------------------------------+
-To put these items in calendar order, sort them by month, and then by day within month:
-SELECT date, description FROM event
-ORDER BY MONTH(date), DAYOFMONTH(date);
-+------------+-------------------------------------+
-| date  | description   |
-+------------+-------------------------------------+
-| 1958-01-31 | Explorer 1 launch date   |
-| 1809-02-12 | Abraham Lincoln's birthday   |
-| 1732-02-22 | George Washington's birthday |
-| 1944-06-06 | D-Day at Normandy Beaches    |
-| 1215-06-15 | Signing of the Magna Carta   |
-| 1919-06-28 | Signing of the Treaty of Versailles |
-| 1789-07-04 | US Independence Day  |
-| 1776-07-14 | Bastille Day |
-| 1957-10-04 | Sputnik launch date  |
-| 1989-11-09 | Opening of the Berlin Wall   |
-+------------+-------------------------------------+
-MySQL also has a DAYOFYEAR( ) function that you might suspect would be useful for calendar day sorting:
-SELECT date, description FROM event ORDER BY DAYOFYEAR(date);
-+------------+-------------------------------------+
-| date  | description   |
-+------------+-------------------------------------+
-| 1958-01-31 | Explorer 1 launch date   |
-| 1809-02-12 | Abraham Lincoln's birthday   |
-| 1732-02-22 | George Washington's birthday |
-| 1944-06-06 | D-Day at Normandy Beaches    |
-| 1215-06-15 | Signing of the Magna Carta   |
-| 1919-06-28 | Signing of the Treaty of Versailles |
-| 1789-07-04 | US Independence Day  |
-| 1776-07-14 | Bastille Day |
-| 1957-10-04 | Sputnik launch date  |
-| 1989-11-09 | Opening of the Berlin Wall   |
-+------------+-------------------------------------+
-That appears to work, but only because the table doesn’t have rows in it that expose a problem with using DAYOFYEAR( ) for sorting: it can generate the same value for different calendar days. For example, February 29 of leap years and March 1 of nonleap years have the same day-of-year value:
-SELECT DAYOFYEAR('1996-02-29'), DAYOFYEAR('1997-03-01');
-+-------------------------+-------------------------+
-| DAYOFYEAR('1996-02-29') | DAYOFYEAR('1997-03-01') |
-+-------------------------+-------------------------+
-|   60 |    60 |
-+-------------------------+-------------------------+
-This property means that DAYOFYEAR( ) won’t necessarily produce correct results for calendar sorting. It can group dates that actually occur on different calendar days.
-If a table represents dates using separate year, month, and day columns, calendar sort- ing requires no date-part extraction. Just sort the relevant columns directly. For large datasets, sorting using separate date-part columns can be much faster than sorts based on extracting pieces of DATE values. There’s no overhead for part extraction, but more important, you can index the date-part columns separately—something not possible with a DATE column. The principle here is that you should design the table to make it easy to extract or sort by the values that you expect to use a lot.
-Sorting by Day of Week
-Problem
-You want to sort rows in day-of-week order.
+```
 
-Solution
-Use DAYOFWEEK( ) to convert a date column to its numeric day-of-week value.
+## To put these items in calendar order, sort them by month, and then by day within month:
 
-Discussion
-Day-of-week sorting is similar to calendar-day sorting, except that you use different functions to get at the relevant ordering values.
-You can get the day of the week using DAYNAME( ), but that produces strings that sort lexically rather than in day-of-week order (Sunday, Monday, Tuesday, and so forth). Here the technique of displaying one value but sorting by another is useful (see Rec- ipe 7.3). Display day names using DAYNAME( ), but sort in day-of-week order using DAYOFWEEK( ), which returns numeric values FROM 1 to 7 for Sunday through Saturday:
-SELECT DAYNAME(date) AS day, date, description
+```sql
+SELECT 
+    date, 
+    description 
 FROM event
-ORDER BY DAYOFWEEK(date);
-+----------+------------+-------------------------------------+
-| day   | date  | description   |
-+----------+------------+-------------------------------------+
-| Sunday    | 1809-02-12 | Abraham Lincoln's birthday   |
-| Sunday    | 1776-07-14 | Bastille Day |
-| Monday    | 1215-06-15 | Signing of the Magna Carta   |
-| Tuesday  | 1944-06-06 | D-Day at Normandy Beaches |
-| Thursday | 1989-11-09 | Opening of the Berlin Wall    |
-| Friday    | 1732-02-22 | George Washington's birthday |
-| Friday    | 1958-01-31 | Explorer 1 launch date   |
-| Friday    | 1957-10-04 | Sputnik launch date  |
-| Saturday | 1919-06-28 | Signing of the Treaty of Versailles |
-| Saturday | 1789-07-04 | US Independence Day   |
-+----------+------------+-------------------------------------+
-If you want to sort rows in day-of-week order but treat Monday as the first day of the week and Sunday as the last, you can use a the MOD( ) function to map Monday to 0, Tuesday to 1, ..., Sunday to 6:
-SELECT DAYNAME(date), date, description
-FROM event
-ORDER BY MOD(DAYOFWEEK(date)+5, 7);
-+---------------+------------+-------------------------------------+
-| DAYNAME(date) | date  | description   |
-+---------------+------------+-------------------------------------+
+ORDER BY date_part('month',date), date_part('day',date);
+```
++------------+-------------------------------------+
+| date       | description                         |
++------------+-------------------------------------+
+| 1958-01-31 | Explorer 1 launch date              |
+| 1809-02-12 | Abraham Lincoln's birthday          |
+| 1732-02-22 | George Washington's birthday        |
+| 1944-06-06 | D-Day at Normandy Beaches           |
+| 1215-06-15 | Signing of the Magna Carta          |
+| 1919-06-28 | Signing of the Treaty of Versailles |
+| 1789-07-04 | US Independence Day                 |
+| 1776-07-14 | Bastille Day                        |
+| 1957-10-04 | Sputnik launch date                 |
+| 1989-11-09 | Opening of the Berlin Wall          |
++------------+-------------------------------------+
 
+# Sorting by Day of Week
+## Problem
+## You want to sort rows in day-of-week order.
 
-+---------------+------------+-------------------------------------+
-The following table shows the DAYOFWEEK( ) expressions to use for putting any day of the week first in the sort order:
+## Solution
+Use date_part('dow', field) to convert a date column to its numeric day-of-week value.
 
-Sunday  DAYOFWEEK(date)
-Monday  MOD(DAYOFWEEK(date)+5, 7)
-Tuesday MOD(DAYOFWEEK(date)+4, 7)
-Wednesday   MOD(DAYOFWEEK(date)+3, 7)
-Thursday    MOD(DAYOFWEEK(date)+2, 7)
-Friday  MOD(DAYOFWEEK(date)+1, 7)
-Saturday    MOD(DAYOFWEEK(date)+0, 7)
+# Sorting by Time of Day
+## Problem
+## You want to sort rows in time-of-day order.
 
+## Solution
+## Pull out the hour, minute, and second from the column that contains the time, and use them for sorting.
 
-Another function that you can use for day-of-week sorting is WEEKDAY( ), although it returns a different set of values (0 for Monday through 6 for Sunday).
+## Discussion
 
-Sorting by Time of Day
-Problem
-You want to sort rows in time-of-day order.
-
-Solution
-Pull out the hour, MINute, and second FROM the column that contains the time, and use them for sorting.
-
-Discussion
-Time-of-day sorting can be done different ways, depending on your column type. If the values are stored in a TIME column named timecol, just sort them directly using ORDER BY timecol. To put DATETIME or TIMESTAMP values in time-of-day order, extract the time parts and sort them. For example, the mail table contains DATETIME values, which can be sorted by time of day like this:
-SELECT * FROM mail ORDER BY HOUR(t), MINUTE(t), SECOND(t);
-+---------------------+---------+---------+---------+---------+---------+
-| t | sender | srchost | recipient | dsthost | size  |
-+---------------------+---------+---------+---------+---------+---------+
-| 2006-05-15 07:17:48 | gene    | mars  | gene  | saturn |  3824 |
-| 2006-05-15 08:50:57 | phil    | venus | phil  | venus |   978 |
-| 2006-05-16 09:00:28 | gene    | venus | barb  | mars  |   613 |
-| 2006-05-14 09:31:37 | gene    | venus | barb  | mars  |   2291 |
-| 2006-05-11 10:15:08 | barb    | saturn  | tricia | mars   |   58274 |
-| 2006-05-15 10:25:52 | gene    | mars  | tricia | saturn | 998532 |
-| 2006-05-14 11:52:17 | phil    | mars  | tricia | saturn | 5781 |
-| 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
-...
-You can also use TIME_TO_SEC( ), which strips off the date part and returns the time part as the corresponding number of seconds:
-SELECT * FROM mail ORDER BY TIME_TO_SEC(t);
-+---------------------+---------+---------+---------+---------+---------+
-| t | sender | srchost | recipient | dsthost | size  |
-+---------------------+---------+---------+---------+---------+---------+
-| 2006-05-15 07:17:48 | gene    | mars  | gene  | saturn |  3824 |
-| 2006-05-15 08:50:57 | phil    | venus | phil  | venus |   978 |
-| 2006-05-16 09:00:28 | gene    | venus | barb  | mars  |   613 |
-| 2006-05-14 09:31:37 | gene    | venus | barb  | mars  |   2291 |
-| 2006-05-11 10:15:08 | barb    | saturn  | tricia | mars   |   58274 |
-| 2006-05-15 10:25:52 | gene    | mars  | tricia | saturn | 998532 |
-| 2006-05-14 11:52:17 | phil    | mars  | tricia | saturn | 5781 |
-| 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
-...
 
 ---
 
-Sorting by Fixed-Length Substrings
-Problem
-You want to sort using parts of a column that occur at a given position within the column.
+# Sorting by Fixed-Length Substrings
+## Problem
+## You want to sort using parts of a column that occur at a given position within the column.
 
-Solution
-Pull out the parts you need with LEFT( ), MID( ), or RIGHT( ), and sort them.
+## Solution
+## Pull out the parts you need with LEFT(), MID(), or RIGHT(), and sort them.
 
-Discussion
-Suppose that you have a housewares table that acts as a catalog for houseware furnish- ings, and that items are identified by 10-character ID values consisting of three subparts: a three-character category abbreviation (such as DIN for “dining room” or KIT for “kitchen”), a five-digit serial number, and a two-character country code indicating WHERE the part is manufactured:
+## Discussion
+## Suppose that you have a housewares table that acts as a catalog for houseware furnish- ings, and that items are identified by 10-character ID values consisting of three subparts: a three-character category abbreviation (such as DIN for “dining room” or KIT for “kitchen”), a five-digit serial number, and a two-character country code indicating WHERE the part is manufactured:
+
+```sql
 SELECT * FROM housewares;
+```
+```
 +------------+------------------+
-| id    | description   |
+| id         | description      |
 +------------+------------------+
-| DIN40672US | dining table |
+| DIN40672US | dining table     |
 | KIT00372UK | garbage disposal |
 | KIT01729JP | microwave oven   |
-| BED00038SG | bedside lamp |
-| BTH00485US | shower stall |
-| BTH00415JP | lavatory |
+| BED00038SG | bedside lamp     |
+| BTH00485US | shower stall     |
+| BTH00415JP | lavatory         |
 +------------+------------------+
-This is not necessarily a good way to store complex ID values, and later we’ll consider how to represent them using separate columns (see Recipe 11.11). But for now, assume that the values must be stored as just shown.
-If you want to sort rows FROM this table based on the id values, just use the entire column value:
+```
+## This is not necessarily a good way to store complex ID values, and later we’ll consider how to represent them using separate columns. But for now, assume that the values must be stored as just shown. If you want to sort rows from this table based on the id values, just use the entire column value:
+
+```sql
 SELECT * FROM housewares ORDER BY id;
+```
+```
 +------------+------------------+
-| id    | description   |
+| id    | description           |
 +------------+------------------+
-| BED00038SG | bedside lamp |
-| BTH00415JP | lavatory |
-| BTH00485US | shower stall |
-| DIN40672US | dining table |
+| BED00038SG | bedside lamp     |
+| BTH00415JP | lavatory         |
+| BTH00485US | shower stall     |
+| DIN40672US | dining table     |
 | KIT00372UK | garbage disposal |
 | KIT01729JP | microwave oven   |
 +------------+------------------+
-But you might also have a need to sort on any of the three subparts (for example, to sort by country of manufacture). For that kind of operation, it’s helpful to use functions that pull out pieces of a column, such as LEFT( ), MID( ), and RIGHT( ). These functions can be used to break apart the id values into their three components:
-SELECT id,
-LEFT(id,3) AS category,
-MID(id,4,5)  AS serial,
-RIGHT(id,2)   AS  country
+```
+
+## But you might also have a need to sort on any of the three subparts (for example, to sort by country of manufacture). For that kind of operation, it’s helpful to use functions that pull out pieces of a column, such as `LEFT()`, `MID()`, and `RIGHT()`. These functions can be used to break apart the id values into their three components:
+
+```sql
+SELECT 
+    id,
+    LEFT(id,3) AS category,
+    MID(id,4,5) AS serial,
+    RIGHT(id,2) AS  country
 FROM housewares;
-+------------+----------+--------+---------+
-| id    | category | serial | country |
-+------------+----------+--------+---------+
+```
+```
+Any of those fixed-length substrings of the id values can be used for sorting, either alone or in combination. To sort by product category, extract the category value and use it in the `ORDER BY` clause:
+```
 
-+------------+----------+--------+---------+
-Any of those fixed-length substrings of the id values can be used for sorting, either alone or in combination. To sort by product category, extract the category value and use it in the ORDER BY clause:
+```sql
 SELECT * FROM housewares ORDER BY LEFT(id,3);
+```
+```
 +------------+------------------+
-| id    | description   |
+| id         | description      |
 +------------+------------------+
-| BED00038SG | bedside lamp |
-| BTH00485US | shower stall |
-| BTH00415JP | lavatory |
-| DIN40672US | dining table |
+| BED00038SG | bedside lamp     |
+| BTH00485US | shower stall     |
+| BTH00415JP | lavatory         | 
+| DIN40672US | dining table     |
 | KIT00372UK | garbage disposal |
 | KIT01729JP | microwave oven   |
 +------------+------------------+
-To sort rows by product serial number, use MID( ) to extract the middle five characters FROM the id values, beginning with the fourth:
+```
+## To sort rows by product serial number, use `MID()` to extract the middle five characters from the `id` values, beginning with the fourth:
+
+```sql
 SELECT * FROM housewares ORDER BY MID(id,4,5);
+```
+```
 +------------+------------------+
-| id    | description   |
+| id         | description      |
 +------------+------------------+
-| BED00038SG | bedside lamp |
+| BED00038SG | bedside lamp     |
 | KIT00372UK | garbage disposal |
-| BTH00415JP | lavatory |
-| BTH00485US | shower stall |
+| BTH00415JP | lavatory         |
+| BTH00485US | shower stall     |
 | KIT01729JP | microwave oven   |
-| DIN40672US | dining table |
+| DIN40672US | dining table     |
 +------------+------------------+
-This appears to be a numeric sort, but it’s actually a string sort, because MID( ) returns strings. It just so happens that the lexical and numeric sort order are the same in this case because the “numbers” have leading zeros to make them all the same length.
-To sort by country code, use the rightmost two characters of the id values:
+```
+
+## This appears to be a numeric sort, but it’s actually a string sort, because MID() returns strings. It just so happens that the lexical and numeric sort order are the same in this case because the “numbers” have leading zeros to make them all the same length.
+## To sort by country code, use the rightmost two characters of the id values:
+
+```sql
 SELECT * FROM housewares ORDER BY RIGHT(id,2);
+```
+```
 +------------+------------------+
-| id    | description   |
+| id         | description      |
 +------------+------------------+
 | KIT01729JP | microwave oven   |
-| BTH00415JP | lavatory |
-| BED00038SG | bedside lamp |
+| BTH00415JP | lavatory         |
+| BED00038SG | bedside lamp     |
 | KIT00372UK | garbage disposal |
-| DIN40672US | dining table |
-| BTH00485US | shower stall |
+| DIN40672US | dining table     |
+| BTH00485US | shower stall     |
 +------------+------------------+
-You can also sort using combinations of substrings. For example, to sort by country code and serial number, the query looks like this:
-SELECT * FROM housewares ORDER BY RIGHT(id,2), MID(id,4,5);
+```
+
+## You can also sort using combinations of substrings. For example, to sort by country code and serial number, the query looks like this:
+
+```sql
+SELECT * 
+FROM housewares 
+ORDER BY RIGHT(id,2), MID(id,4,5);
+```
+```
 +------------+------------------+
-| id    | description   |
+| id         | description      |
 +------------+------------------+
-| BTH00415JP | lavatory |
+| BTH00415JP | lavatory         |
 | KIT01729JP | microwave oven   |
-| BED00038SG | bedside lamp |
+| BED00038SG | bedside lamp     |
 | KIT00372UK | garbage disposal |
-| BTH00485US | shower stall |
-| DIN40672US | dining table |
+| BTH00485US | shower stall     |
+| DIN40672US | dining table     |
 +------------+------------------+
+```
 
 
 ---
 
+# Ignoring Groups in Aggregate Data Sets
+## Problem
+## You want to ignore certain groups of data based on the outcome of aggregate functions or grouping actions. In effect, you’d really like another where clause to work after the `GROUP BY` clause, providing criteria at the group or aggregate level.
 
+## Solution
+SQL provides the `HAVING` clause to apply criteria to grouped data. For our recipe, we solve the problem of finding minimum, average, and maximum salary for people performing the same job in each of the departments in the employee table. Importantly, we only want to see these aggregate values where more than one person performs the same job in a given department. The next SQL statement uses an expression in the `HAVING` clause to solve our problem.
 
+```sql
+SELECT 
+    department_id, 
+    job_id, 
+    MIN(salary), 
+    AVG(salary), 
+    MAX(salary), 
+    COUNT(*) 
+FROM 
+    employee
+GROUP BY 
+    department_id, job_id 
+HAVING COUNT(*) > 1;
+```
+
+## The HAVING clause criteria can be arbitrarily complex, so you can use multiple criteria of different sorts.
+
+```sql
+SELECT 
+    department_id, 
+    job_id, 
+    MIN(salary), 
+    AVG(salary), 
+    MAX(salary), 
+    COUNT(*) 
+FROM employee
+GROUP BY 
+    department_id, job_id 
+HAVING 
+    COUNT(*) > 1
+    AND MIN(salary) BETWEEN 2500 AND 17000 
+    AND AVG(salary) != 5000
+    AND MAX(salary)/MIN(salary) < 2;
+```
 
 ---
-2-4. Ignoring Groups in Aggregate Data Sets
-Problem
-You want to ignore certain groups of data based on the outcome of aggregate functions or grouping actions. In effect, you’d really like another WHERE clause to work after the GROUP BY clause, providing criteria at the group or aggregate level.
-
-Solution
-SQL provides the HAVING clause to apply criteria to grouped data. For our recipe, we solve the problem of finding MINimum, average, and MAXimum salary for people perforMINg the same job in each of the departments in the employee table. Importantly, we only want to see these aggregate values WHERE more than one person performs the same job in a given department. The next SQL statement uses an expression in the HAVING clause to solve our problem.
-
-SELECT department_id, job_id, MIN(salary), AVG(salary), MAX(salary), count(*) FROM employee
-GROUP BY department_id, job_id having count(*) > 1;
-
-The HAVING clause criteria can be arbitrarily complex, so you can use multiple criteria of different
-sorts.
-
-SELECT department_id, job_id, MIN(salary), AVG(salary), MAX(salary), count(*) FROM employee
-GROUP BY department_id, job_id having count(*) > 1
-and MIN(salary) between 2500 and 17000 and AVG(salary) != 5000
-and MAX(salary)/MIN(salary) < 2;
-
----
-Working with Per-Group and Overall Summary Values Simultaneously
-Problem
-You want to produce a report that requires different levels of summary detail. Or you want to compare per-group summary values to an overall summary value.
+# Working with Per-Group and Overall Summary Values Simultaneously
+## Problem
+## You want to produce a report that requires different levels of summary detail. Or you want to compare per-group summary values to an overall summary value.
 
 Solution
 Use two statements that retrieve different levels of summary information. Or use a subquery to retrieve one summary value and refer to it in the outer query that refers to other summary values. If it’s necessary only to display multiple summary levels, WITH ROLLUP might be sufficient.
@@ -1988,7 +2011,7 @@ GROUP BY name WITH ROLLUP;
 | NULL |    216.6000 |
 +-------+------------+
 In each case, the output row with NULL in the name column represents the overall sum or average calculated over all drivers.
-WITH ROLLUP can present multiple levels of summary, if you GROUP BY more than one column. The following statement shows the number of mail messages sent between each pair of users:
+WITH ROLLUP can present multiple levels of summary, if you GROUP BY more than one column. The following statement shows the number of mail messages sent BETWEEN each pair of users:
 SELECT sender, recipient, COUNT(*)
 FROM mail GROUP BY sender, recipient;
 +---------+---------+----------+
@@ -2009,7 +2032,7 @@ FROM mail GROUP BY sender, recipient WITH ROLLUP;
 ---
 2-5. Aggregating Data at Multiple Levels
 Problem
-You want to find totals, averages, and other aggregate figures, as well as subtotals in various dimensions for a report. You want to achieve this with as few statements as possible, preferably just one, rather than having to issue separate statements to get each intermediate subtotal along the way.
+You want to find totals, averages, and other aggregate figures, as well as subtotals in various dimensions for a report. You want to achieve this with as few statements as possible, preferably just one, rather than HAVING to issue separate statements to get each intermediate subtotal along the way.
 
 Solution
 You can calculate subtotals or other intermediate aggregates in Oracle using the CUBE, ROLLUP and grouping sets features. For this recipe, we’ll assume some real-world requirements. We want to find average and total (summed) salary figures by department and job category, and show meaningful higher-level averages and subtotals at the department level (regardless of job category), as well as a grand total and company-wide average for the whole organization.
@@ -2017,10 +2040,10 @@ You can calculate subtotals or other intermediate aggregates in Oracle using the
 SELECT department_id, job_id, AVG(salary), sum(salary) FROM employee
 GROUP BY rollup (department_id, job_id);
 
-The ROLLUP function performs grouping at multiple levels, using a right-to-left method of rolling up through intermediate levels to any grand total or summation. In our recipe, this means that after perforMINg normal grouping by DEPARTMENT_ID and JOB_ID, the ROLLUP function rolls up all JOB_ID values so that we see an average and sum for the DEPARTMENT_ID level across all jobs in a given department.
+The ROLLUP function performs grouping at multiple levels, using a right-to-left method of rolling up through intermediate levels to any grand total or summation. In our recipe, this means that after performing normal grouping by DEPARTMENT_ID and JOB_ID, the ROLLUP function rolls up all JOB_ID values so that we see an average and sum for the DEPARTMENT_ID level across all jobs in a given department.
 ROLLUP then rolls up to the next (and highest) level in our recipe, rolling up all departments, in effect
 providing an organization-wide rollup. You can see the rolled up rows in bold in the output.
-PerforMINg this rollup would be the equivalent of running three separate statements, such as the three that follow, and using UNION or application-level code to stitch the results together.
+performing this rollup would be the equivalent of running three separate statements, such as the three that follow, and using UNION or application-level code to stitch the results together.
 
 SELECT department_id, job_id, AVG(salary), sum(salary) FROM employee
 GROUP BY department_id, job_id;
@@ -2063,9 +2086,9 @@ or salcalc.start_year IS NULL ORDER BY 1,2,3,4;
 How It Works
 Our recipe uses the aggregated and grouped results of the subquery as an inline view, which we then SELECT FROM and apply further criteria. In this case, we could avoid the subquery approach by using
 a more complex HAVING clause like this.
-having to_char(hire_date,'YYYY') > '1990' or to_char(hire_date,'YYYY') IS NULL
+HAVING to_char(hire_date,'YYYY') > '1990' or to_char(hire_date,'YYYY') IS NULL
 
-Avoiding a subquery here works only because we’re comparing our aggregates with literals. If we wanted to find averages for jobs in departments WHERE someone had previously held the job, we’d need to reference the HR.JOBHISTORY table. Depending on the business requirement, we might get lucky and be able to construct our join, aggregates, groups, and having criteria in one statement. By treating the results of the aggregate and grouping query as input to another query, we get better readability, and the ability to code even more complexity than the HAVING clause allows.
+Avoiding a subquery here works only because we’re comparing our aggregates with literals. If we wanted to find averages for jobs in departments WHERE someone had previously held the job, we’d need to reference the HR.JOBHISTORY table. Depending on the business requirement, we might get lucky and be able to construct our join, aggregates, groups, and HAVING criteria in one statement. By treating the results of the aggregate and grouping query as input to another query, we get better readability, and the ability to code even more complexity than the HAVING clause allows.
 ---
 
 2-7. Counting Members in Groups and Sets
@@ -2076,8 +2099,8 @@ You need to count members of a group, groups of groups, and other set-based coll
 Solution
 Oracle’s COUNT feature can be used to count materialized results as well as actual rows in tables. The next SELECT statement uses a subquery to count the instances of jobs held across tables, and then summarizes those counts. In effect, this is a count of counts against data resulting FROM a query, rather than anything stored directly in Oracle.
 
-SELECT jh.JobsHeld, count(*) as StaffCount FROM
-(SELECT u.employee_id, count(*) as JobsHeld FROM
+SELECT jh.JobsHeld, COUNT(*) as StaffCount FROM
+(SELECT u.employee_id, COUNT(*) as JobsHeld FROM
 (SELECT employee_id FROM employee union all
 SELECT employee_id FROM hr.job_history) u GROUP BY u.employee_id) jh
 GROUP BY jh.JobsHeld;
@@ -2095,8 +2118,8 @@ You need to test if a given data value is unique in a table—that is, it appear
 Solution
 Oracle supports the standard HAVING clause for SELECT statements, and the COUNT function, which together can identify single instances of data in a table or result. The following SELECT statement solves the problem of finding if the surname Fay is unique in the employee table.
 
-SELECT last_name, count(*) FROM employee
-WHERE last_name = 'Fay' GROUP BY last_name having count(*) = 1;
+SELECT last_name, COUNT(*) FROM employee
+WHERE last_name = 'Fay' GROUP BY last_name HAVING COUNT(*) = 1;
 With this recipe, we receive these results:
 LAST_NAME   COUNT(*)
 Fay 1
@@ -2105,13 +2128,13 @@ Because there is exactly one LAST_NAME value of Fay, we get a count of 1 and the
 How It Works
 Only unique combinations of data will group to a count of 1. For instance, we can test if the surname King is unique:
 
-SELECT last_name, count(*) FROM employee
-WHERE last_name = 'King' GROUP BY last_name having count(*) = 1;
+SELECT last_name, COUNT(*) FROM employee
+WHERE last_name = 'King' GROUP BY last_name HAVING COUNT(*) = 1;
 
 This statement returns no results, meaning that the count of people with a surname of King is not 1; it’s some other number like 0, 2, or more. The statement first deterMINes which rows have a LAST_NAME value of King. It then groups by LAST_NAME and counts the hits encountered. Lastly, the HAVING clause tests to see if the count of rows with a LAST_NAME of King was equal to 1. Only those results are returned, so a surname is unique only if you see a result.
 If we remove the HAVING clause as in the next SELECT statement, we’ll see how many Kings are in the
 employee table.
-SELECT last_name, count(*) FROM employee
+SELECT last_name, COUNT(*) FROM employee
 WHERE last_name = 'King' GROUP BY last_name;
 LAST_NAME   COUNT(*)
 King    2
@@ -2120,9 +2143,9 @@ King    2
 Two people have a surname of King, thus it isn’t unique and didn’t show up in our test for uniqueness.
 The same technique can be extended to test for unique combinations of columns. We can expand our recipe to test if someone’s complete name, based on the combination of FIRST_NAME and LAST_NAME, is unique. This SELECT statement includes both columns in the criteria, testing to see if Lindsey Smith is a unique full name in the employee table.
 
-SELECT first_name, last_name, count(*) FROM employee
+SELECT first_name, last_name, COUNT(*) FROM employee
 WHERE first_name = 'Lindsey' and last_name = 'Smith'
-GROUP BY first_name, last_name having count(*) = 1;
+GROUP BY first_name, last_name HAVING COUNT(*) = 1;
 
 
 
@@ -2134,18 +2157,18 @@ You would like to query data to produce an ordered result, but you want to inclu
 
 Solution
 Oracle supports the LAG and LEAD analytical functions to provide access to multiple rows in a table or expression, utilizing preceding/following logic—and you won’t need to resort to joining the source data
-to itself. Our recipe assumes you are trying to tackle the business problem of visualizing the trend in hiring of staff over time. The LAG function can be used to see which employee’s hiring followed another, and also to calculate the elapsed time between hiring.
+to itself. Our recipe assumes you are trying to tackle the business problem of visualizing the trend in hiring of staff over time. The LAG function can be used to see which employee’s hiring followed another, and also to calculate the elapsed time BETWEEN hiring.
 SELECT first_name, last_name, hire_date,
 lag(hire_date, 1, '01-JUN-1987') over (ORDER BY hire_date) as Prev_Hire_Date, hire_date - lag(hire_date, 1, '01-JUN-1987') over (ORDER BY hire_date)
-as Days_Between_Hires FROM employee
+as Days_BETWEEN_Hires FROM employee
 ORDER BY hire_date;
-Our query returns 107 rows, linking the employee in the order they were hired (though not necessarily preserving the implicit sort for display or other purposes), and showing the time delta between each joining the organization.
+Our query returns 107 rows, linking the employee in the order they were hired (though not necessarily preserving the implicit sort for display or other purposes), and showing the time delta BETWEEN each joining the organization.
 
 How It Works
 The LAG and LEAD functions are like most other analytical and windowing functions in that they operate once the base non-analytic portion of the query is complete. Oracle performs a second pass over the intermediate result set to apply any analytical predicates. In effect, the non-analytic components are evaluated first, as if this query had been run.
 SELECT first_name, last_name, hire_date
 -- placeholder for Prev_Hire_Date,
--- placehodler for Days_Between_Hires FROM employee;
+-- placehodler for Days_BETWEEN_Hires FROM employee;
 The results at this point would look like this if you could see them:
 
 
@@ -2158,14 +2181,14 @@ lag (column or expression, preceding row offset, default for first row)
 The column or expression is mostly self-explanatory, as this is the table data or computed result over which you want LAG to operate. The preceding row offset portion indicates the relative row prior to the current row the LAG should act against. In our case, the value ‘1’ means the row that is one row before the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We’ve chosen the arbitrary date of 01-JUN-1987 as a notional date on which the organization was founded. You could use any date, date calculation, or date-returning function here. Oracle will supply a NULL value if you don’t specify the first row’s precedent value.
 The OVER analytic clause then dictates the order of data against which to apply the analytic function,
 and any partitioning of the data into windows or subsets (not shown in this recipe). Astute readers will realize that this means our recipe could have included a general ORDER BY clause that sorted the data for presentation in a different order FROM the HIRE_DATE ordering used for the LAG function. This gives you the most flexibility to handle general ordering and analytic lag and lead in different ways for the same statement. We’ll show an example of this later in this chapter. And remember, you should never rely on the implicit sorting that analytic functions use. This can and will change in the future, so you are best advised to always include ORDER BY for sorting WHEREver explicitly required.
-The LEAD function works in a nearly identical fashion to LAG, but instead tracks following rows rather than preceding ones. We could rewrite our recipe to show hires along with the HIRE_DATE of the next employee, and a similar elapsed-time window between their employment dates, as in this SELECT statement.
+The LEAD function works in a nearly identical fashion to LAG, but instead tracks following rows rather than preceding ones. We could rewrite our recipe to show hires along with the HIRE_DATE of the next employee, and a similar elapsed-time window BETWEEN their employment dates, as in this SELECT statement.
 SELECT first_name, last_name, hire_date,
 lead(hire_date, 1, sysdate) over (ORDER BY hire_date) as Next_Hire_Date, lead(hire_date, 1, sysdate) over (ORDER BY hire_date) - hire_date
-as Days_Between_Hires FROM employee;
+as Days_BETWEEN_Hires FROM employee;
 
 The pattern of dates is very intuitive now that you’ve seen the LAG example. With LEAD, the key difference is the effect of the default value in the third parameter.
 
-In contrast to LAG, WHERE the default provides a notional starting point for the first row’s comparison, LEAD uses the default value to provide a hypothetical end point for the last row in the forward-looking chain. In this recipe, we are comparing how many days have elapsed between employee being hired. It makes sense for us to compare the last employee hired (in this case, Sundita Kumar) with the current date using the SYSDATE function. This is a quick and easy finishing flourish to calculate the days that have elapsed since hiring the last employee.
+In contrast to LAG, WHERE the default provides a notional starting point for the first row’s comparison, LEAD uses the default value to provide a hypothetical end point for the last row in the forward-looking chain. In this recipe, we are comparing how many days have elapsed BETWEEN employee being hired. It makes sense for us to compare the last employee hired (in this case, Sundita Kumar) with the current date using the SYSDATE function. This is a quick and easy finishing flourish to calculate the days that have elapsed since hiring the last employee.
 ---
 2-12. Assigning Ranking Values to Rows in a Query Result
 Problem
@@ -2191,12 +2214,12 @@ We now see the “missing” consecutive rank values.
 ---
 2-13. Finding First and Last Values within a Group
 Problem
-You want to calculate and display aggregate information like MINimum and MAXimum for a group, along with detail information for each member. You want don’t want to repeat effort to display the aggregate and detail values.
+You want to calculate and display aggregate information like minimum and maximum for a group, along with detail information for each member. You want don’t want to repeat effort to display the aggregate and detail values.
 
 
 Solution
 Oracle provides the analytic functions FIRST and LAST to calculate the leading and ending values in any ordered sequence. Importantly, these do not require grouping to be used, unlike explicit aggregate functions such as MIN and MAX that work without OLAP features.
-For our recipe, we’ll assume the problem is a concrete one of displaying an employee’s salary, alongside the MINimum and MAXimum salaries paid to the employee’s peers in their department. This SELECT statement does the work.
+For our recipe, we’ll assume the problem is a concrete one of displaying an employee’s salary, alongside the minimum and maximum salaries paid to the employee’s peers in their department. This SELECT statement does the work.
 
 SELECT department_id, first_name, last_name, MIN(salary)
 over (partition by department_id) "MINSal", salary,
@@ -2204,7 +2227,7 @@ MAX(salary)
 over (partition by department_id) "MAXSal" FROM employee
 ORDER BY department_id, salary;
 
-This code outputs all employee and displays their salaries between the lowest and highest within their own department, as shown in the following partial output.
+This code outputs all employee and displays their salaries BETWEEN the lowest and highest within their own department, as shown in the following partial output.
 
 
 How It Works
@@ -2212,7 +2235,7 @@ The key to both the FIRST and LAST analytic functions is their ability to let yo
 The OLAP window is partitioned over each department with the OVER clause
 over (partition by department_id) “MINSal”
 ---
-2-14. PerforMINg Aggregations over Moving Windows
+2-14. performing Aggregations over Moving Windows
 Problem
 You need to provide static and moving summaries or aggregates based on the same data. For example, as part of a sales report, you need to provide a monthly summary of sales order amounts, together with a moving three- month average of sales amounts for comparison.
 
@@ -2221,9 +2244,9 @@ Oracle provides moving or rolling window functions as part of the analytical fun
 
 SELECT to_char(order_date, 'MM') as OrderMonth, sum(order_total) as MonthTotal, AVG(sum(order_total))
 over
-(ORDER BY to_char(order_date, 'MM') rows between 3 preceding and current row) as RollingQtrAverage
+(ORDER BY to_char(order_date, 'MM') rows BETWEEN 3 preceding and current row) as RollingQtrAverage
 FROM oe.orders
-WHERE order_date between '01-JAN-1999' and '31-DEC-1999' GROUP BY to_char(order_date, 'MM')
+WHERE order_date BETWEEN '01-JAN-1999' and '31-DEC-1999' GROUP BY to_char(order_date, 'MM')
 ORDER BY 1;
 We see the month, the associated total, and the calculated rolling three-month average in our results.
 
@@ -2234,19 +2257,19 @@ How It Works
 Our SELECT statement for a rolling average starts by Selecting some straightforward values. The month number is extracted FROM the ORDER_DATE field using the TO_CHAR() function with the MM format string to obtain the month’s number. We choose the month number rather than the name so that the output is sorted as a person would expect.
 Next up is a normal aggregate of the ORDER_TOTAL field using the traditional SUM function. No magic there. We then introduce an OLAP AVG function, which is WHERE the detail of our rolling average is managed. That part of the statement looks like this.
 
-AVG(sum(order_total)) over (ORDER BY to_char(order_date, 'MM') rows between 3 preceding and current row) as RollingQtrAverage
+AVG(sum(order_total)) over (ORDER BY to_char(order_date, 'MM') rows BETWEEN 3 preceding and current row) as RollingQtrAverage
 
 All of that text is to generate our result column, the ROLLINGQTRAVERAGE. Breaking the sections down will illustrate how each part contributes to the solution. The leading functions, AVG(SUM(ORDER_TOTAL)), suggest we are going to sum the ORDER_TOTAL values and then take their average. That is correct to an extent, but Oracle isn’t just going to calculate a normal average or sum. These are OLAP AVG and SUM functions, so their scope is governed by the OVER clause.
 The OVER clause starts by instructing Oracle to perform the calculations based on the order of the formatted ORDER_DATE field—that’s what ORDER BY TO_CHAR(ORDER_DATE, 'MM') achieves—effectively ordering the calculations by the values 02 to 12 (remember, there’s no data for January 1999 in the database). Finally, and most importantly, the ROWS element tells Oracle the size of the window of rows over which it should calculate the driving OLAP aggregate functions. In our case, that means over how many months should the ORDER_TOTAL values be summed and then averaged. Our recipe instructs Oracle to use the results FROM the third-last row through to the current row. This is one interpretation of three-
 month rolling average, though technically it’s actually generating an average over four months. If what you want is really a three-month average —the last two months plus the current month—you’d change the ROWS BETWEEN element to read
-rows between 2 preceding and current row
+rows BETWEEN 2 preceding and current row
 This brings up an interesting point. This recipe assumes you want a rolling average computed over historic data. But some business requirements call for a rolling window to track trends based on data not only prior to a point in time, but also after that point. For instance, we might want to use a three-month window but base it on the previous, current, and following months. The next version of the recipe
 shows exactly this ability of the windowing function, with the key changes in bold.
 
 SELECT to_char(order_date, 'MM') as OrderMonth, sum(order_total) as MonthTotal, AVG(sum(order_total)) over (ORDER BY to_char(order_date, 'MM')
-rows between 1 preceding and 1 following) as AVGTrend
+rows BETWEEN 1 preceding and 1 following) as AVGTrend
 FROM oe.orders
-WHERE order_date between '01-JAN-1999' and '31-DEC-1999' GROUP BY to_char(order_date, 'MM')
+WHERE order_date BETWEEN '01-JAN-1999' and '31-DEC-1999' GROUP BY to_char(order_date, 'MM')
 ORDER BY 1
 /
 Our output changes as you’d expect, as the monthly ORDER_TOTAL values are now grouped differently for the calculation.
@@ -2373,10 +2396,10 @@ This recipe looks for gaps in the sequence of days on which orders were made for
 with salesdays as
 (SELECT extract(day FROM order_date) next_sale, lag(extract(day FROM order_date),1,0)
 over (ORDER BY extract(day FROM order_date)) prev_sale FROM oe.orders
-WHERE order_date between '01-NOV-1999' and '30-NOV-1999') SELECT prev_sale, next_sale
+WHERE order_date BETWEEN '01-NOV-1999' and '30-NOV-1999') SELECT prev_sale, next_sale
 FROM salesdays
 WHERE next_sale - prev_sale > 1 ORDER BY prev_sale;
-Our query exposes the gaps, in days, between sales for the month of November 1999.
+Our query exposes the gaps, in days, BETWEEN sales for the month of November 1999.
 
 
 PREV_SALE NEXT_SALE
@@ -2390,7 +2413,7 @@ The SALESDAYS subquery calculates two fields. First, it uses the EXTRACT functio
 
 SELECT extract(day FROM order_date) next_sale, lag(extract(day FROM order_date),1,0)
 over (ORDER BY extract(day FROM order_date)) prev_sale FROM oe.orders
-WHERE order_date between '01-NOV-1999' and '30-NOV-1999'
+WHERE order_date BETWEEN '01-NOV-1999' and '30-NOV-1999'
 The results would look like this if executed independently.
 NEXT_SALE PREV_SALE
 
@@ -2407,7 +2430,7 @@ this.
 SELECT prev_sale, next_sale
 FROM (SELECT extract(day FROM order_date) next_sale, lag(extract(day FROM order_date),1,0)
 over (ORDER BY extract(day FROM order_date)) prev_sale FROM oe.orders
-WHERE order_date between '01-NOV-1999' and '30-NOV-1999') WHERE next_sale - prev_sale > 1
+WHERE order_date BETWEEN '01-NOV-1999' and '30-NOV-1999') WHERE next_sale - prev_sale > 1
 ORDER BY prev_sale
 /
 The approach to take is largely a question of style and readability. We prefer the WITH approach on those occasions WHERE it greatly increases the readability of your SQL statements.
@@ -2460,7 +2483,7 @@ Problem
 You are joining two tables by one or more common columns, but you want to make sure to return all rows in the first table regardless of a matching row in the second. For example, you are joining the employee and department tables, but some employee lack department assignments.
 
 Solution
-Use an outer join. In Oracle’s sample database, the HR user maintains the employee and DEPARTMENT tables; assigning a department to an employee is optional. There are 107 employee in the employee table. Using a standard join between employee and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the employee table, you can use LEFT OUTER JOIN to include all rows in the employee table and matching rows in DEPARTMENTS, if any:
+Use an outer join. In Oracle’s sample database, the HR user maintains the employee and DEPARTMENT tables; assigning a department to an employee is optional. There are 107 employee in the employee table. Using a standard join BETWEEN employee and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the employee table, you can use LEFT OUTER JOIN to include all rows in the employee table and matching rows in DEPARTMENTS, if any:
 
 SELECT employee_id, last_name, first_name, department_id, department_name FROM employee
 left outer join departments using(department_id)
@@ -2492,10 +2515,10 @@ Needless to say, if you can use ANSI SQL-99 syntax, by all means do so for clari
 
 3-4. Making a Join Optional in Both Directions
 Problem
-All of the tables in your query have at least a few rows that don’t match rows in the other tables, but you still want to return all rows FROM all tables and show the mismatches in the results. For example, you want to reduce the number of reports by including mismatches FROM both tables instead of having one report for each scenario.
+All of the tables in your query have at least a few rows that don’t match rows in the other tables, but you still want to return all rows FROM all tables and show the mismatches in the results. For example, you want to reduce the number of reports by including mismatches FROM both tables instead of HAVING one report for each scenario.
 
 Solution
-Use FULL OUTER JOIN. As you might expect, a full outer join between two or more tables will return all rows in each table of the query and match WHERE possible. You can use FULL OUTER JOIN with the employee and DEPARTMENT table as follows:
+Use FULL OUTER JOIN. As you might expect, a full outer join BETWEEN two or more tables will return all rows in each table of the query and match WHERE possible. You can use FULL OUTER JOIN with the employee and DEPARTMENT table as follows:
 
 
 SELECT employee_id, last_name, first_name, department_id, department_name FROM employee
@@ -2509,7 +2532,7 @@ full outer join departments using(department_id)
 Note The OUTER keyword is optional when using a FULL, LEFT, or RIGHT join. It does add documentation value to your query, making it clear that mismatched rows FROM one or both tables will be in the results.
 
 
-Using FULL OUTER JOIN is a good way to view, at a glance, mismatches between two tables. In the preceding output, you can see an employee without a department as well as several departments that have no employee.
+Using FULL OUTER JOIN is a good way to view, at a glance, mismatches BETWEEN two tables. In the preceding output, you can see an employee without a department as well as several departments that have no employee.
 
 How It Works
 Trying to accomplish a full outer join before Oracle9i was a bit inelegant: you had to perform a UNION of two outer joins (a left and a right outer join) using the proprietary Oracle syntax as follows:
@@ -2538,9 +2561,9 @@ Use a join—that is, a query that lists multiple tables in its FROM clause and 
 
 Discussion
 The essential idea behind a join is that it combines rows in one table with rows in one or more other tables. Joins enable you to combine information FROM multiple tables when each table contains only part of the information in which you’re interested. Out- put rows FROM a join contain more information than rows FROM either table by itself.
-A complete join that produces all possible row combinations is called a Cartesian prod- uct. For example, joining each row in a 100-row table to each row in a 200-row table produces a result containing 100 × 200, or 20,000 rows. With larger tables, or joins between more than two tables, the result set for a Cartesian product can easily become immense. Because of that, and because you rarely want all the combinations anyway, a join normally includes an ON or USING clause that specifies how to join rows between tables. (This requires that each table have one or more columns of common information
+A complete join that produces all possible row combinations is called a Cartesian prod- uct. For example, joining each row in a 100-row table to each row in a 200-row table produces a result containing 100 × 200, or 20,000 rows. With larger tables, or joins BETWEEN more than two tables, the result set for a Cartesian product can easily become immense. Because of that, and because you rarely want all the combinations anyway, a join normally includes an ON or USING clause that specifies how to join rows BETWEEN tables. (This requires that each table have one or more columns of common information
 that can be used to link them together logically.) You can also include a WHERE clause that restricts which of the joined rows to SELECT. Each of these clauses narrows the focus of the query.
-This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches between tables. Later recipes show how to identify mismatches between tables (Recipe 12.2) and how to compare a table to itself (Recipe 12.3). The examples assume that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
+This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches BETWEEN tables. Later recipes show how to identify mismatches BETWEEN tables (Recipe 12.2) and how to compare a table to itself (Recipe 12.3). The examples assume that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
 CREATE TABLE artist (
 a_id INT UNSIGNED NOT NULL AUTO_INCREMENT, # artist ID
 name  VARCHAR(30) NOT NULL, # artist name PRIMARY KEY (a_id),
@@ -2573,7 +2596,7 @@ SELECT * FROM painting ORDER BY a_id, p_id;
 +------+------+-------------------+-------+-------+
 The low values in the price column of the painting table betray the fact that your collection actually contains only cheap facsimiles, not the originals. Well, that’s all right: who can afford the originals?
 Each table contains partial information about your collection. For example, the artist table doesn’t tell you which paintings each artist produced, and the painting table lists artist IDs but not their names. To use the information in both tables, you can ask MySQL to show you various combinations of artists and paintings by writing a query that performs a join. A join names two or more tables after the FROM keyword. In the output column list, you can name columns FROM any or all the joined tables, or use expressions that are based on those columns, tbl_name .* to SELECT all columns FROM a given table, or * to SELECT all columns FROM all tables.
-The simplest join involves two tables and SELECTs all columns FROM each. With no re- strictions, the join generates output for all combinations of rows (that is, the Cartesian product). The following complete join between the artist and painting tables shows this:
+The simplest join involves two tables and SELECTs all columns FROM each. With no re- strictions, the join generates output for all combinations of rows (that is, the Cartesian product). The following complete join BETWEEN the artist and painting tables shows this:
 SELECT * FROM artist, painting;
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
@@ -2581,7 +2604,7 @@ SELECT * FROM artist, painting;
 
 +------+----------+------+------+-------------------+-------+-------+
 The statement output illustrates why a complete join generally is not useful: it produces a lot of output, and the result is not meaningful. Clearly, you’re not maintaining these tables to match every artist with every painting, which is what the preceding statement does. An unrestricted join in this case produces nothing of value.
-To answer questions meaningfully, you must combine the two tables in a way that produces only the relevant matches. Doing so is a matter of including appropriate join conditions. For example, to produce a list of paintings together with the artist names, you can associate rows FROM the two tables using a simple WHERE clause that matches up values in the artist ID column that is common to both tables and that serves as the link between them:
+To answer questions meaningfully, you must combine the two tables in a way that produces only the relevant matches. Doing so is a matter of including appropriate join conditions. For example, to produce a list of paintings together with the artist names, you can associate rows FROM the two tables using a simple WHERE clause that matches up values in the artist ID column that is common to both tables and that serves as the link BETWEEN them:
 SELECT * FROM artist, painting
 WHERE artist.a_id = painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
@@ -2729,16 +2752,16 @@ For complicated statements that SELECT many columns, aliases can save a lot of t
 ---
 Finding Rows with No Match in Another Table
 Problem
-You want to find rows in one table that have no match in another. Or you want to produce a list on the basis of a join between tables, and you want the list to include an entry for every row in the first table, even when there are no matches in the second table.
+You want to find rows in one table that have no match in another. Or you want to produce a list on the basis of a join BETWEEN tables, and you want the list to include an entry for every row in the first table, even when there are no matches in the second table.
 
 Solution
 Use an outer join—a LEFT JOIN or a RIGHT JOIN.
 
 Discussion
-Recipe 12.1 focused on inner joins, which are joins that find matches between two tables. However, the answers to some questions require deterMINing which rows do not have a match (or, stated another way, which rows have values that are missing FROM the other table). For example, you might want to know which artists in the artist table you don’t yet have any paintings by. The same kind of question occurs in other contexts. Some examples:
+Recipe 12.1 focused on inner joins, which are joins that find matches BETWEEN two tables. However, the answers to some questions require deterMINing which rows do not have a match (or, stated another way, which rows have values that are missing FROM the other table). For example, you might want to know which artists in the artist table you don’t yet have any paintings by. The same kind of question occurs in other contexts. Some examples:
 You’re working in sales. You have a list of potential customers, and another list of people who have placed orders. To focus your efforts on people who are not yet actual customers, you want to find people in the first list who are not in the second.
 You have one list of baseball players, and another list of players who have hit home runs, and you want to know which players in the first list have not hit a home run. The answer is deterMINed by finding those players in the first list who are not in the second.
-For these types of questions, it’s necessary to use an outer join. Like an inner join, an outer join can find matches between tables. But unlike an inner join, an outer join can also deterMINe which rows in one table have no match in another. Two types of outer join are LEFT JOIN and RIGHT JOIN.
+For these types of questions, it’s necessary to use an outer join. Like an inner join, an outer join can find matches BETWEEN tables. But unlike an inner join, an outer join can also deterMINe which rows in one table have no match in another. Two types of outer join are LEFT JOIN and RIGHT JOIN.
 To see why outer joins are useful, let’s consider the problem of deterMINing which artists in the artist table are missing FROM the painting table. At present, the tables are small, so it’s easy to exaMINe them visually:
 SELECT * FROM artist ORDER BY a_id;
 +------+----------+
@@ -2756,7 +2779,7 @@ SELECT * FROM painting ORDER BY a_id, p_id;
 +------+------+-------------------+-------+-------+
 
 +------+------+-------------------+-------+-------+
-By looking at the tables, you can see that you have no paintings by Monet or Picasso (there are no painting rows with an a_id value of 2 or 4). But as you acquire more paintings and the tables get larger, it won’t be so easy to eyeball them and answer the question by inspection. Can you answer it using SQL? Sure, although first attempts at a solution generally look something like the following statement, which uses a not- equal condition to look for mismatches between the two tables:
+By looking at the tables, you can see that you have no paintings by Monet or Picasso (there are no painting rows with an a_id value of 2 or 4). But as you acquire more paintings and the tables get larger, it won’t be so easy to eyeball them and answer the question by inspection. Can you answer it using SQL? Sure, although first attempts at a solution generally look something like the following statement, which uses a not- equal condition to look for mismatches BETWEEN the two tables:
 SELECT * FROM artist INNER JOIN painting
 ON artist.a_id != painting.a_id;
 +------+----------+------+------+-------------------+-------+-------+
@@ -2838,7 +2861,7 @@ ElseWHERE in this book, I’ll generally refer only to LEFT JOIN for brevity, bu
 
 See Also
 As shown in this section, LEFT JOIN is useful for finding values with no match in another table or for showing whether each value is matched. LEFT JOIN may also be used to
-produce a summary that includes all items in a list, even those for which there’s nothing to summarize. This is very common for characterizing the relationship between a master table and a detail table. For example, a LEFT JOIN can produce “total sales per customer” reports that list all customers, even those who haven’t bought anything during the summary period. (See Recipe 12.4 for information about master-detail lists.)
+produce a summary that includes all items in a list, even those for which there’s nothing to summarize. This is very common for characterizing the relationship BETWEEN a master table and a detail table. For example, a LEFT JOIN can produce “total sales per customer” reports that list all customers, even those who haven’t bought anything during the summary period. (See Recipe 12.4 for information about master-detail lists.)
 You can also use LEFT JOIN to perform consistency checking when you receive two datafiles that are supposed to be related, and you want to deterMINe whether they really are. (That is, you want to check the integrity of their relationship.) Import each file into a MySQL table, and then run a couple of LEFT JOIN statements to deterMINe whether there are unattached rows in one table or the other—that is, rows that have no match in the other table. Recipe 12.13 discusses how to identify (and optionally delete) these unattached rows.
 
 ---
@@ -2993,7 +3016,7 @@ ORDER BY s1.name;
 | West Virginia  | 1863-06-20 |
 | Wisconsin | 1848-05-29 |
 +----------------+------------+
-For each row in the states table, the statement SELECTs rows in which the state has a statehood value in the same year, not including that state itself. For rows having no such match, the LEFT JOIN forces the output to contain a row anyway, with all the s2 columns set to NULL. Those rows identify the states with no other state that joined the Union in the same year.
+For each row in the states table, the statement SELECTs rows in which the state has a statehood value in the same year, not including that state itself. For rows HAVING no such match, the LEFT JOIN forces the output to contain a row anyway, with all the s2 columns set to NULL. Those rows identify the states with no other state that joined the Union in the same year.
 
 ---
 Producing Master-Detail Lists and Summaries
@@ -3121,9 +3144,9 @@ SELECT
 
 Enumerating a Many-to-Many Relationship
 Problem
-You want to display a relationship between tables when rows in either table might be matched by multiple rows in the other table.
+You want to display a relationship BETWEEN tables when rows in either table might be matched by multiple rows in the other table.
 Solution
-This is a many-to-many relationship. It requires a third table for associating your two primary tables and a three-way join to list the correspondences between them.
+This is a many-to-many relationship. It requires a third table for associating your two primary tables and a three-way join to list the correspondences BETWEEN them.
 
 Discussion
 The artist and painting tables used in earlier sections are related in a one-to-many relationship: a given artist may have produced many paintings, but each painting was created by only one artist. One-to-many relationships are relatively simple and the two tables in the relationship can be joined with a key that is common to both tables.
@@ -3145,7 +3168,7 @@ SELECT title, state FROM painting ORDER BY state;
 | The Mona Lisa | MI    |
 | Les Deux Soeurs   | NE    |
 +-------------------+-------+
-If you want to see the full state names rather than abbreviations, exploit the one-to-one relationship that exists between the two that is enumerated in the states table. Join that table to the painting table as follows, using the abbreviation values that are com- mon to the two tables:
+If you want to see the full state names rather than abbreviations, exploit the one-to-one relationship that exists BETWEEN the two that is enumerated in the states table. Join that table to the painting table as follows, using the abbreviation values that are com- mon to the two tables:
 SELECT painting.title, states.name AS state
 FROM painting INNER JOIN states ON painting.state = states.abbrev
 ORDER BY state;
@@ -3159,7 +3182,7 @@ ORDER BY state;
 | The Mona Lisa | Michigan |
 | Les Deux Soeurs   | Nebraska |
 +-------------------+----------+
-A more complex relationship between tables is the many-to-many relationship, which occurs when a row in one table may have many matches in the other, and vice versa. To illustrate such a relationship, this is the point at which database books typically devolve into the “parts and suppliers” problem. (A given part may be available through several suppliers; how can you produce a list showing which parts are available FROM which suppliers?) However, having seen that example far too many times, I prefer to use a different illustration. So, even though conceptually it’s really the same idea, let’s use the following scenario: you and a bunch of your friends are avid enthusiasts of euchre, a four-handed card game played with two teams of partners. Each year, you all get together, pair off, and run a friendly tournament. Naturally, to avoid controversy about how different players might remember the results of each tournament, you record the pairings and outcomes in a database. One way to store the results is with a table that is set up as follows, WHERE for each tournament year, you record the team names, win-loss records, players, and player cities of residence:
+A more complex relationship BETWEEN tables is the many-to-many relationship, which occurs when a row in one table may have many matches in the other, and vice versa. To illustrate such a relationship, this is the point at which database books typically devolve into the “parts and suppliers” problem. (A given part may be available through several suppliers; how can you produce a list showing which parts are available FROM which suppliers?) However, HAVING seen that example far too many times, I prefer to use a different illustration. So, even though conceptually it’s really the same idea, let’s use the following scenario: you and a bunch of your friends are avid enthusiasts of euchre, a four-handed card game played with two teams of partners. Each year, you all get together, pair off, and run a friendly tournament. Naturally, to avoid controversy about how different players might remember the results of each tournament, you record the pairings and outcomes in a database. One way to store the results is with a table that is set up as follows, WHERE for each tournament year, you record the team names, win-loss records, players, and player cities of residence:
 SELECT * FROM euchre ORDER BY year, wins DESC, player;
 +----------+------+------+--------+----------+-------------+
 | team  | year | wins | losses | player | player_city |
@@ -3170,7 +3193,7 @@ As shown by the table, each team has multiple players, and each player has parti
 Store each team name, year, and record once in a table named euchre_team.
 Store each player name and city of residence once in a table named
 euchre_player.
-Create a third table, euchre_link, that stores team-player associations and serves as a link, or bridge, between the two primary tables. To MINimize the information stored in this table, assign unique IDs to each team and player within their respec- tive tables, and store only those IDs in the euchre_link table.
+Create a third table, euchre_link, that stores team-player associations and serves as a link, or bridge, BETWEEN the two primary tables. To MINimize the information stored in this table, assign unique IDs to each team and player within their respec- tive tables, and store only those IDs in the euchre_link table.
 The resulting team and player tables look like this:
 SELECT * FROM euchre_team;
 +----+----------+------+------+--------+
@@ -3207,7 +3230,7 @@ SELECT * FROM euchre_link;
 
 +---------+-----------+
 To answer questions about the teams or players using these tables, you need to perform a three-way join, using the link table to relate the two primary tables to each other. Here are some examples:
-List all the pairings that show the teams and who played on them. This statement enumerates all the correspondences between the euchre_team and euchre_player tables and reproduces the information that was originally in the nonnormal euchre table:
+List all the pairings that show the teams and who played on them. This statement enumerates all the correspondences BETWEEN the euchre_team and euchre_player tables and reproduces the information that was originally in the nonnormal euchre table:
 SELECT t.name, t.year, t.wins, t.losses, p.name, p.city
 FROM euchre_team AS t INNER JOIN euchre_link AS l
 INNER JOIN euchre_player AS p
@@ -3245,12 +3268,12 @@ WHERE p.name = 'Billy';
 
 ---
 
-Finding Rows Containing Per-Group MINimum or MAXimum Values
+Finding Rows Containing Per-Group minimum or maximum Values
 Problem
-You want to find which row within each group of rows in a table contains the MAXimum or MINimum value for a given column. For example, you want to deterMINe the most expensive painting in your collection for each artist.
+You want to find which row within each group of rows in a table contains the maximum or minimum value for a given column. For example, you want to deterMINe the most expensive painting in your collection for each artist.
 
 Solution
-Create a temporary table to hold the per-group MAXimum or MINimum values, and then join the temporary table with the original one to pull out the matching row for each group. If you prefer a single-query solution, use a subquery in the FROM clause rather than a temporary table.
+Create a temporary table to hold the per-group maximum or minimum values, and then join the temporary table with the original one to pull out the matching row for each group. If you prefer a single-query solution, use a subquery in the FROM clause rather than a temporary table.
 
 Discussion
 Many questions involve finding largest or smallest values in a particular table column, but it’s also common to want to know what the other values are in the row that contains the value. For example, when you are using the artist and painting tables, it’s possible to answer questions like “What is the most expensive painting in the collection, and who painted it?” One way to do this is to store the highest price in a user-defined variable and then use the variable to identify the row containing the price so that you can retrieve other columns FROM it:
@@ -3264,7 +3287,7 @@ WHERE painting.price = @MAX_price;
 +----------+---------------+-------+
 | Da Vinci | The Mona Lisa |    87 |
 +----------+---------------+-------+
-The same thing can be done by creating a temporary table to hold the MAXimum price and then joining it with the other tables:
+The same thing can be done by creating a temporary table to hold the maximum price and then joining it with the other tables:
 CREATE TABLE tmp SELECT MAX(price) AS MAX_price FROM painting;
 SELECT artist.name, painting.title, painting.price
 FROM artist INNER JOIN painting INNER JOIN tmp
@@ -3277,7 +3300,7 @@ AND painting.price = tmp.MAX_price;
 +----------+---------------+-------+
 The techniques of using a user-defined variable or a temporary table as just shown were illustrated originally in Recipe 8.5. Their use here is similar except that now we are applying them to multiple tables.
 On the face of it, using a temporary table and a join is just a more complicated way of answering the question than with a user-defined variable. Does this technique have any practical value? Yes, it does, because it leads to a more general technique for answering more difficult questions. The previous statements show information only for the single most expensive painting in the entire painting table. What if your question is, “What is the most expensive painting for each artist?” You can’t use a user-defined variable to answer that question, because the answer requires finding one price per artist, and a variable can hold only a single value at a time. But the technique of using a temporary table works well, because the table can hold multiple rows, and a join can find matches for all of them.
-To answer the question, SELECT each artist ID and the corresponding MAXimum painting price into a temporary table. The table will contain not just the MAXimum painting price but the MAXimum within each group, WHERE “group” is defined as “paintings by a given artist.” Then use the artist IDs and prices stored in the tmp table to match rows in the painting table, and join the result with the artist table to get the artist names:
+To answer the question, SELECT each artist ID and the corresponding maximum painting price into a temporary table. The table will contain not just the maximum painting price but the maximum within each group, WHERE “group” is defined as “paintings by a given artist.” Then use the artist IDs and prices stored in the tmp table to match rows in the painting table, and join the result with the artist table to get the artist names:
 CREATE TABLE tmp
 SELECT a_id, MAX(price) AS MAX_price FROM painting GROUP BY a_id;
 SELECT artist.name, painting.title, painting.price
@@ -3307,7 +3330,7 @@ AND painting.price = tmp.MAX_price;
 | Van Gogh | The Potato Eaters |    67 |
 | Renoir    | Les Deux Soeurs   |   64 |
 +----------+-------------------+-------+
-Yet another way to answer MAXimum-per-group questions is to use a LEFT JOIN that joins a table to itself. The following statement identifies the highest-priced painting per artist ID (we are using IS NULL to SELECT all the rows FROM p1 for which there is no row in p2 with a higher price):
+Yet another way to answer maximum-per-group questions is to use a LEFT JOIN that joins a table to itself. The following statement identifies the highest-priced painting per artist ID (we are using IS NULL to SELECT all the rows FROM p1 for which there is no row in p2 with a higher price):
 SELECT p1.a_id, p1.title, p1.price
 FROM  painting  AS  p1  LEFT  JOIN  painting  AS p2
 ON  p1.a_id  =  p2.a_id  AND   p1.price  <  p2.price
@@ -3352,7 +3375,7 @@ ORDER BY name, travel_date;
 | Suzi  | 2006-08-29 |  391 |
 | Suzi  | 2006-09-02 |  502 |
 +-------+------------+-------+
-One type of MAXimum-per-group problem for this table is “show the most recent trip for each driver.” It can be solved with a temporary table like this:
+One type of maximum-per-group problem for this table is “show the most recent trip for each driver.” It can be solved with a temporary table like this:
 CREATE TABLE tmp
 SELECT name, MAX(travel_date) AS travel_date
 FROM driver_log GROUP BY name;
@@ -3384,7 +3407,7 @@ ORDER BY driver_log.name;
 Which technique is better: the temporary table or the subquery in the FROM clause? For small tables, there might not be much difference either way. If the temporary table or subquery result is large, a general advantage of the temporary table is that you can index it after creating it and before using it in a join.
 
 See Also
-This recipe shows how to answer MAXimum-per-group questions by Selecting summary information into a temporary table and joining that table to the original one or by using a subquery in the FROM clause. These techniques have application in many contexts. One of them is calculation of team standings, WHERE the standings for each group of teams are deterMINed by comparing each team in the group to the team with the best record. Recipe 12.7 discusses how to do this.
+This recipe shows how to answer maximum-per-group questions by Selecting summary information into a temporary table and joining that table to the original one or by using a subquery in the FROM clause. These techniques have application in many contexts. One of them is calculation of team standings, WHERE the standings for each group of teams are deterMINed by comparing each team in the group to the team with the best record. Recipe 12.7 discusses how to do this.
 
 
 ---
@@ -3429,7 +3452,7 @@ A. Mathematically, the games-behind calculation for the two teams can be express
 ((winsA - winsB) + (lossesB - lossesA)) / 2
 With a little rearrangement of terms, the expression becomes:
 ((winsA - lossesA) - (winsB - lossesB)) / 2
-The second expression is equivalent to the first, but it has each factor written as a single team’s win-loss differential, rather than as a comparison between teams. This makes it easier to work with, because each factor can be deterMINed independently FROM a single
+The second expression is equivalent to the first, but it has each factor written as a single team’s win-loss differential, rather than as a comparison BETWEEN teams. This makes it easier to work with, because each factor can be deterMINed independently FROM a single
 team record. The first factor represents the first-place team’s win-loss differential, so if we calculate that value first, all the other teams GB values can be deterMINed in relation to it.
 The first-place team is the one with the largest win-loss differential. To find that value and save it in a variable, use this statement:
 SET @wl_diff = (SELECT MAX(wins-losses) FROM standings1);
@@ -3536,7 +3559,7 @@ Problem
 You want to produce a summary for each of several categories, but some of them are not represented in the data to be summarized. Consequently, the summary has missing categories.
 
 Solution
-Create a reference table that lists each category and produce the summary based on a LEFT JOIN between the list and the table containing your data. Then every category in the reference table will appear in the result, even those not present in the data to be summarized.
+Create a reference table that lists each category and produce the summary based on a LEFT JOIN BETWEEN the list and the table containing your data. Then every category in the reference table will appear in the result, even those not present in the data to be summarized.
 
 Discussion
 When you run a summary query, normally it produces entries only for the values that are actually present in the data. Let’s say you want to produce a time-of-day summary for the rows in the mail table. That table looks like this:
@@ -3603,7 +3626,7 @@ my ($db_name, $tbl_name, $col_name, $MIN_date, $MAX_date) = @ARGV; # ... connect
 my $days = $dbh->SELECTrow_array (qq{ SELECT DATEDIFF(?,?) + 1 },
 undef, $MAX_date, $MIN_date);
 
-print "MINimum date: $MIN_date\n"; print "MAXimum date: $MAX_date\n";
+print "minimum date: $MIN_date\n"; print "maximum date: $MAX_date\n";
 print "Number of days spanned by range: $days\n"; die "Date range is too small\n" if $days < 1;
 
 # Drop table if it exists, and then recreate it
@@ -3635,10 +3658,10 @@ FROM driver_log GROUP BY travel_date;
 +------------+---------+
 
 +------------+---------+
-However, that summary does not show dates when no drivers were active. To generate a complete summary that includes the missing dates, use make_date_list.pl. FROM the simple summary just shown, we can tell the MINimum and MAXimum dates, so generate a reference table named ref with a date column d that spans those dates:
+However, that summary does not show dates when no drivers were active. To generate a complete summary that includes the missing dates, use make_date_list.pl. FROM the simple summary just shown, we can tell the minimum and maximum dates, so generate a reference table named ref with a date column d that spans those dates:
 % make_date_list.pl cookbook ref d 2006-08-26 2006-09-02
-MINimum date: 2006-08-26
-MAXimum date: 2006-09-02
+minimum date: 2006-08-26
+maximum date: 2006-09-02
 Number of days spanned by range: 8
 After creating the reference table, use it in the following statement to generate the complete summary:
 SELECT ref.d, COUNT(driver_log.travel_date) AS drivers
@@ -3665,20 +3688,20 @@ ORDER BY d;
 
 Calculating Successive-Row Differences
 Problem
-You have a table containing successive cumulative values in its rows, and you want to compute the differences between pairs of successive rows.
+You have a table containing successive cumulative values in its rows, and you want to compute the differences BETWEEN pairs of successive rows.
 
 Solution
-Use a self-join that matches up pairs of adjacent rows and calculates the differences between members of each pair.
+Use a self-join that matches up pairs of adjacent rows and calculates the differences BETWEEN members of each pair.
 
 Discussion
-Self-joins are useful when you have a set of absolute (or cumulative) values that you want to convert to relative values representing the differences between successive pairs of rows. For example, if you take an automobile trip and write down the total miles traveled at each stopping point, you can compute the difference between successive points to deterMINe the distance FROM one stop to the next. Here is such a table that shows the stops for a trip FROM San Antonio, Texas to Madison, Wisconsin. Each row shows the total miles driven as of each stop:
+Self-joins are useful when you have a set of absolute (or cumulative) values that you want to convert to relative values representing the differences BETWEEN successive pairs of rows. For example, if you take an automobile trip and write down the total miles traveled at each stopping point, you can compute the difference BETWEEN successive points to deterMINe the distance FROM one stop to the next. Here is such a table that shows the stops for a trip FROM San Antonio, Texas to Madison, Wisconsin. Each row shows the total miles driven as of each stop:
 SELECT seq, city, miles FROM trip_log ORDER BY seq;
 +-----+------------------+-------+
 | seq | city    | miles |
 +-----+------------------+-------+
 
 +-----+------------------+-------+
-A self-join can convert these cumulative values to successive differences that represent the distances FROM each city to the next. The following statement shows how to use the sequence numbers in the rows to match pairs of successive rows and compute the differences between each pair of mileage values:
+A self-join can convert these cumulative values to successive differences that represent the distances FROM each city to the next. The following statement shows how to use the sequence numbers in the rows to match pairs of successive rows and compute the differences BETWEEN each pair of mileage values:
 SELECT t1.seq AS seq1, t2.seq AS seq2,
 t1.city AS city1, t2.city AS city2,
 t1.miles AS miles1, t2.miles AS miles2,
@@ -3706,7 +3729,7 @@ FROM player_stats ORDER BY id;
 |  4 | 2006-07-31 | 196 | 49 | 0.250 |
 |  5 | 2006-08-31 | 304 | 98 | 0.322 |
 +----+------------+-----+----+-------+
-The last column of the query result also shows the player’s batting average as of each date. This column is not stored in the table but is easily computed as the ratio of hits to at-bats. The result provides a general idea of how the player’s hitting performance changed over the course of the season, but it doesn’t give a very informative picture of how the player did during each individual month. To deterMINe that, it’s necessary to calculate relative differences between pairs of rows. This is easily done with a self-join that matches each row n with row n +1 to calculate differences between pairs of at-bats and hits values. These differences enable computation of batting average during each month:
+The last column of the query result also shows the player’s batting average as of each date. This column is not stored in the table but is easily computed as the ratio of hits to at-bats. The result provides a general idea of how the player’s hitting performance changed over the course of the season, but it doesn’t give a very informative picture of how the player did during each individual month. To deterMINe that, it’s necessary to calculate relative differences BETWEEN pairs of rows. This is easily done with a self-join that matches each row n with row n +1 to calculate differences BETWEEN pairs of at-bats and hits values. These differences enable computation of batting average during each month:
 SELECT
 t1.id AS id1, t2.id AS id2,
 t2.date,
@@ -3803,7 +3826,7 @@ GROUP BY t1.date;
 | 2006-06-03 |  0.50 |  2.00 |  2 | 1.000000 |
 | 2006-06-05 |  1.00 |  3.00 |  3 | 1.000000 |
 +------------+--------------+-------------+--------------+-------------+
-To fix the problem, it’s necessary to deterMINe the number of days elapsed a different way. Take the MINimum and MAXimum date involved in each sum and calculate a days- elapsed value FROM them using the following expression:
+To fix the problem, it’s necessary to deterMINe the number of days elapsed a different way. Take the minimum and maximum date involved in each sum and calculate a days- elapsed value FROM them using the following expression:
 DATEDIFF(MAX(t2.date),MIN(t2.date)) + 1
 That value must be used for the days-elapsed column and for computing the running averages. The resulting statement is as follows:
 SELECT t1.date, t1.precip AS 'daily precip',
@@ -4100,7 +4123,7 @@ Use a LEFT JOIN to identify unmatched values in each table. If there are any and
 
 Discussion
 Inner joins are useful for identifying relationships, and outer joins are useful for iden- tifying the lack of relationship. This property of outer joins is valuable when you have datasets that are supposed to be related but for which the relationship might be imperfect.
-Mismatches between datasets can occur if you receive two datafiles FROM an external source that are supposed to be related but for which the integrity of the relationship actually is imperfect. It can also occur as an anticipated consequence of a deliberate action. Suppose that an online discussion board uses a parent table that lists discussion topics and a child table that rows the articles posted for each topic. If you purge the child table of old article rows, that may result in any given topic row in the parent table no longer having any children. If so, the lack of recent postings for the topic indicates that it is probably dead and that the parent row in the topic table can be deleted, too. In such a situation, you delete a set of child rows with the explicit recognition that the operation may strand parent rows and cause them to become eligible for being deleted as well.
+Mismatches BETWEEN datasets can occur if you receive two datafiles FROM an external source that are supposed to be related but for which the integrity of the relationship actually is imperfect. It can also occur as an anticipated consequence of a deliberate action. Suppose that an online discussion board uses a parent table that lists discussion topics and a child table that rows the articles posted for each topic. If you purge the child table of old article rows, that may result in any given topic row in the parent table no longer HAVING any children. If so, the lack of recent postings for the topic indicates that it is probably dead and that the parent row in the topic table can be deleted, too. In such a situation, you delete a set of child rows with the explicit recognition that the operation may strand parent rows and cause them to become eligible for being deleted as well.
 However you arrive at the point WHERE related tables have unmatched rows, you can analyze and modify them using SQL statements. Specifically, restoring their relation- ship is a matter of identifying the unattached rows and then deleting them:
 To identify unattached rows, use a LEFT JOIN, because this is a “find unmatched rows” problem. (See Recipe 12.2 for information about LEFT JOIN.)
 To delete rows that are unmatched, use a multiple-table DELETE statement that specifies which rows to remove using a similar LEFT JOIN.
@@ -4185,7 +4208,7 @@ WHERE region_id NOT IN (SELECT region_id FROM sales_region);
 
 ----
 
-PerforMINg a Join Between Tablesin Different Databases
+performing a Join BETWEEN Tablesin Different Databases
 Problem
 You want to use tables in a join, but they’re not located in the same database.
 
@@ -4276,13 +4299,13 @@ That means column values won’t get lost. Unfortunately, it’s still necessary
 ---
 3-6. Finding Matched Data Across Tables
 Problem
-You want to find the rows in common between two or more tables or queries.
+You want to find the rows in common BETWEEN two or more tables or queries.
 
 Solution
-Use the INTERSECT operator. When you use INTERSECT, the resulting row set contains only rows that are in common between the two tables or queries:
-SELECT count(*) FROM employee_act; COUNT(*)
+Use the INTERSECT operator. When you use INTERSECT, the resulting row set contains only rows that are in common BETWEEN the two tables or queries:
+SELECT COUNT(*) FROM employee_act; COUNT(*)
 6
-SELECT count(*) FROM employee_new; COUNT(*)
+SELECT COUNT(*) FROM employee_new; COUNT(*)
 5
 
 
@@ -4325,7 +4348,7 @@ If you wanted to note changes for the entire row, you could use this query inste
 SELECT * FROM employee MINus
 SELECT * FROM employee_bonus
 ;
-A Venn diagram may help to show how the MINUS operator works. Figure 3-2 shows the result of Query1 MINUS Query2. Any rows that overlap between Query1 and Query2 are removed FROM the result set along with any rows in Query2 that do not overlap Query1. In other words, only rows in Query1 are returned less any rows in Query1 that exist in Query2.
+A Venn diagram may help to show how the MINUS operator works. Figure 3-2 shows the result of Query1 MINUS Query2. Any rows that overlap BETWEEN Query1 and Query2 are removed FROM the result set along with any rows in Query2 that do not overlap Query1. In other words, only rows in Query1 are returned less any rows in Query1 that exist in Query2.
 
 ---
 
@@ -4562,7 +4585,7 @@ SELECT department_name FROM department d WHERE not exists (SELECT e.employee_id 
 WHERE d.manager_id = e.employee_id);
 
 How It Works
-In any database, including Oracle, the EXISTS predicate answers the question, “Is there a relationship between two data items, and by extension, what items in one set are related to items in a second set?” The NOT EXISTS variant tests the converse, “Can it definitively be said that no relationship exists between two sets of data, based on a proposed criterion?” Each approach is referred to as correlation or a correlated subquery (literally, co-relation, sharing a relationship).
+In any database, including Oracle, the EXISTS predicate answers the question, “Is there a relationship BETWEEN two data items, and by extension, what items in one set are related to items in a second set?” The NOT EXISTS variant tests the converse, “Can it definitively be said that no relationship exists BETWEEN two sets of data, based on a proposed criterion?” Each approach is referred to as correlation or a correlated subquery (literally, co-relation, sharing a relationship).
 Interestingly, Oracle bases its decision on whether satisfying data exists solely on this premise: was a matching row found that satisfied the subquery’s predicates? It’s almost too subtle, so we’ll point out the obvious thing Oracle isn’t seeking. What you SELECT in the inner correlated query doesn’t matter—it’s only the criteria that matter. So you’ll often see versions of existence tests that form their subSELECT by Selecting the value 1, the entire row using an asterisk, a literal value, or even NULL. Ultimately, it’s immaterial in this form of the recipe. The key point is the correlation expression. In our case, it’s WHERE D.MANAGER_ID = E.EMPLOYEE_ID.
 This also helps explain what Oracle is doing in the second half of the recipe, WHERE we’re looking for DEPARTMENT_NAME values for rows WHERE the MANAGER_ID doesn’t exist in the employee table. Oracle drives the query by evaluating, for each row in the outer query, whether no rows are returned by the inner correlated query. Oracle doesn’t care what data exists in other columns not in the correlation criteria. It pays to be careful using such NOT EXISTS clauses on their own—not because the logic won’t work but because against large data sets, the optimizer can decided to repeatedly scan the inner data in full, which might affect performance. In our example, so long as a manager’s ID listed for a department is not found in the employee table, the NOT EXISTS predicate will be satisfied, and department included in the results.
 
@@ -4578,8 +4601,8 @@ Problem
 In order to produce a concise result in one query, you need to change the column returned on a row-by- row basis, conditional on a value FROM another row. You want to avoid awkward mixes of unions, subqueries, aggregation, and other inelegant techniques.
 
 Solution
-For circumstances WHERE you need to conditionally branch or alternate between source data, Oracle provides the CASE statement. CASE mimics the traditional switch or case statement found in many programMINg languages like C or Java.
-To bring focus to our example, we’ll assume our problem is far more tangible and straightforward. We want to find the date employee in the shipping department (with the DEPARTMENT_ID of 50) started their current job. We know their initial hire date with the firm is tracked in the HIRE_DATE column on the employee table, but if they’ve had a promotion or changed roles, the date when they commenced their new position can be inferred FROM the END_DATE of their previous position in the HR.JOB_HISTORY table. We need to branch between HIRE_DATE or END_DATE for each employee of the shipping department accordingly, as shown in the next SQL statement.
+For circumstances WHERE you need to conditionally branch or alternate BETWEEN source data, Oracle provides the CASE statement. CASE mimics the traditional switch or case statement found in many programMINg languages like C or Java.
+To bring focus to our example, we’ll assume our problem is far more tangible and straightforward. We want to find the date employee in the shipping department (with the DEPARTMENT_ID of 50) started their current job. We know their initial hire date with the firm is tracked in the HIRE_DATE column on the employee table, but if they’ve had a promotion or changed roles, the date when they commenced their new position can be inferred FROM the END_DATE of their previous position in the HR.JOB_HISTORY table. We need to branch BETWEEN HIRE_DATE or END_DATE for each employee of the shipping department accordingly, as shown in the next SQL statement.
 
 SELECT e.employee_id, case
 when old.job_id IS NULL then e.hire_date else old.end_date end
@@ -4596,7 +4619,7 @@ JOB_START_DATE.
 …
 
 How It Works
-Our recipe uses the CASE feature, in Search form rather than Simple form, to switch between HIRE_DATE
+Our recipe uses the CASE feature, in Search form rather than Simple form, to switch BETWEEN HIRE_DATE
 and END_DATE values FROM the joined tables. In some respects, it’s easiest to think of this CASE operation
 
 
@@ -4605,7 +4628,7 @@ SELECT e.employee_id, e.hire_date…
 WHEREas for employee that have had promotions, the CASE statement switches the SELECT to the following form:
 SELECT e.employee_id, old.end_date…
 
-The beauty is in not having to explicitly code these statements yourself, and for far more complex uses of CASE, not having to code many dozens or hundreds of statement combinations.
+The beauty is in not HAVING to explicitly code these statements yourself, and for far more complex uses of CASE, not HAVING to code many dozens or hundreds of statement combinations.
 To explore the solution FROM the data’s perspective, the following SQL statement extracts the employee identifier and the hire and end dates using the same left outer join as our recipe.
 
 SELECT e.employee_id, e.hire_date, old.end_date end FROM employee e left outer join hr.job_history old on e.employee_id = old.employee_id
