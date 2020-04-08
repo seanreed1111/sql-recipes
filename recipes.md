@@ -2144,11 +2144,11 @@ SELECT * FROM (
 SELECT 
     department_id as 'dept', 
     job_id as 'job', 
-    to_char(hire_date,'YYYY') as 'Start_Year', 
+    TO_CHAR(hire_date,'YYYY') as 'Start_Year', 
     AVG(salary) as 'avg_salary'
 FROM employee
 GROUP BY 
-    rollup (department_id, job_id, to_char(hire_date,'YYYY'))) AS salcalc 
+    rollup (department_id, job_id, TO_CHAR(hire_date,'YYYY'))) AS salcalc 
 WHERE 
     salcalc.start_year > '1990'
 OR  salcalc.start_year IS NULL 
@@ -2158,7 +2158,7 @@ ORDER BY 1,2,3,4;
 
 ## How It Works
 ## Our recipe uses the aggregated and grouped results of the subquery as an inline view, which we then SELECT FROM and apply further criteria. In this case, we could avoid the subquery approach by using a more complex HAVING clause like this.
-## HAVING to_char(hire_date,'YYYY') > '1990' or to_char(hire_date,'YYYY') IS NULL
+## HAVING TO_CHAR(hire_date,'YYYY') > '1990' or TO_CHAR(hire_date,'YYYY') IS NULL
 
 ## Avoiding a subquery here works only because we’re comparing our aggregates with literals. If we wanted to find averages for jobs in departments WHERE someone had previously held the job, we’d need to reference the HR.JOBHISTORY table. Depending on the business requirement, we might get lucky and be able to construct our join, aggregates, groups, and HAVING criteria in one statement. By treating the results of the aggregate and grouping query as input to another query, we get better readability, and the ability to code even more complexity than the HAVING clause allows.
 
@@ -2317,89 +2317,85 @@ FROM employee;
 ## You can use an alternative to sparse ranking called dense ranking. SQL supports this using the `DENSE_RANK` analytical function. Observe what happens to the recipe when we switch to dense ranking.
 
 ```sql
-SELECT employee_id, salary, dense_RANK() over (ORDER BY salary desc) as Salary_Rank
+SELECT employee_id, salary, DENSE_RANK() over (ORDER BY salary desc) as Salary_Rank
 FROM employee;
+```
 We now see the “missing” consecutive `RANK` values.
 
 ---
-2-13. Finding First and Last Values within a Group
-Problem
-You want to calculate and display aggregate information like minimum and maximum for a group, along with detail information for each member. You want don’t want to repeat effort to display the aggregate and detail values.
+
+# Finding First and Last Values within a Group
+## Problem
+## You want to calculate and display aggregate information like minimum and maximum for a group, along with detail information for each member. You want don’t want to repeat effort to display the aggregate and detail values.
 
 
-Solution
-SQL provides the analytic functions FIRST and LAST to calculate the leading and ending values in any ordered sequence. Importantly, these do not require grouping to be used, unlike explicit aggregate functions such as MIN and MAX that work without OLAP features.
-For our recipe, we’ll assume the problem is a concrete one of displaying an employee’s salary, alongside the minimum and maximum salaries paid to the employee’s peers in their department. This SELECT statement does the work.
+## Solution
+##SQL provides the analytic functions FIRST and LAST to calculate the leading and ending values in any ordered sequence. Importantly, these do not require grouping to be used, unlike explicit aggregate functions such as MIN and MAX that work without OLAP features.
 
-SELECT department_id, first_name, last_name, MIN(salary)
-over (partition by department_id) "MINSal", salary,
-MAX(salary)
-over (partition by department_id) "MAXSal" FROM employee
-ORDER BY department_id, salary;
-
-This code outputs all employee and displays their salaries BETWEEN the lowest and highest within their own department, as shown in the following partial output.
-
-
-How It Works
-The key to both the FIRST and LAST analytic functions is their ability to let you perform the grouping and ordering on one set of criteria, while leaving you free to order differently in the main body of the query, and optionally group or not as desired by other factors.
-The OLAP window is partitioned over each department with the OVER clause
-over (partition by department_id) “MINSal”
 ---
-2-14. performing Aggregations over Moving Windows
-Problem
-You need to provide static and moving SUMmaries or aggregates based on the same data. For example, as part of a sales report, you need to provide a monthly summary of sales order amounts, together with a moving three- month average of sales amounts for comparison.
 
-Solution
-SQL provides moving or rolling window functions as part of the analytical function set. This gives you the ability to reference any number of preceding rows in a result set, the current row in the result set, and any number of following rows in a result set. Our initial recipe uses the current row and the three preceding rows to calculate the rolling average of order values.
+# Performing Aggregations over Moving Windows
+## Problem
+## You need to provide static and moving summaries or aggregates based on the same data. For example, as part of a sales report, you need to provide a monthly summary of sales order amounts, together with a moving three- month average of sales amounts for comparison.
 
-SELECT to_char(order_date, 'MM') as OrderMonth, SUM(order_total) as MonthTotal, AVG(SUM(order_total))
-over
-(ORDER BY to_char(order_date, 'MM') rows BETWEEN 3 preceding and current row) as RollingQtrAverage
-FROM oe.orders
-WHERE order_date BETWEEN '01-JAN-1999' and '31-DEC-1999' GROUP BY to_char(order_date, 'MM')
+## Solution
+## SQL provides moving or rolling window functions as part of the analytical function set. This gives you the ability to reference any number of preceding rows in a result set, the current row in the result set, and any number of following rows in a result set. Our initial recipe uses the current row and the three preceding rows to calculate the rolling average of order values.
+
+```sql
+SELECT 
+    TO_CHAR(order_date, 'MM') as OrderMonth, SUM(order_total) as MonthTotal, 
+    AVG(SUM(order_total)) OVER (ORDER BY TO_CHAR(order_date, 'MM') rows BETWEEN 3 preceding and current row) AS RollingQtrAverage
+FROM orders
+WHERE order_date BETWEEN '01-JAN-1999' and '31-DEC-1999' 
+GROUP BY TO_CHAR(order_date, 'MM')
 ORDER BY 1;
-We see the month, the associated total, and the calculated rolling three-month average in our results.
+```
 
-You might notice January (OrderMonth 01) is missing. This isn’t a quirk of this approach: rather it’s because the OE.ORDERS table has no orders recorded for this month in 1999.
+## We see the month, the associated total, and the calculated rolling three-month average in our results.
+
+## You might notice January (OrderMonth 01) is missing. This isn’t a quirk of this approach: rather it’s because the OE.ORDERS table has no orders recorded for this month in 1999.
 
 
-How It Works
-Our SELECT statement for a rolling average starts by Selecting some straightforward values. The month number is extracted FROM the ORDER_DATE field using the TO_CHAR() function with the MM format string to obtain the month’s number. We choose the month number rather than the name so that the output is sorted as a person would expect.
-Next up is a normal aggregate of the ORDER_TOTAL field using the traditional SUM function. No magic there. We then introduce an OLAP AVG function, which is WHERE the detail of our rolling average is managed. That part of the statement looks like this.
+## How It Works
+## Our SELECT statement for a rolling average starts by Selecting some straightforward values. The month number is extracted FROM the ORDER_DATE field using the TO_CHAR() function with the MM format string to obtain the month’s number. We choose the month number rather than the name so that the output is sorted as a person would expect.
 
-AVG(SUM(order_total)) over (ORDER BY to_char(order_date, 'MM') rows BETWEEN 3 preceding and current row) as RollingQtrAverage
+## Next up is a normal aggregate of the ORDER_TOTAL field using the traditional SUM function. No magic there. We then introduce an OLAP AVG function, which is where the detail of our rolling average is managed. That part of the statement looks like this.
 
-All of that text is to generate our result column, the ROLLINGQTRAVERAGE. Breaking the sections down will illustrate how each part contributes to the solution. The leading functions, AVG(SUM(ORDER_TOTAL)), suggest we are going to SUM the ORDER_TOTAL values and then take their average. That is correct to an extent, but SQL isn’t just going to calculate a normal average or SUM. These are OLAP AVG and SUM functions, so their scope is governed by the OVER clause.
-The OVER clause starts by instructing SQL to perform the calculations based on the order of the formatted ORDER_DATE field—that’s what ORDER BY TO_CHAR(ORDER_DATE, 'MM') achieves—effectively ordering the calculations by the values 02 to 12 (remember, there’s no data for January 1999 in the database). Finally, and most importantly, the ROWS element tells SQL the size of the window of rows over which it should calculate the driving OLAP aggregate functions. In our case, that means over how many months should the ORDER_TOTAL values be SUMmed and then averaged. Our recipe instructs SQL to use the results FROM the third-last row through to the current row. This is one interpretation of three-
-month rolling average, though technically it’s actually generating an average over four months. If what you want is really a three-month average —the last two months plus the current month—you’d change the ROWS BETWEEN element to read
-rows BETWEEN 2 preceding and current row
-This brings up an interesting point. This recipe assumes you want a rolling average computed over historic data. But some business requirements call for a rolling window to track trends based on data not only prior to a point in time, but also after that point. For instance, we might want to use a three-month window but base it on the previous, current, and following months. The next version of the recipe
-shows exactly this ability of the windowing function, with the key changes in bold.
+```sql
+AVG(SUM(order_total)) OVER (ORDER BY TO_CHAR(order_date, 'MM') rows BETWEEN 3 preceding AND current row) AS RollingQtrAverage
+```
 
-SELECT to_char(order_date, 'MM') as OrderMonth, SUM(order_total) as MonthTotal, AVG(SUM(order_total)) over (ORDER BY to_char(order_date, 'MM')
-rows BETWEEN 1 preceding and 1 following) as AVGTrend
-FROM oe.orders
-WHERE order_date BETWEEN '01-JAN-1999' and '31-DEC-1999' GROUP BY to_char(order_date, 'MM')
-ORDER BY 1
-/
+## All of that text is to generate our result column, the ROLLINGQTRAVERAGE. Breaking the sections down will illustrate how each part contributes to the solution. The leading functions, AVG(SUM(ORDER_TOTAL)), suggest we are going to sum the ORDER_TOTAL values and then take their average. That is correct to an extent, but SQL isn’t just going to calculate a normal average or SUM. These are OLAP AVG and SUM functions, so their scope is governed by the OVER clause.
+## The `OVER` clause starts by instructing SQL to perform the calculations based on the order of the formatted ORDER_DATE field—that’s what ORDER BY TO_CHAR(ORDER_DATE, 'MM') achieves, effectively ordering the calculations by the values 02 to 12 (remember, there’s no data for January 1999 in the database). Finally, and most importantly, the ROWS element tells SQL the size of the window of rows over which it should calculate the driving OLAP aggregate functions. In our case, that means over how many months should the ORDER_TOTAL values be SUMmed and then averaged. Our recipe instructs SQL to use the results FROM the third-last row through to the current row. This is one interpretation of three-month rolling average, though technically it’s actually generating an average over four months. If what you want is really a three-month average —the last two months plus the current month—you’d change the ROWS BETWEEN element to read rows BETWEEN 2 preceding and current row.
+## This brings up an interesting point. This recipe assumes you want a rolling average computed over historic data. But some business requirements call for a rolling window to track trends based on data not only prior to a point in time, but also after that point. For instance, we might want to use a three-month window but base it on the previous, current, and following months. The next version of the recipe shows exactly this ability of the windowing function, with the key changes in bold.
+
+```sql
+SELECT 
+    TO_CHAR(order_date, 'MM') as OrderMonth, 
+    SUM(order_total) as MonthTotal, 
+    AVG(SUM(order_total)) OVER (ORDER BY TO_CHAR(order_date, 'MM') ROWS BETWEEN 1 PRECEDING and 1 FOLLOWING) as AVGTrend
+FROM orders
+WHERE 
+    order_date BETWEEN '01-JAN-1999' and '31-DEC-1999' 
+GROUP BY TO_CHAR(order_date, 'MM')
+ORDER BY 1;
+```
 Our output changes as you’d expect, as the monthly ORDER_TOTAL values are now grouped differently for the calculation.
 
 
-
-
-11 rows selected.
-The newly designated AVGTREND value is calculated as described, using both preceding and following rows. Both our original recipe and this modified version are rounded out with a WHERE clause to SELECT only data FROM the OE.ORDERS table for the year 1999. We GROUP BY the derived month number so that our traditional SUM of ORDER_TOTAL in the second field of the results aggregates correctly, and finish up ordering logically by the month number.
+## The newly designated AVGTREND value is calculated as described, using both preceding and following rows. Both our original recipe and this modified version are rounded out with a WHERE clause to SELECT only data from the `ORDERS` table for the year 1999. We `GROUP BY` the derived month number so that our traditional sum of ORDER_TOTAL in the second field of the results aggregates correctly, and finish up ordering logically by the month number.
 
 ---
 
-2-15. Removing Duplicate Rows Based on a Subset of Columns
-Problem
-Data needs to be cleansed FROM a table based on duplicate values that are present only in a subset of rows.
+# Removing Duplicate Rows Based on a Subset of Columns
+## Problem
+## Data needs to be cleansed FROM a table based on duplicate values that are present only in a subset of rows.
 
-Solution
-Historically there were SQL-specific solutions for this problem that used the ROWNUM feature. However, this can become awkward and complex if you have multiple groups of duplicates and want to remove the excess data in one pass. Instead, you can use SQL’s ROW_NUMBER OLAP function with a DELETE statement to efficiently remove all duplicates in one pass.
-To illustrate our recipe in action, we’ll first introduce several new staff members that have the same
-FIRST_NAME and LAST_NAME as some existing employee. These INSERT statements create our problematic duplicates.
+## Solution
+## Historically there were SQL-specific solutions for this problem that used the `ROWNUM` feature. However, this can become awkward and complex if you have multiple groups of duplicates and want to remove the excess data in one pass. Instead, you can use SQL’s ROW_NUMBER OLAP function with a DELETE statement to efficiently remove all duplicates in one pass.
+## To illustrate our recipe in action, we’ll first introduce several new staff members that have the same FIRST_NAME and LAST_NAME as some existing employee. These INSERT statements create our problematic duplicates.
+
+```sql
 insert into employee
 (employee_id, first_name, last_name, email, phone_number, hire_date, job_id, salary, commission_pct, manager_id, department_id)
 Values
@@ -2415,10 +2411,23 @@ Insert into employee
 Values
 (212, 'Allen', 'McEwen', 'AMCEWEN2', '650.555.8882', '25-MAR-2009', 'SA_REP', 3500, 0.25, 145, 80);
 commit;
-To show that we do indeed have some duplicates, a quick SELECT shows the rows in question.
-SELECT employee_id, first_name, last_name FROM employee
-WHERE first_name in ('Janette','Patrick','Allan') and last_name in ('King','Sully','McEwen')
-ORDER BY first_name, last_name;
+```
+
+## To show that we do indeed have some duplicates, a quick SELECT shows the rows in question.
+
+```sql
+SELECT 
+    employee_id, 
+    first_name, 
+    last_name 
+FROM employee
+WHERE 
+    first_name IN ('Janette','Patrick','Allan') 
+    AND last_name IN ('King','Sully','McEwen')
+ORDER BY 
+    first_name, last_name;
+```
+```
 EMPLOYEE_ID FIRST_NAME  LAST_NAME
 ----------- ----------- ----------
 158 Allan   McEwen
@@ -2426,52 +2435,62 @@ EMPLOYEE_ID FIRST_NAME  LAST_NAME
 210 Janette King
 156 Janette King
 211 Patrick Sully
-Patrick Sully
-If you worked in HR, or were one of these people, you might be concerned with the unpredictable consequences and want to see the duplicates removed. With our problematic data in place, we can introduce the SQL to remove the “extra” Janette King, Patrick Sully, and Allen McEwen.
+```
 
+## If you worked in HR, or were one of these people, you might be concerned with the unpredictable consequences and want to see the duplicates removed. With our problematic data in place, we can introduce the SQL to remove the “extra” Janette King, Patrick Sully, and Allen McEwen.
+
+```sql
 delete FROM employee WHERE rowid in
 (SELECT rowid FROM
 (SELECT first_name, last_name, rowid, row_number() over
 (partition by first_name, last_name ORDER BY employee_id) staff_row
 FROM employee) WHERE staff_row > 1);
+```
 
-When run, this code does indeed claim to remove three rows, preSUMably our duplicates. To check, we can repeat our quick query to see which rows match those three names. We see this set of results.
+## When run, this code does indeed claim to remove three rows, presumably our duplicates. To check, we can repeat our quick query to see which rows match those three names. We see this set of results.
 
-
+```
 EMPLOYEE_ID FIRST_NAME LAST_NAME
 Allan   McEwen
 Janette King
 Patrick Sully
-Our DELETE has succeeded, based on finding duplicates for a subset of columns only.
+```
 
-How It Works
-Our recipe uses both the ROW_NUMBER OLAP function and SQL’s internal ROWID value for uniquely identifying rows in a table. The query starts with exactly the kind of DELETE syntax you’d assume.
+##Our DELETE has succeeded, based on finding duplicates for a subset of columns only.
 
-delete FROM employee WHERE rowid in
-(… nested subqueries here …)
-As you’d expect, we’re asking SQL to delete rows FROM employee WHERE the ROWID value matches the values we detect for duplicates, based on criteria evaluating a subset of columns. In our case, we use subqueries to precisely identify duplicates based on FIRST_NAME and LAST_NAME.
-To understand how the nested subqueries work, it’s easiest to start with the innermost subquery,
-which looks like this.
+## How It Works
+## Our recipe uses both the ROW_NUMBER OLAP function and SQL’s internal ROWID value for uniquely identifying rows in a table. The query starts with exactly the kind of DELETE syntax you’d assume.
 
+```sql
+DELETE FROM employee WHERE rowid IN
+-- (… nested subqueries here …)
+```
+## As you’d expect, we’re asking SQL to delete rows FROM employee WHERE the ROWID value matches the values we detect for duplicates, based on criteria evaluating a subset of columns. In our case, we use subqueries to precisely identify duplicates based on FIRST_NAME and LAST_NAME.
+## To understand how the nested subqueries work, it’s easiest to start with the innermost subquery, which looks like this.
+
+```sql
 SELECT first_name, last_name, rowid, row_number() over
 (partition by first_name, last_name ORDER BY employee_id) staff_row
 FROM employee
-We’ve intentionally added the columns FIRST_NAME and LAST_NAME to this innermost subquery to make the recipe understandable as we work through its logic. Strictly speaking, these are superfluous to the logic, and the innermost subquery could be written without them to the same effect. If we execute just this innermost query (with the extra columns selected for clarity), we see these results.
+```
+## We’ve intentionally added the columns FIRST_NAME and LAST_NAME to this innermost subquery to make the recipe understandable as we work through its logic. Strictly speaking, these are superfluous to the logic, and the innermost subquery could be written without them to the same effect. If we execute just this innermost query (with the extra columns selected for clarity), we see these results.
 
 
+## All 110 staff FROM the employee table have their FIRST_NAME, LAST_NAME and ROWID returned. The ROW_NUMBER() function then works over sets of FIRST_NAME and LAST_NAME driven by the PARTITION BY instruction. This means that for every unique FIRST_NAME and LAST_NAME, ROW_NUMBER will start a running count of rows we’ve aliased as STAFF_ROW. When a new FIRST_NAME and LAST_NAME combination is observed, the STAFF_ROW counter resets to 1.
+## In this way, the first 'Janette King' has a STAFF_ROW value of 1, the second 'Janette King' entry has a STAFF_ROW value of 2, and if there were a third and fourth such repeated name, they’d have STAFF_ROW values of 3 and 4 respectively. With our identically-named staff now numbered, we move to the next outermost subSELECT, which queries the results FROM above.
 
-
-
-
-110 rows selected.
-All 110 staff FROM the employee table have their FIRST_NAME, LAST_NAME and ROWID returned. The ROW_NUMBER() function then works over sets of FIRST_NAME and LAST_NAME driven by the PARTITION BY instruction. This means that for every unique FIRST_NAME and LAST_NAME, ROW_NUMBER will start a running count of rows we’ve aliased as STAFF_ROW. When a new FIRST_NAME and LAST_NAME combination is observed, the STAFF_ROW counter resets to 1.
-In this way, the first Janette King has a STAFF_ROW value of 1, the second Janette King entry has a STAFF_ROW value of 2, and if there were a third and fourth such repeated name, they’d have STAFF_ROW values of 3 and 4 respectively. With our identically-named staff now numbered, we move to the next
-outermost subSELECT, which queries the results FROM above.
-SELECT rowid FROM SELECT
-(SELECT first_name, last_name, rowid, row_number() over
-(partition by first_name, last_name ORDER BY first_name, last_name) staff_row
-FROM employee) WHERE staff_row > 1
-
+```sql
+SELECT rowid 
+FROM SELECT
+    (SELECT 
+        first_name, 
+        last_name, 
+        rowid, 
+        row_number() over (partition by first_name, last_name 
+            ORDER BY first_name, last_name) AS staff_row
+    FROM employee) 
+WHERE staff_row > 1
+```
 This outer query looks simple, because it is! We simply SELECT the ROWID values FROM the results of our innermost query, WHERE the calculated STAFF_ROW value is greater than 1. That means that we only SELECT the ROWID values for the second Janette King, Allan McEwen, and Patrick Sully, like this.
 ROWID
 AAARAgAAFAAAABYAA4 AAARAgAAFAAAABYAA6 AAARAgAAFAAAABYAA5
