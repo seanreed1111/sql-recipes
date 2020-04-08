@@ -159,9 +159,9 @@ WHERE
 
 ---
 
-# Summarizing the Values in a Column
+# SUMmarizing the Values in a Column
 ## Problem
-## You need to summarize data in a column in some way. For example, you have been asked to report on the average salary paid per employee, as well as the total salary budget, number of employee, highest and lowest earners, and more.
+## You need to SUMmarize data in a column in some way. For example, you have been asked to report on the average salary paid per employee, as well as the total salary budget, number of employee, highest and lowest earners, and more.
 
 ## Solution
 ## You don’t need to calculate a total and count the number of employee separately to deterMINe the average salary. The AVG function calculates average salary for you, as shown in the next SELECT statement.
@@ -176,7 +176,7 @@ AVG(SALARY)
 
 ----
 
-# Summarizing with COUNT( )
+# SUMmarizing with COUNT( )
 ## Problem
 ## You want to count the number of rows in a table, the number of rows that match certain conditions, or the number of times that particular values occur.
 
@@ -252,7 +252,7 @@ FROM driver_log;
 
 ---
 
-# Summarizing with MIN( ) and MAX( )
+# SUMmarizing with MIN( ) and MAX( )
 ## Problem
 ## You need to deterMINe the smallest or largest of a set of values.
 
@@ -316,7 +316,7 @@ FROM states;
 
 ---
 
-# Summarizing with SUM( ) and AVG( )
+# SUMmarizing with SUM( ) and AVG( )
 ## Problem
 ## You need to add a set of numbers or find their average.
 
@@ -370,7 +370,7 @@ SELECT SUM(pop) FROM states;
 ## Use `DISTINCT` to SELECT unique values to count them.
 
 ## Discussion
-## One summary operation that doesn’t use aggregate functions is to deterMINe which values or rows are contained in a dataset by eliMINating duplicates. Do this with DISTINCT. DISTINCT is useful for boiling down a query result, and often is combined with ORDER BY to place the values in more mean- ingful order. For example, to deterMINe the names of the drivers listed in the driver_log table, use the following statement:
+## One SUMmary operation that doesn’t use aggregate functions is to deterMINe which values or rows are contained in a dataset by eliMINating duplicates. Do this with DISTINCT. DISTINCT is useful for boiling down a query result, and often is combined with ORDER BY to place the values in more mean- ingful order. For example, to deterMINe the names of the drivers listed in the driver_log table, use the following statement:
 
 ```sql
 SELECT DISTINCT name FROM driver_log ORDER BY name;
@@ -513,13 +513,13 @@ WHERE pop = (SELECT MAX(population) FROM states);
 ---
 
 ## Problem
-## You want to calculate a summary for each subgroup of a set of rows, not an overall summary value.
+## You want to calculate a SUMmary for each subgroup of a set of rows, not an overall SUMmary value.
 
 ## Solution
 ## Use a GROUP BY clause to arrange rows into groups.
 
 ## Discussion
-## The summary statements shown so far calculate summary values over all rows in the result set. For example, the following statement deterMINes the number of records in the mail table, and thus the total number of mail messages that have been sent:
+## The SUMmary statements shown so far calculate SUMmary values over all rows in the result set. For example, the following statement deterMINes the number of records in the mail table, and thus the total number of mail messages that have been sent:
 ```sql
 SELECT COUNT(*) FROM mail;
 ```
@@ -532,7 +532,7 @@ SELECT COUNT(*) FROM mail;
 +----------+
 ```
 
-## Sometimes it’s desirable to break a set of rows into subgroups and summarize each group. Do this by using aggregate functions in conjunction with a GROUP BY clause. To deterMINe the number of messages per sender, group the rows by sender name, count how many times each name occurs, and display the names with the counts:
+## Sometimes it’s desirable to break a set of rows into subgroups and SUMmarize each group. Do this by using aggregate functions in conjunction with a GROUP BY clause. To deterMINe the number of messages per sender, group the rows by sender name, count how many times each name occurs, and display the names with the counts:
 ```sql
 SELECT sender, COUNT(*) FROM mail
 GROUP BY sender;
@@ -545,7 +545,7 @@ GROUP BY sender;
 | phil    |   5      |
 | tricia  |   2      |
 +---------+----------+
-That query summarizes the same column that is used for grouping (`sender`), but that’s not always necessary. Suppose that you want a quick characterization of the mail table, showing for each `sender` listed in it the total amount of traffic sent (in bytes) and the average number of bytes per message. In this case, you still use the `sender` column to place the rows in groups, but the summary functions operate on the size values:
+That query SUMmarizes the same column that is used for grouping (`sender`), but that’s not always necessary. Suppose that you want a quick characterization of the mail table, showing for each `sender` listed in it the total amount of traffic sent (in bytes) and the average number of bytes per message. In this case, you still use the `sender` column to place the rows in groups, but the SUMmary functions operate on the size values:
 
 ```sql
 SELECT sender,
@@ -565,7 +565,7 @@ Output
 | tricia  |  2589407    |  1294703.5000     |
 +---------+-------------+-------------------+
 ```
-## Use as many grouping columns as necessary to achieve as fine-grained a summary as you require. The earlier query that shows the number of messages per sender is a coarse summary. To be more specific and find out how many messages each sender sent from each host, use two grouping columns. This produces a result with nested groups (groups within groups):
+## Use as many grouping columns as necessary to achieve as fine-grained a SUMmary as you require. The earlier query that shows the number of messages per sender is a coarse SUMmary. To be more specific and find out how many messages each sender sent from each host, use two grouping columns. This produces a result with nested groups (groups within groups):
 
 SELECT sender, srchost, COUNT(sender) FROM mail
 GROUP BY sender, srchost;
@@ -584,7 +584,7 @@ GROUP BY sender, srchost;
 | tricia  |   2      |
 +---------+----------+
 
-## The preceding examples in this section have used COUNT( ), SUM( ), and AVG( ) for per- group summaries. You can use MIN( ) or MAX( ), too. With a GROUP BY clause, they will tell you the smallest or largest value per group. The following query groups mail table rows by message sender, displaying for each the size of the largest message sent and the date of the most recent message:
+## The preceding examples in this section have used COUNT( ), SUM( ), and AVG( ) for per- group SUMmaries. You can use MIN( ) or MAX( ), too. With a GROUP BY clause, they will tell you the smallest or largest value per group. The following query groups mail table rows by message sender, displaying for each the size of the largest message sent and the date of the most recent message:
 
 ```sql
 SELECT sender, MAX(size), MAX(t) FROM mail GROUP BY sender;
@@ -619,7 +619,7 @@ GROUP BY
 +---------+---------+-----------+
 ```
 
-## Watch out for the following trap! Make sure you only select nonsummary table columns that are **related** to the grouping columns. 
+## Watch out for the following trap! Make sure you only select nonSUMmary table columns that are **related** to the grouping columns. 
 ## Suppose that you want to know the longest trip per driver in the driver_log table. That’s produced by this query:
 
 ```sql
@@ -646,7 +646,7 @@ FROM driver_log
 GROUP BY name;
 ```
 ## The query does produce a result but not all dates are correct!!! 
-## So what’s going on? Why does the MAX() statement produce incorrect results? This happens because when you include a GROUP BY clause in a query, the only values that you can SELECT are the `grouped` columns or summary values calculated FROM the grouped column. 
+## So what’s going on? Why does the MAX() statement produce incorrect results? This happens because when you include a GROUP BY clause in a query, the only values that you can SELECT are the `grouped` columns or SUMmary values calculated FROM the grouped column. 
 ## If you display additional table columns, they’re not tied to the grouped columns and the values displayed for them are indeterMINate!
 So, since `travel_date` is not in the `GROUP BY`, SQL will not display the correct date!! 
 
@@ -679,9 +679,9 @@ Output
 
 ---
 
-## Summaries and NULL Values
+## SUMmaries and NULL Values
 ## Problem
-## You’re summarizing a set of values that may include NULL values and you need to know how to interpret the results.
+## You’re SUMmarizing a set of values that may include NULL values and you need to know how to interpret the results.
 
 ## Solution
 ## Understand how aggregate functions handle NULL values.
@@ -733,11 +733,11 @@ GROUP BY subject;
 | Marvin  | 3 | 150   | 50.0000 | 45     |    53   |
 +---------+---+-------+---------+--------+---------+
 ```
-## You can see FROM the results in the column labeled n (number of tests) that the query counts only five values, even though the table contains eight. Why? Because the values in that column correspond to the number of non-NULL test scores for each subject. The other summary columns display results that are calculated only FROM the non-NULL scores as well.
+## You can see FROM the results in the column labeled n (number of tests) that the query counts only five values, even though the table contains eight. Why? Because the values in that column correspond to the number of non-NULL test scores for each subject. The other SUMmary columns display results that are calculated only FROM the non-NULL scores as well.
 
-## It makes a lot of sense for aggregate functions to ignore NULL values. If they followed the usual SQL arithmetic rules, adding NULL to any other value would produce a NULL result. That would make aggregate functions really difficult to use because you’d have to filter out NULL values every time you performed a summary, to avoid getting a NULL result. Ugh. By ignoring NULL values, aggregate functions become a lot more convenient.
+## It makes a lot of sense for aggregate functions to ignore NULL values. If they followed the usual SQL arithmetic rules, adding NULL to any other value would produce a NULL result. That would make aggregate functions really difficult to use because you’d have to filter out NULL values every time you performed a SUMmary, to avoid getting a NULL result. Ugh. By ignoring NULL values, aggregate functions become a lot more convenient.
 
-## However, be aware that even though aggregate functions may ignore NULL values, some of them can still produce NULL as a result. This happens if there’s nothing to summarize, which occurs if the set of values is empty or contains only NULL values. The following query is the same as the previous one, with one small difference. It selects only NULL test scores, so there’s nothing for the aggregate functions to operate on:
+## However, be aware that even though aggregate functions may ignore NULL values, some of them can still produce NULL as a result. This happens if there’s nothing to SUMmarize, which occurs if the set of values is empty or contains only NULL values. The following query is the same as the previous one, with one small difference. It selects only NULL test scores, so there’s nothing for the aggregate functions to operate on:
 
 ```sql
 SELECT 
@@ -761,7 +761,7 @@ GROUP BY subject;
 +---------+---+-------+---------+--------+---------+
 ```
 
-## For COUNT( ), the number of scores per subject is zero and is reported that way. On the other hand, SUM( ) , AVG( ), MIN( ), and MAX( ) return NULL when there are no values to summarize. If you don’t want these functions to produce NULL in the query output, use `COALESCE( )` to map their results appropriately:
+## For COUNT( ), the number of scores per subject is zero and is reported that way. On the other hand, SUM( ) , AVG( ), MIN( ), and MAX( ) return NULL when there are no values to SUMmarize. If you don’t want these functions to produce NULL in the query output, use `COALESCE( )` to map their results appropriately:
 
 ```sql
 SELECT 
@@ -837,13 +837,13 @@ GROUP BY subject;
 
 # Selecting Only Groups with Certain Characteristics
 ## Problem
-## You want to calculate group summaries using AVG, MIN, MAX, etc, but display the results only for those groups that match certain criteria.
+## You want to calculate group SUMmaries using AVG, MIN, MAX, etc, but display the results only for those groups that match certain criteria.
 
 ## Solution
 ## Use a HAVING clause.
 
 ## Discussion
-## You’re familiar with the use of `WHERE` to specify conditions that individual rows must satisfy to be select by a statement. It’s natural, therefore, to use WHERE to write conditions that involve summary values. 
+## You’re familiar with the use of `WHERE` to specify conditions that individual rows must satisfy to be select by a statement. It’s natural, therefore, to use WHERE to write conditions that involve SUMmary values. 
 ## The only trouble is that it doesn’t work! If you want to identify drivers in the `driver_log` table who drove more than three days, you’d probably first think to write the statement like this:
 
 ```sql
@@ -875,7 +875,7 @@ HAVING
 +----------+-------+
 ```
 
-## When you use HAVING, you can still include a WHERE clause —- but only to SELECT rows, not to test summary values. 
+## When you use HAVING, you can still include a WHERE clause —- but only to SELECT rows, not to test SUMmary values. 
 ## HAVING can refer to aliases, so the previous query can be rewritten like this:
 
 ```sql
@@ -1003,7 +1003,7 @@ HAVING count > 1;
 
 # Categorizing Noncategorical Data
 ## Problem
-## You need to summarize a set of values that are not naturally categorical.
+## You need to SUMmarize a set of values that are not naturally categorical.
 ## Solution
 ## Use an expression to group the values into categories.
 
@@ -1123,15 +1123,15 @@ SELECT COUNT(DISTINCT name) / COUNT(name) FROM driver_log;
 
 ---
 
-# Finding Smallest or Largest Summary Values
+# Finding Smallest or Largest SUMmary Values
 ## Problem
-## You want to compute per-group summary values but display only the smallest or largest of them.
+## You want to compute per-group SUMmary values but display only the smallest or largest of them.
 
 ## Solution
 ## Add a LIMIT clause to the statement.
 
 ## Discussion
-## MIN( ) and MAX( ) find the values at the endpoints of a range of values, but if you want to know the extremes of a set of summary values, those functions won’t work. The arguments to MIN( ) and MAX( ) cannot be other aggregate functions. For example, you can easily find per-driver mileage totals:
+## MIN( ) and MAX( ) find the values at the endpoints of a range of values, but if you want to know the extremes of a set of SUMmary values, those functions won’t work. The arguments to MIN( ) and MAX( ) cannot be other aggregate functions. For example, you can easily find per-driver mileage totals:
 ```sql
 SELECT name, SUM(miles)
 FROM driver_log
@@ -1175,7 +1175,7 @@ LIMIT 1;
 +-------+-------------+
 ```
 
-## Note that if there is more than one row with the given summary value, a LIMIT 1 query won’t tell you that. For example, you might attempt to ascertain the most common initial letter for state names like this:
+## Note that if there is more than one row with the given SUMmary value, a LIMIT 1 query won’t tell you that. For example, you might attempt to ascertain the most common initial letter for state names like this:
 
 ```sql
 SELECT 
@@ -1249,15 +1249,15 @@ HAVING  count =
 
 ---
 
-# Date-Based Summaries
+# Date-Based SUMmaries
 ## Problem
-## You want to produce a summary based on date or time values.
+## You want to produce a SUMmary based on date or time values.
 
 ## Solution
 ## Use GROUP BY to place temporal values into categories of the appropriate duration. Often this involves using expressions to extract the significant parts of dates or times.
 
 ## Discussion
-## To put rows in time order, use an ORDER BY clause to sort a column that has a temporal type. If instead you want to summarize rows based on groupings into time intervals, you need to deterMINe how to categorize each row into the proper interval and use GROUP BY to group them accordingly.
+## To put rows in time order, use an ORDER BY clause to sort a column that has a temporal type. If instead you want to SUMmarize rows based on groupings into time intervals, you need to deterMINe how to categorize each row into the proper interval and use GROUP BY to group them accordingly.
 ## For example, to deterMINe how many drivers were on the road and how many miles were driven each day, group the rows in the driver_log table by date:
 ```sql
 SELECT 
@@ -1268,9 +1268,9 @@ FROM driver_log
 GROUP BY travel_date;
 ```
 
-## However, this summary will grow lengthier as you add more rows to the table. At some point, the number of distinct dates likely will become so large that the summary fails to be useful, and you’d probably decide to change the category size FROM daily to weekly or monthly.
-## When a temporal column contains so many distinct values that it fails to categorize well, it’s typical for a summary to group rows using expressions that map the relevant parts of the date or time values onto a smaller set of categories. 
-## For example, to produce a time-of-day summary for rows in the mail table, do this:
+## However, this SUMmary will grow lengthier as you add more rows to the table. At some point, the number of distinct dates likely will become so large that the SUMmary fails to be useful, and you’d probably decide to change the category size FROM daily to weekly or monthly.
+## When a temporal column contains so many distinct values that it fails to categorize well, it’s typical for a SUMmary to group rows using expressions that map the relevant parts of the date or time values onto a smaller set of categories. 
+## For example, to produce a time-of-day SUMmary for rows in the mail table, do this:
 ```sql
 SELECT HOUR(t) AS hour,
 COUNT(*) AS 'number of messages',
@@ -1279,7 +1279,7 @@ FROM mail
 GROUP BY hour;
 ```
 
-## To produce a day-of-week summary instead, use the date_part() function:
+## To produce a day-of-week SUMmary instead, use the date_part() function:
 ```sql
 SELECT 
     date_part('dow', t) AS weekday,
@@ -1292,9 +1292,9 @@ GROUP BY weekday;
 ## Note that the result includes an entry only for hours of the day actually represented in the data. 
 
 ---
-# Summarizing Data for Different Groups
+# SUMmarizing Data for Different Groups
 ## Problem
-## You want to summarize data in a column, but you don’t want to summarize over all the rows in a table. You want to divide the rows into groups, and then summarize the column separately for each group. For example, you need to know the average salary paid per department.
+## You want to SUMmarize data in a column, but you don’t want to SUMmarize over all the rows in a table. You want to divide the rows into groups, and then SUMmarize the column separately for each group. For example, you need to know the average salary paid per department.
 
 ## Solution
 ## Use SQL’s GROUP BY feature to group common subsets of data together to apply functions like COUNT, MIN, MAX, SUM, and AVG. This SQL statement shows how to use an aggregate function on subgroups of your data with GROUP BY.
@@ -1782,7 +1782,7 @@ SELECT * FROM housewares;
 | BTH00415JP | lavatory         |
 +------------+------------------+
 ```
-## This is not necessarily a good way to store complex ID values, and later we’ll consider how to represent them using separate columns. But for now, assume that the values must be stored as just shown. If you want to sort rows from this table based on the id values, just use the entire column value:
+## This is not necessarily a good way to store complex ID values, and later we’ll consider how to represent them using separate columns. But for now, asSUMe that the values must be stored as just shown. If you want to sort rows from this table based on the id values, just use the entire column value:
 
 ```sql
 SELECT * FROM housewares ORDER BY id;
@@ -1932,46 +1932,50 @@ HAVING
 ```
 
 ---
-# Working with Per-Group and Overall Summary Values Simultaneously
-## Problem
-## You want to produce a report that requires different levels of summary detail. Or you want to compare per-group summary values to an overall summary value.
 
-Solution
-Use two statements that retrieve different levels of summary information. Or use a subquery to retrieve one summary value and refer to it in the outer query that refers to other summary values. If it’s necessary only to display multiple summary levels, WITH ROLLUP might be sufficient.
-Discussion
-Sometimes a report involves different levels of summary information. For example, the following report displays the total number of miles per driver FROM the driver_log table, along with each driver’s miles as a percentage of the total miles in the entire table:
+# Working with Per-Group and Overall SUMmary Values Simultaneously
+## Problem
+## You want to produce a report that requires different levels of SUMmary detail. Or you want to compare per-group SUMmary values to an overall SUMmary value.
+
+## Solution
+## Use two statements that retrieve different levels of SUMmary information. Or use a subquery to retrieve one SUMmary value and refer to it in the outer query that refers to other SUMmary values. If it’s necessary only to display multiple SUMmary levels, with `ROLLUP` might be sufficient.
+
+## Discussion
+## Sometimes a report involves different levels of SUMmary information. For example, the following report displays the total number of miles per driver from the driver_log table, along with each driver’s miles as a percentage of the total miles in the entire table:
+
+```
 +-------+--------------+------------------------+
 | name  | miles/driver | percent of total miles |
 +-------+--------------+------------------------+
-| Ben   |   362 |   16.7128 |
-| Henry |   911 |   42.0591 |
-| Suzi |    893 |   41.2281 |
+| Ben   |   362        |                16.7128 |
+| Henry |   911        |                42.0591 |
+| Suzi |    893        |                41.2281 |
 +-------+--------------+------------------------+
-The percentages represent the ratio of each driver’s miles to the total miles for all drivers. To perform the percentage calculation, you need a per-group summary to get each driver’s miles and also an overall summary to get the total miles. First, run a query to get the overall mileage total:
-SELECT @total := SUM(miles) AS 'total miles' FROM driver_log;
+```
+## The percentages represent the ratio of each driver’s miles to the total miles for all drivers. To perform the percentage calculation, you need a per-group SUMmary to get each driver’s miles and also an overall SUMmary to get the total miles. This query to get the overall mileage total:
+
+```sql
+-- This query gets the overall mileage total
+SELECT SUM(miles) AS total FROM driver_log;
+```
+```
 +-------------+
 | total miles |
 +-------------+
-|   2166 |
+|   2166      |
 +-------------+
-Now, calculate the per-group values and use the overall total to compute the percen- tages:
-SELECT name,
-SUM(miles) AS 'miles/driver',
-(SUM(miles)*100)/@total AS 'percent of total miles'
-FROM driver_log GROUP BY name;
-+-------+--------------+------------------------+
-| name  | miles/driver | percent of total miles |
-+-------+--------------+------------------------+
-| Ben   |   362 |   16.7128 |
-| Henry |   911 |   42.0591 |
-| Suzi |    893 |   41.2281 |
-+-------+--------------+------------------------+
-To combine the two statements into one, use a subquery that computes the total miles:
+```
+
+## Now, calculate the per-group values and use the overall total to compute the percentages:
+
+```sql
 SELECT name,
 SUM(miles) AS 'miles/driver',
 (SUM(miles)*100)/(SELECT SUM(miles) FROM driver_log)
  AS 'percent of total miles'
 FROM driver_log GROUP BY name;
+```
+```
 +-------+--------------+------------------------+
 | name  | miles/driver | percent of total miles |
 +-------+--------------+------------------------+
@@ -1979,19 +1983,37 @@ FROM driver_log GROUP BY name;
 | Henry |   911 |   42.0591 |
 | Suzi |    893 |   41.2281 |
 +-------+--------------+------------------------+
-Another type of problem that uses different levels of summary information occurs when you want to compare per-group summary values with the corresponding overall sum- mary value. Suppose that you want to deterMINe which drivers had a lower average miles per day than the group average. Calculate the overall average in a subquery, and then compare each driver’s average to the overall average using a HAVING clause:
-SELECT name, AVG(miles) AS driver_AVG FROM driver_log
-GROUP BY name
-HAVING driver_AVG < (SELECT AVG(miles) FROM driver_log);
+```
+
+## Another type of problem that uses different levels of SUMmary information occurs when you want to compare per-group SUMmary values with the corresponding overall SUM- mary value. Suppose that you want to deterMINe which drivers had a lower average miles per day than the group average. Calculate the overall average in a subquery, and then compare each driver’s average to the overall average using a `HAVING` clause:
+
+```sql
+SELECT 
+    name, 
+    AVG(miles) AS driver_avg 
+FROM 
+    driver_log
+GROUP BY 
+    name
+HAVING 
+    driver_avg < (SELECT AVG(miles) FROM driver_log);
+```
+```
 +-------+------------+
-| name  | driver_AVG |
+| name  | driver_avg |
 +-------+------------+
 | Ben   |   120.6667 |
 | Henry |   182.2000 |
 +-------+------------+
-If you just want to display different summary values (and not perform calculations involving one summary level against another), add WITH ROLLUP to the GROUP BY clause:
+```
+
+## If you just want to display different SUMmary values (and not perform calculations involving one SUMmary level against another), add `WITH ROLLUP` to the `GROUP BY` clause:
+
+```sql
 SELECT name, SUM(miles) AS 'miles/driver'
 FROM driver_log GROUP BY name WITH ROLLUP;
+```
+```
 +-------+--------------+
 | name  | miles/driver |
 +-------+--------------+
@@ -2000,8 +2022,13 @@ FROM driver_log GROUP BY name WITH ROLLUP;
 | Suzi |    893 |
 | NULL |    2166 |
 +-------+--------------+
+```
+
+```sql
 SELECT name, AVG(miles) AS driver_AVG FROM driver_log
 GROUP BY name WITH ROLLUP;
+```
+```
 +-------+------------+
 | name  | driver_AVG |
 +-------+------------+
@@ -2010,51 +2037,64 @@ GROUP BY name WITH ROLLUP;
 | Suzi |    446.5000 |
 | NULL |    216.6000 |
 +-------+------------+
-In each case, the output row with NULL in the name column represents the overall sum or average calculated over all drivers.
-WITH ROLLUP can present multiple levels of summary, if you GROUP BY more than one column. The following statement shows the number of mail messages sent BETWEEN each pair of users:
+```
+
+## In each case, the output row with NULL in the name column represents the overall SUM or average calculated over all drivers.
+`WITH ROLLUP` can present multiple levels of SUMmary, if you `GROUP BY` more than one column. The following statement shows the number of mail messages sent between each pair of users:
+
+```sql
 SELECT sender, recipient, COUNT(*)
 FROM mail GROUP BY sender, recipient;
-+---------+---------+----------+
-| sender | recipient | COUNT(*) |
-+---------+---------+----------+
+```
 
+## Adding `WITH ROLLUP` causes the output to include an intermediate count for each sender value (these are the lines with NULL in the recipient column), plus an overall count at the end:
 
-+---------+---------+----------+
-Adding WITH ROLLUP causes the output to include an intermediate count for each sender value (these are the lines with NULL in the recipient column), plus an overall count at the end:
-SELECT sender, recipient, COUNT(*)
-FROM mail GROUP BY sender, recipient WITH ROLLUP;
-+---------+---------+----------+
-| sender | recipient | COUNT(*) |
-+---------+---------+----------+
-
-+---------+---------+----------+
+```sql
+SELECT 
+    sender, 
+    recipient, 
+    COUNT(*)
+FROM 
+    mail 
+GROUP BY 
+    sender, recipient 
+WITH ROLLUP;
+```
 
 ---
-2-5. Aggregating Data at Multiple Levels
-Problem
-You want to find totals, averages, and other aggregate figures, as well as subtotals in various dimensions for a report. You want to achieve this with as few statements as possible, preferably just one, rather than HAVING to issue separate statements to get each intermediate subtotal along the way.
 
-Solution
-You can calculate subtotals or other intermediate aggregates in Oracle using the CUBE, ROLLUP and grouping sets features. For this recipe, we’ll assume some real-world requirements. We want to find average and total (summed) salary figures by department and job category, and show meaningful higher-level averages and subtotals at the department level (regardless of job category), as well as a grand total and company-wide average for the whole organization.
+# Aggregating Data at Multiple Levels Using `ROLLUP`
+## Problem
+## You want to find totals, averages, and other aggregate figures, as well as subtotals in various dimensions for a report. You want to achieve this with as few statements as possible, preferably just one, rather than HAVING to issue separate statements to get each intermediate subtotal along the way.
 
-SELECT department_id, job_id, AVG(salary), sum(salary) FROM employee
+## Solution
+## You can calculate subtotals or other intermediate aggregates in SQL using the `CUBE`, `ROLLUP` and `grouping sets` features. For this recipe, we’ll asSUMe some real-world requirements. We want to find average and total (SUMmed) salary figures by department and job category, and show meaningful higher-level averages and subtotals at the department level (regardless of job category), as well as a grand total and company-wide average for the whole organization.
+
+```sql
+SELECT 
+    department_id, 
+    job_id, 
+    AVG(salary), 
+    SUM(salary) 
+    FROM employee
 GROUP BY rollup (department_id, job_id);
+```
 
-The ROLLUP function performs grouping at multiple levels, using a right-to-left method of rolling up through intermediate levels to any grand total or summation. In our recipe, this means that after performing normal grouping by DEPARTMENT_ID and JOB_ID, the ROLLUP function rolls up all JOB_ID values so that we see an average and sum for the DEPARTMENT_ID level across all jobs in a given department.
+The ROLLUP function performs grouping at multiple levels, using a right-to-left method of rolling up through intermediate levels to any grand total or SUMmation. In our recipe, this means that after performing normal grouping by DEPARTMENT_ID and JOB_ID, the ROLLUP function rolls up all JOB_ID values so that we see an average and SUM for the DEPARTMENT_ID level across all jobs in a given department.
 ROLLUP then rolls up to the next (and highest) level in our recipe, rolling up all departments, in effect
 providing an organization-wide rollup. You can see the rolled up rows in bold in the output.
 performing this rollup would be the equivalent of running three separate statements, such as the three that follow, and using UNION or application-level code to stitch the results together.
 
-SELECT department_id, job_id, AVG(salary), sum(salary) FROM employee
+SELECT department_id, job_id, AVG(salary), SUM(salary) FROM employee
 GROUP BY department_id, job_id;
-SELECT department_id, AVG(salary), sum(salary) FROM employee
+SELECT department_id, AVG(salary), SUM(salary) FROM employee
 GROUP BY department_id;
-SELECT AVG(salary), sum(salary) FROM employee;
+SELECT AVG(salary), SUM(salary) FROM employee;
 
 Careful observers will note that because ROLLUP works FROM right to left with the columns given, we
 don’t see values WHERE departments are rolled up by job. We could achieve this using this version of the recipe.
 
-SELECT department_id, job_id, AVG(salary), sum(salary) FROM employee
+SELECT department_id, job_id, AVG(salary), SUM(salary) FROM employee
 GROUP BY rollup (job_id, department_id);
 In doing so, we get the DEPARTMENT_ID intermediate rollup we want, but lose the JOB_ID intermediate rollup, seeing only JOB_ID rolled up at the final level. To roll up in all dimensions, change the recipe to use the CUBE function.
 
@@ -2075,7 +2115,7 @@ Problem
 You want to use the output of a complex query involving aggregates and grouping as source data for another query.
 
 Solution
-Oracle allows any query to be used as a subquery or inline view, including those containing aggregates and grouping functions. This is especially useful WHERE you’d like to specify group-level criteria compared against data FROM other tables or queries, and don’t have a ready-made view available.
+SQL allows any query to be used as a subquery or inline view, including those containing aggregates and grouping functions. This is especially useful WHERE you’d like to specify group-level criteria compared against data FROM other tables or queries, and don’t have a ready-made view available.
 For our recipe, we’ll use an average salary calculation with rollups across department, job, and start year, as shown in this SELECT statement.
 SELECT * FROM (
 SELECT department_id as "dept", job_id as "job", to_char(hire_date,'YYYY') as "Start_Year", AVG(salary) as "avsal"
@@ -2097,7 +2137,7 @@ You need to count members of a group, groups of groups, and other set-based coll
 
 
 Solution
-Oracle’s COUNT feature can be used to count materialized results as well as actual rows in tables. The next SELECT statement uses a subquery to count the instances of jobs held across tables, and then summarizes those counts. In effect, this is a count of counts against data resulting FROM a query, rather than anything stored directly in Oracle.
+SQL’s COUNT feature can be used to count materialized results as well as actual rows in tables. The next SELECT statement uses a subquery to count the instances of jobs held across tables, and then SUMmarizes those counts. In effect, this is a count of counts against data resulting FROM a query, rather than anything stored directly in SQL.
 
 SELECT jh.JobsHeld, COUNT(*) as StaffCount FROM
 (SELECT u.employee_id, COUNT(*) as JobsHeld FROM
@@ -2116,7 +2156,7 @@ You need to test if a given data value is unique in a table—that is, it appear
 
 
 Solution
-Oracle supports the standard HAVING clause for SELECT statements, and the COUNT function, which together can identify single instances of data in a table or result. The following SELECT statement solves the problem of finding if the surname Fay is unique in the employee table.
+SQL supports the standard HAVING clause for SELECT statements, and the COUNT function, which together can identify single instances of data in a table or result. The following SELECT statement solves the problem of finding if the surname Fay is unique in the employee table.
 
 SELECT last_name, COUNT(*) FROM employee
 WHERE last_name = 'Fay' GROUP BY last_name HAVING COUNT(*) = 1;
@@ -2156,8 +2196,8 @@ Problem
 You would like to query data to produce an ordered result, but you want to include calculations based on preceding and following rows in the result set. For instance, you want to perform calculations on event- style data based on events that occurred earlier and later in time.
 
 Solution
-Oracle supports the LAG and LEAD analytical functions to provide access to multiple rows in a table or expression, utilizing preceding/following logic—and you won’t need to resort to joining the source data
-to itself. Our recipe assumes you are trying to tackle the business problem of visualizing the trend in hiring of staff over time. The LAG function can be used to see which employee’s hiring followed another, and also to calculate the elapsed time BETWEEN hiring.
+SQL supports the LAG and LEAD analytical functions to provide access to multiple rows in a table or expression, utilizing preceding/following logic—and you won’t need to resort to joining the source data
+to itself. Our recipe asSUMes you are trying to tackle the business problem of visualizing the trend in hiring of staff over time. The LAG function can be used to see which employee’s hiring followed another, and also to calculate the elapsed time BETWEEN hiring.
 SELECT first_name, last_name, hire_date,
 lag(hire_date, 1, '01-JUN-1987') over (ORDER BY hire_date) as Prev_Hire_Date, hire_date - lag(hire_date, 1, '01-JUN-1987') over (ORDER BY hire_date)
 as Days_BETWEEN_Hires FROM employee
@@ -2165,7 +2205,7 @@ ORDER BY hire_date;
 Our query returns 107 rows, linking the employee in the order they were hired (though not necessarily preserving the implicit sort for display or other purposes), and showing the time delta BETWEEN each joining the organization.
 
 How It Works
-The LAG and LEAD functions are like most other analytical and windowing functions in that they operate once the base non-analytic portion of the query is complete. Oracle performs a second pass over the intermediate result set to apply any analytical predicates. In effect, the non-analytic components are evaluated first, as if this query had been run.
+The LAG and LEAD functions are like most other analytical and windowing functions in that they operate once the base non-analytic portion of the query is complete. SQL performs a second pass over the intermediate result set to apply any analytical predicates. In effect, the non-analytic components are evaluated first, as if this query had been run.
 SELECT first_name, last_name, hire_date
 -- placeholder for Prev_Hire_Date,
 -- placehodler for Days_BETWEEN_Hires FROM employee;
@@ -2178,7 +2218,7 @@ FIRST_NAME LAST_NAME HIRE_DATE PREV_HIRE DAYS_BETWEEN
 The analytic function(s) are then processed, providing the results you’ve seen. Our recipe uses the LAG function to compare the current row of results with a preceding row. The general format is the best way to understand LAG, and has the following form.
 lag (column or expression, preceding row offset, default for first row)
 
-The column or expression is mostly self-explanatory, as this is the table data or computed result over which you want LAG to operate. The preceding row offset portion indicates the relative row prior to the current row the LAG should act against. In our case, the value ‘1’ means the row that is one row before the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We’ve chosen the arbitrary date of 01-JUN-1987 as a notional date on which the organization was founded. You could use any date, date calculation, or date-returning function here. Oracle will supply a NULL value if you don’t specify the first row’s precedent value.
+The column or expression is mostly self-explanatory, as this is the table data or computed result over which you want LAG to operate. The preceding row offset portion indicates the relative row prior to the current row the LAG should act against. In our case, the value ‘1’ means the row that is one row before the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We’ve chosen the arbitrary date of 01-JUN-1987 as a notional date on which the organization was founded. You could use any date, date calculation, or date-returning function here. SQL will supply a NULL value if you don’t specify the first row’s precedent value.
 The OVER analytic clause then dictates the order of data against which to apply the analytic function,
 and any partitioning of the data into windows or subsets (not shown in this recipe). Astute readers will realize that this means our recipe could have included a general ORDER BY clause that sorted the data for presentation in a different order FROM the HIRE_DATE ordering used for the LAG function. This gives you the most flexibility to handle general ordering and analytic lag and lead in different ways for the same statement. We’ll show an example of this later in this chapter. And remember, you should never rely on the implicit sorting that analytic functions use. This can and will change in the future, so you are best advised to always include ORDER BY for sorting WHEREver explicitly required.
 The LEAD function works in a nearly identical fashion to LAG, but instead tracks following rows rather than preceding ones. We could rewrite our recipe to show hires along with the HIRE_DATE of the next employee, and a similar elapsed-time window BETWEEN their employment dates, as in this SELECT statement.
@@ -2195,7 +2235,7 @@ Problem
 The results FROM a query need to be allocated an ordinal number representing their positions in the result. You do not want to have to insert and track these numbers in the source data.
 
 Solution
-Oracle provides the RANK analytic function to generate a ranking number for rows in a result set. RANK is applied as a normal OLAP-style function to a column or derived expression. For the purposes of this recipe, we’ll assume that the business would like to rank employee by salary, FROM highest-paid down. The following SELECT statement uses the rank function to assign these values.
+SQL provides the RANK analytic function to generate a ranking number for rows in a result set. RANK is applied as a normal OLAP-style function to a column or derived expression. For the purposes of this recipe, we’ll asSUMe that the business would like to rank employee by salary, FROM highest-paid down. The following SELECT statement uses the rank function to assign these values.
 
 SELECT employee_id, salary, rank() over (ORDER BY salary desc) as Salary_Rank FROM employee;
 
@@ -2204,8 +2244,8 @@ Our query produces results FROM the highest earner at 24000 per month, right dow
 How It Works
 RANK acts like any other analytic function, operating in a second pass over the result set once non- analytic processing is complete. In this recipe, the EMPLOYEE_ID and SALARY values are SELECTed (there are no WHERE predicates to filter the table’s data, so we get everyone employed in the organization). The analytic phase then orders the results in descending ORDER BY salary, and computes the rank value on the results starting at 1.
 Note carefully how the RANK function has handled equal values. Two employee with salary of 17000
-are given equal rank of 2. The next employee, at 14000, has a rank of 4. This is known as sparse ranking, WHERE tied values “consume” place holders. In practical terms, this means that our equal second-place holders consume both second and third place, and the next available rank to provide is 4.
-You can use an alternative to sparse ranking called dense ranking. Oracle supports this using the
+are given equal rank of 2. The next employee, at 14000, has a rank of 4. This is known as sparse ranking, WHERE tied values “conSUMe” place holders. In practical terms, this means that our equal second-place holders conSUMe both second and third place, and the next available rank to provide is 4.
+You can use an alternative to sparse ranking called dense ranking. SQL supports this using the
 DENSE_RANK analytical function. Observe what happens to the recipe when we switch to dense ranking.
 SELECT employee_id, salary, dense_rank() over (ORDER BY salary desc) as Salary_Rank
 FROM employee;
@@ -2218,8 +2258,8 @@ You want to calculate and display aggregate information like minimum and maximum
 
 
 Solution
-Oracle provides the analytic functions FIRST and LAST to calculate the leading and ending values in any ordered sequence. Importantly, these do not require grouping to be used, unlike explicit aggregate functions such as MIN and MAX that work without OLAP features.
-For our recipe, we’ll assume the problem is a concrete one of displaying an employee’s salary, alongside the minimum and maximum salaries paid to the employee’s peers in their department. This SELECT statement does the work.
+SQL provides the analytic functions FIRST and LAST to calculate the leading and ending values in any ordered sequence. Importantly, these do not require grouping to be used, unlike explicit aggregate functions such as MIN and MAX that work without OLAP features.
+For our recipe, we’ll asSUMe the problem is a concrete one of displaying an employee’s salary, alongside the minimum and maximum salaries paid to the employee’s peers in their department. This SELECT statement does the work.
 
 SELECT department_id, first_name, last_name, MIN(salary)
 over (partition by department_id) "MINSal", salary,
@@ -2237,12 +2277,12 @@ over (partition by department_id) “MINSal”
 ---
 2-14. performing Aggregations over Moving Windows
 Problem
-You need to provide static and moving summaries or aggregates based on the same data. For example, as part of a sales report, you need to provide a monthly summary of sales order amounts, together with a moving three- month average of sales amounts for comparison.
+You need to provide static and moving SUMmaries or aggregates based on the same data. For example, as part of a sales report, you need to provide a monthly SUMmary of sales order amounts, together with a moving three- month average of sales amounts for comparison.
 
 Solution
-Oracle provides moving or rolling window functions as part of the analytical function set. This gives you the ability to reference any number of preceding rows in a result set, the current row in the result set, and any number of following rows in a result set. Our initial recipe uses the current row and the three preceding rows to calculate the rolling average of order values.
+SQL provides moving or rolling window functions as part of the analytical function set. This gives you the ability to reference any number of preceding rows in a result set, the current row in the result set, and any number of following rows in a result set. Our initial recipe uses the current row and the three preceding rows to calculate the rolling average of order values.
 
-SELECT to_char(order_date, 'MM') as OrderMonth, sum(order_total) as MonthTotal, AVG(sum(order_total))
+SELECT to_char(order_date, 'MM') as OrderMonth, SUM(order_total) as MonthTotal, AVG(SUM(order_total))
 over
 (ORDER BY to_char(order_date, 'MM') rows BETWEEN 3 preceding and current row) as RollingQtrAverage
 FROM oe.orders
@@ -2257,16 +2297,16 @@ How It Works
 Our SELECT statement for a rolling average starts by Selecting some straightforward values. The month number is extracted FROM the ORDER_DATE field using the TO_CHAR() function with the MM format string to obtain the month’s number. We choose the month number rather than the name so that the output is sorted as a person would expect.
 Next up is a normal aggregate of the ORDER_TOTAL field using the traditional SUM function. No magic there. We then introduce an OLAP AVG function, which is WHERE the detail of our rolling average is managed. That part of the statement looks like this.
 
-AVG(sum(order_total)) over (ORDER BY to_char(order_date, 'MM') rows BETWEEN 3 preceding and current row) as RollingQtrAverage
+AVG(SUM(order_total)) over (ORDER BY to_char(order_date, 'MM') rows BETWEEN 3 preceding and current row) as RollingQtrAverage
 
-All of that text is to generate our result column, the ROLLINGQTRAVERAGE. Breaking the sections down will illustrate how each part contributes to the solution. The leading functions, AVG(SUM(ORDER_TOTAL)), suggest we are going to sum the ORDER_TOTAL values and then take their average. That is correct to an extent, but Oracle isn’t just going to calculate a normal average or sum. These are OLAP AVG and SUM functions, so their scope is governed by the OVER clause.
-The OVER clause starts by instructing Oracle to perform the calculations based on the order of the formatted ORDER_DATE field—that’s what ORDER BY TO_CHAR(ORDER_DATE, 'MM') achieves—effectively ordering the calculations by the values 02 to 12 (remember, there’s no data for January 1999 in the database). Finally, and most importantly, the ROWS element tells Oracle the size of the window of rows over which it should calculate the driving OLAP aggregate functions. In our case, that means over how many months should the ORDER_TOTAL values be summed and then averaged. Our recipe instructs Oracle to use the results FROM the third-last row through to the current row. This is one interpretation of three-
+All of that text is to generate our result column, the ROLLINGQTRAVERAGE. Breaking the sections down will illustrate how each part contributes to the solution. The leading functions, AVG(SUM(ORDER_TOTAL)), suggest we are going to SUM the ORDER_TOTAL values and then take their average. That is correct to an extent, but SQL isn’t just going to calculate a normal average or SUM. These are OLAP AVG and SUM functions, so their scope is governed by the OVER clause.
+The OVER clause starts by instructing SQL to perform the calculations based on the order of the formatted ORDER_DATE field—that’s what ORDER BY TO_CHAR(ORDER_DATE, 'MM') achieves—effectively ordering the calculations by the values 02 to 12 (remember, there’s no data for January 1999 in the database). Finally, and most importantly, the ROWS element tells SQL the size of the window of rows over which it should calculate the driving OLAP aggregate functions. In our case, that means over how many months should the ORDER_TOTAL values be SUMmed and then averaged. Our recipe instructs SQL to use the results FROM the third-last row through to the current row. This is one interpretation of three-
 month rolling average, though technically it’s actually generating an average over four months. If what you want is really a three-month average —the last two months plus the current month—you’d change the ROWS BETWEEN element to read
 rows BETWEEN 2 preceding and current row
-This brings up an interesting point. This recipe assumes you want a rolling average computed over historic data. But some business requirements call for a rolling window to track trends based on data not only prior to a point in time, but also after that point. For instance, we might want to use a three-month window but base it on the previous, current, and following months. The next version of the recipe
+This brings up an interesting point. This recipe asSUMes you want a rolling average computed over historic data. But some business requirements call for a rolling window to track trends based on data not only prior to a point in time, but also after that point. For instance, we might want to use a three-month window but base it on the previous, current, and following months. The next version of the recipe
 shows exactly this ability of the windowing function, with the key changes in bold.
 
-SELECT to_char(order_date, 'MM') as OrderMonth, sum(order_total) as MonthTotal, AVG(sum(order_total)) over (ORDER BY to_char(order_date, 'MM')
+SELECT to_char(order_date, 'MM') as OrderMonth, SUM(order_total) as MonthTotal, AVG(SUM(order_total)) over (ORDER BY to_char(order_date, 'MM')
 rows BETWEEN 1 preceding and 1 following) as AVGTrend
 FROM oe.orders
 WHERE order_date BETWEEN '01-JAN-1999' and '31-DEC-1999' GROUP BY to_char(order_date, 'MM')
@@ -2278,7 +2318,7 @@ Our output changes as you’d expect, as the monthly ORDER_TOTAL values are now 
 
 
 11 rows SELECTed.
-The newly designated AVGTREND value is calculated as described, using both preceding and following rows. Both our original recipe and this modified version are rounded out with a WHERE clause to SELECT only data FROM the OE.ORDERS table for the year 1999. We GROUP BY the derived month number so that our traditional sum of ORDER_TOTAL in the second field of the results aggregates correctly, and finish up ordering logically by the month number.
+The newly designated AVGTREND value is calculated as described, using both preceding and following rows. Both our original recipe and this modified version are rounded out with a WHERE clause to SELECT only data FROM the OE.ORDERS table for the year 1999. We GROUP BY the derived month number so that our traditional SUM of ORDER_TOTAL in the second field of the results aggregates correctly, and finish up ordering logically by the month number.
 
 ---
 
@@ -2287,7 +2327,7 @@ Problem
 Data needs to be cleansed FROM a table based on duplicate values that are present only in a subset of rows.
 
 Solution
-Historically there were Oracle-specific solutions for this problem that used the ROWNUM feature. However, this can become awkward and complex if you have multiple groups of duplicates and want to remove the excess data in one pass. Instead, you can use Oracle’s ROW_NUMBER OLAP function with a DELETE statement to efficiently remove all duplicates in one pass.
+Historically there were SQL-specific solutions for this problem that used the ROWNUM feature. However, this can become awkward and complex if you have multiple groups of duplicates and want to remove the excess data in one pass. Instead, you can use SQL’s ROW_NUMBER OLAP function with a DELETE statement to efficiently remove all duplicates in one pass.
 To illustrate our recipe in action, we’ll first introduce several new staff members that have the same
 FIRST_NAME and LAST_NAME as some existing employee. These INSERT statements create our problematic duplicates.
 insert into employee
@@ -2325,7 +2365,7 @@ delete FROM employee WHERE rowid in
 (partition by first_name, last_name ORDER BY employee_id) staff_row
 FROM employee) WHERE staff_row > 1);
 
-When run, this code does indeed claim to remove three rows, presumably our duplicates. To check, we can repeat our quick query to see which rows match those three names. We see this set of results.
+When run, this code does indeed claim to remove three rows, preSUMably our duplicates. To check, we can repeat our quick query to see which rows match those three names. We see this set of results.
 
 
 EMPLOYEE_ID FIRST_NAME LAST_NAME
@@ -2335,11 +2375,11 @@ Patrick Sully
 Our DELETE has succeeded, based on finding duplicates for a subset of columns only.
 
 How It Works
-Our recipe uses both the ROW_NUMBER OLAP function and Oracle’s internal ROWID value for uniquely identifying rows in a table. The query starts with exactly the kind of DELETE syntax you’d assume.
+Our recipe uses both the ROW_NUMBER OLAP function and SQL’s internal ROWID value for uniquely identifying rows in a table. The query starts with exactly the kind of DELETE syntax you’d asSUMe.
 
 delete FROM employee WHERE rowid in
 (… nested subqueries here …)
-As you’d expect, we’re asking Oracle to delete rows FROM employee WHERE the ROWID value matches the values we detect for duplicates, based on criteria evaluating a subset of columns. In our case, we use subqueries to precisely identify duplicates based on FIRST_NAME and LAST_NAME.
+As you’d expect, we’re asking SQL to delete rows FROM employee WHERE the ROWID value matches the values we detect for duplicates, based on criteria evaluating a subset of columns. In our case, we use subqueries to precisely identify duplicates based on FIRST_NAME and LAST_NAME.
 To understand how the nested subqueries work, it’s easiest to start with the innermost subquery,
 which looks like this.
 
@@ -2386,10 +2426,10 @@ Problem
 You want to find all gaps in the sequence of numbers or in dates and times in your data. The gaps could be in dates recorded for a given action, or in some other data with a logically consecutive nature.
 
 Solution
-Oracle’s LAG and LEAD OLAP functions let you compare the current row of results with a preceding row. The general format of LAG looks like this
+SQL’s LAG and LEAD OLAP functions let you compare the current row of results with a preceding row. The general format of LAG looks like this
 Lag (column or expression, preceding row offset, default for first row)
 
-The column or expression is the value to be compared with lagging (preceding) values. The preceding row offset indicates how many rows prior to the current row the LAG should act against. We’ve used ‘1’ in the following listing to mean the row one prior to the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We instruct Oracle to use 0 as the default anchor value, to handle the case WHERE we look for the day prior to the first of the month.
+The column or expression is the value to be compared with lagging (preceding) values. The preceding row offset indicates how many rows prior to the current row the LAG should act against. We’ve used ‘1’ in the following listing to mean the row one prior to the current row. The default for LAG indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We instruct SQL to use 0 as the default anchor value, to handle the case WHERE we look for the day prior to the first of the month.
 The WITH query alias approach can be used in almost all situations WHERE a subquery is used, to
 relocate the subquery details ahead of the main query. This aids readability and refactoring of the code if required at a later date.
 This recipe looks for gaps in the sequence of days on which orders were made for the month of November 1999:
@@ -2418,7 +2458,7 @@ The results would look like this if executed independently.
 NEXT_SALE PREV_SALE
 
 
-Starting with the anchor value of 0 in the lag, we see the day of the month for a sale as NEXT_SALE, and the day of the previous sale as PREV_SALE. You can probably already visually spot the gaps, but it’s much easier to let Oracle do that for you too. This is WHERE our outer query does its very simple arithmetic.
+Starting with the anchor value of 0 in the lag, we see the day of the month for a sale as NEXT_SALE, and the day of the previous sale as PREV_SALE. You can probably already visually spot the gaps, but it’s much easier to let SQL do that for you too. This is WHERE our outer query does its very simple arithmetic.
 The driving query over the SALESDAYS subquery SELECTs the PREV_SALE and NEXT_SALE values FROM the results, based on this predicate.
 
 
@@ -2438,14 +2478,14 @@ The approach to take is largely a question of style and readability. We prefer t
 
 
 
-Querying data FROM Oracle tables is probably the most common task you will perform as a developer or data analyst, and maybe even as a DBA—though probably not as the ETL (Extraction, Transformation, and Loading) tool expert. Quite often, you may query only one table for a small subset of rows, but sooner or later you will have to join multiple tables together. That’s the beauty of a relational database, WHERE the access paths to the data are not fixed: you can join tables that have common columns, or even tables that do not have common columns (at your own peril!).
+Querying data FROM SQL tables is probably the most common task you will perform as a developer or data analyst, and maybe even as a DBA—though probably not as the ETL (Extraction, Transformation, and Loading) tool expert. Quite often, you may query only one table for a small subset of rows, but sooner or later you will have to join multiple tables together. That’s the beauty of a relational database, WHERE the access paths to the data are not fixed: you can join tables that have common columns, or even tables that do not have common columns (at your own peril!).
 In this chapter we’ll cover solutions for joining two or more tables and retrieving the results based on the existence of desired rows in both tables (equi-join), rows that may exist only in one table or the other (left or right outer joins), or joining two tables together and including all rows FROM both tables, matching WHERE possible (full outer joins).
-But wait, there’s more! Oracle (and the SQL language standard) contains a number of constructs that help you retrieve rows FROM tables based on the existence of the same rows in another table with the same column values for the SELECTed rows in a query. These constructs include the INTERSECT, UNION, UNION ALL, and MINUS operators. The results FROM queries using these operators can in some cases be obtained using the standard table-join syntax, but if you’re working with more than just a couple of columns, the query becomes unwieldy, hard to read, and hard to maintain.
+But wait, there’s more! SQL (and the SQL language standard) contains a number of constructs that help you retrieve rows FROM tables based on the existence of the same rows in another table with the same column values for the SELECTed rows in a query. These constructs include the INTERSECT, UNION, UNION ALL, and MINUS operators. The results FROM queries using these operators can in some cases be obtained using the standard table-join syntax, but if you’re working with more than just a couple of columns, the query becomes unwieldy, hard to read, and hard to maintain.
 You may also need to update rows in one table based on matching or non-matching values in another table, so we’ll provide a couple of recipes on correlated queries and correlated updates using the IN/EXISTS SQL constructs as well.
 Of course, no discussion of table manipulation would be complete without delving into the unruly
 child of the query world, the Cartesian join. There are cases WHERE you want to join two or more tables without a join condition, and we’ll give you a recipe for that scenario.
 Most of the examples in this chapter are based on the schemas in the EXAMPLE tablespace created
-during an Oracle Database installation when you specify “Include Sample Schemas.” Those sample schemas aren’t required to understand the solutions in this chapter, but they give you the opportunity to try out the solutions on a pre-populated set of tables and even delve further into the intricacies of table joins.
+during an SQL Database installation when you specify “Include Sample Schemas.” Those sample schemas aren’t required to understand the solutions in this chapter, but they give you the opportunity to try out the solutions on a pre-populated set of tables and even delve further into the intricacies of table joins.
 
 ---
 
@@ -2455,7 +2495,7 @@ You want to combine the results FROM two SELECT statements into a single result 
 
 
 Solution
-Use the UNION operator. UNION combines the results of two or more queries and removes duplicates FROM the entire result set. In Oracle’s mythical company, the employee in the employee_ACT table need to be merged with employee FROM a recent corporate acquisition. The recently acquired company’s employee table employee_NEW has the same exact format as the existing employee_ACT table, so it should be easy to use UNION to combine the two tables into a single result set as follows:
+Use the UNION operator. UNION combines the results of two or more queries and removes duplicates FROM the entire result set. In SQL’s mythical company, the employee in the employee_ACT table need to be merged with employee FROM a recent corporate acquisition. The recently acquired company’s employee table employee_NEW has the same exact format as the existing employee_ACT table, so it should be easy to use UNION to combine the two tables into a single result set as follows:
 SELECT employee_id, first_name, last_name FROM employee_act;
 
 
@@ -2473,7 +2513,7 @@ SELECT employee_id, first_name, last_name FROM employee_new ORDER BY employee_id
 Using UNION removes the duplicate rows. You can have one ORDER BY at the end of the query to order the results. In this example, the two employee tables have two rows in common (some people need to work two or three jobs to make ends meet!), so instead of returning 11 rows, the UNION query returns nine.
 
 How It Works
-Note that for the UNION operator to remove duplicate rows, all columns in a given row must be equal to the same columns in one or more other rows. When Oracle processes a UNION, it must perform a sort/merge to deterMINe which rows are duplicates. Thus, your execution time will likely be more than running each SELECT individually. If you know there are no duplicates within and across each SELECT statement, you can use UNION ALL to combine the results without checking for duplicates.
+Note that for the UNION operator to remove duplicate rows, all columns in a given row must be equal to the same columns in one or more other rows. When SQL processes a UNION, it must perform a sort/merge to deterMINe which rows are duplicates. Thus, your execution time will likely be more than running each SELECT individually. If you know there are no duplicates within and across each SELECT statement, you can use UNION ALL to combine the results without checking for duplicates.
 If there are duplicates, it will not cause an error; you will merely get duplicate rows in your result set.
 
 ---
@@ -2483,7 +2523,7 @@ Problem
 You are joining two tables by one or more common columns, but you want to make sure to return all rows in the first table regardless of a matching row in the second. For example, you are joining the employee and department tables, but some employee lack department assignments.
 
 Solution
-Use an outer join. In Oracle’s sample database, the HR user maintains the employee and DEPARTMENT tables; assigning a department to an employee is optional. There are 107 employee in the employee table. Using a standard join BETWEEN employee and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the employee table, you can use LEFT OUTER JOIN to include all rows in the employee table and matching rows in DEPARTMENTS, if any:
+Use an outer join. In SQL’s sample database, the HR user maintains the employee and DEPARTMENT tables; assigning a department to an employee is optional. There are 107 employee in the employee table. Using a standard join BETWEEN employee and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the employee table, you can use LEFT OUTER JOIN to include all rows in the employee table and matching rows in DEPARTMENTS, if any:
 
 SELECT employee_id, last_name, first_name, department_id, department_name FROM employee
 left outer join departments using(department_id)
@@ -2504,7 +2544,7 @@ SELECT employee_id, last_name, first_name, department_id, department_name FROM d
 right outer join employee using(department_id)
 ;
 The results are identical, and which format you use depends on readability and style.
-The query can be written using the ON clause as well, just as with an equi-join (inner join). And for versions of Oracle before 9i, you must use Oracle’s somewhat obtuse and proprietary outer-join syntax with the characters (+) on the side of the query that is missing rows, as in this example:
+The query can be written using the ON clause as well, just as with an equi-join (inner join). And for versions of SQL before 9i, you must use SQL’s somewhat obtuse and proprietary outer-join syntax with the characters (+) on the side of the query that is missing rows, as in this example:
 
 SELECT employee_id, last_name, first_name, e.department_id, department_name FROM employee e, departments d
 WHERE e.department_id = d.department_id (+)
@@ -2535,7 +2575,7 @@ Note The OUTER keyword is optional when using a FULL, LEFT, or RIGHT join. It do
 Using FULL OUTER JOIN is a good way to view, at a glance, mismatches BETWEEN two tables. In the preceding output, you can see an employee without a department as well as several departments that have no employee.
 
 How It Works
-Trying to accomplish a full outer join before Oracle9i was a bit inelegant: you had to perform a UNION of two outer joins (a left and a right outer join) using the proprietary Oracle syntax as follows:
+Trying to accomplish a full outer join before SQL9i was a bit inelegant: you had to perform a UNION of two outer joins (a left and a right outer join) using the proprietary SQL syntax as follows:
 
 SELECT employee_id, last_name, first_name, e.department_id, department_name FROM employee e, departments d
 WHERE e.department_id = d.department_id (+) union
@@ -2563,7 +2603,7 @@ Discussion
 The essential idea behind a join is that it combines rows in one table with rows in one or more other tables. Joins enable you to combine information FROM multiple tables when each table contains only part of the information in which you’re interested. Out- put rows FROM a join contain more information than rows FROM either table by itself.
 A complete join that produces all possible row combinations is called a Cartesian prod- uct. For example, joining each row in a 100-row table to each row in a 200-row table produces a result containing 100 × 200, or 20,000 rows. With larger tables, or joins BETWEEN more than two tables, the result set for a Cartesian product can easily become immense. Because of that, and because you rarely want all the combinations anyway, a join normally includes an ON or USING clause that specifies how to join rows BETWEEN tables. (This requires that each table have one or more columns of common information
 that can be used to link them together logically.) You can also include a WHERE clause that restricts which of the joined rows to SELECT. Each of these clauses narrows the focus of the query.
-This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches BETWEEN tables. Later recipes show how to identify mismatches BETWEEN tables (Recipe 12.2) and how to compare a table to itself (Recipe 12.3). The examples assume that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
+This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches BETWEEN tables. Later recipes show how to identify mismatches BETWEEN tables (Recipe 12.2) and how to compare a table to itself (Recipe 12.3). The examples asSUMe that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
 CREATE TABLE artist (
 a_id INT UNSIGNED NOT NULL AUTO_INCREMENT, # artist ID
 name  VARCHAR(30) NOT NULL, # artist name PRIMARY KEY (a_id),
@@ -2692,7 +2732,7 @@ WHERE painting.state IN ('KY','IN');
 | Van Gogh |
 +----------+
 The statement also uses DISTINCT to display each artist name just once. Try it with- out DISTINCT and you’ll see that Van Gogh is listed twice; that’s because you obtained two Van Goghs in Kentucky.
-Joins can also be used with aggregate functions to produce summaries. For exam- ple, to find out how many paintings you have per artist, use this statement:
+Joins can also be used with aggregate functions to produce SUMmaries. For exam- ple, to find out how many paintings you have per artist, use this statement:
 SELECT artist.name, COUNT(*) AS 'number of paintings'
 FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
 GROUP BY artist.name;
@@ -2717,7 +2757,7 @@ GROUP BY artist.name;
 | Renoir    |   1 | 64 |    64.0000 |
 | Van Gogh |    3 | 148 |   49.3333 |
 +----------+---------------------+-------------+---------------+
-Note that the summary statements produce output only for those artists in the artist table for whom you actually have acquired paintings. (For example, Monet is listed in the artist table but is not present in the summary because you don’t have any of his paintings yet.) If you want the summary to include all artists, even if you have none of their paintings yet, you must use a different kind of join—specifically, an outer join:
+Note that the SUMmary statements produce output only for those artists in the artist table for whom you actually have acquired paintings. (For example, Monet is listed in the artist table but is not present in the SUMmary because you don’t have any of his paintings yet.) If you want the SUMmary to include all artists, even if you have none of their paintings yet, you must use a different kind of join—specifically, an outer join:
 Joins written with the comma operator or INNER JOIN are inner joins, which means that they produce a result only for values in one table that match values in another table.
 An outer join can produce those matches as well, but also can show you which values in one table are missing FROM the other. Recipe 12.2 introduces outer joins.
 
@@ -2861,7 +2901,7 @@ ElseWHERE in this book, I’ll generally refer only to LEFT JOIN for brevity, bu
 
 See Also
 As shown in this section, LEFT JOIN is useful for finding values with no match in another table or for showing whether each value is matched. LEFT JOIN may also be used to
-produce a summary that includes all items in a list, even those for which there’s nothing to summarize. This is very common for characterizing the relationship BETWEEN a master table and a detail table. For example, a LEFT JOIN can produce “total sales per customer” reports that list all customers, even those who haven’t bought anything during the summary period. (See Recipe 12.4 for information about master-detail lists.)
+produce a SUMmary that includes all items in a list, even those for which there’s nothing to SUMmarize. This is very common for characterizing the relationship BETWEEN a master table and a detail table. For example, a LEFT JOIN can produce “total sales per customer” reports that list all customers, even those who haven’t bought anything during the SUMmary period. (See Recipe 12.4 for information about master-detail lists.)
 You can also use LEFT JOIN to perform consistency checking when you receive two datafiles that are supposed to be related, and you want to deterMINe whether they really are. (That is, you want to check the integrity of their relationship.) Import each file into a MySQL table, and then run a couple of LEFT JOIN statements to deterMINe whether there are unattached rows in one table or the other—that is, rows that have no match in the other table. Recipe 12.13 discusses how to identify (and optionally delete) these unattached rows.
 
 ---
@@ -3019,9 +3059,9 @@ ORDER BY s1.name;
 For each row in the states table, the statement SELECTs rows in which the state has a statehood value in the same year, not including that state itself. For rows HAVING no such match, the LEFT JOIN forces the output to contain a row anyway, with all the s2 columns set to NULL. Those rows identify the states with no other state that joined the Union in the same year.
 
 ---
-Producing Master-Detail Lists and Summaries
+Producing Master-Detail Lists and SUMmaries
 Problem
-Two related tables have a master-detail relationship, and you want to produce a list that shows each master row with its detail rows or a list that produces a summary of the detail rows for each master row.
+Two related tables have a master-detail relationship, and you want to produce a list that shows each master row with its detail rows or a list that produces a SUMmary of the detail rows for each master row.
 
 Solution
 This is a one-to-many relationship. The solution to this problem involves a join, but the type of join depends on the question you want answered. To produce a list con- taining only master rows for which some detail row exists, use an inner join based on the primary key in the master table. To produce a list that includes entries for all master rows, even those that have no detail rows, use an outer join.
@@ -3059,7 +3099,7 @@ ORDER BY name, title;
 | Van Gogh | The Rocks  |
 +----------+-------------------+
 The rows in the result that have NULL in the title column correspond to artists that are listed in the artist table for whom you have no paintings.
-The same principles apply when producing summaries using master and detail tables. For example, to summarize your art collection by number of paintings per painter, you might ask, “How many paintings are there per artist in the painting table?” To find the answer based on artist ID, you can count up the paintings easily with this statement:
+The same principles apply when producing SUMmaries using master and detail tables. For example, to SUMmarize your art collection by number of paintings per painter, you might ask, “How many paintings are there per artist in the painting table?” To find the answer based on artist ID, you can count up the paintings easily with this statement:
 SELECT a_id, COUNT(a_id) AS count FROM painting GROUP BY a_id;
 +------+-------+
 | a_id | count |
@@ -3079,7 +3119,7 @@ GROUP BY artist.name;
 | Renoir    |   1 |
 | Van Gogh |    3 |
 +----------+-------+
-On the other hand, you might ask, “How many paintings did each artist paint?” This is the same question as the previous one (and the same statement answers it), as long as every artist in the artist table has at least one corresponding painting table row. But if you have artists in the artist table that are not yet represented by any paintings in your collection, they will not appear in the statement output. To produce a count- per-artist summary that includes even artists with no paintings in the painting table, use a LEFT JOIN:
+On the other hand, you might ask, “How many paintings did each artist paint?” This is the same question as the previous one (and the same statement answers it), as long as every artist in the artist table has at least one corresponding painting table row. But if you have artists in the artist table that are not yet represented by any paintings in your collection, they will not appear in the statement output. To produce a count- per-artist SUMmary that includes even artists with no paintings in the painting table, use a LEFT JOIN:
 SELECT artist.name AS painter, COUNT(painting.a_id) AS count
 FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
 GROUP BY artist.name;
@@ -3107,7 +3147,7 @@ GROUP BY artist.name;
 +----------+-------+
 Now every artist appears to have at least one painting. Why the difference? The cause of the problem is that the statement uses COUNT(*) rather than COUNT(painting.a_id). The way LEFT JOIN works for unmatched rows in the left table is that it generates a row with all the columns FROM the right table set to NULL. In the example, the right table is painting. The statement that uses COUNT(painting.a_id) works correctly, because COUNT
 ( expr ) counts only non-NULL values. The statement that uses COUNT(*) works incor- rectly because it counts rows, even those containing NULL that correspond to missing artists.
-LEFT JOIN is suitable for other types of summaries as well. To produce additional col- umns showing the total and average values of the paintings for each artist in the artist table, use this statement:
+LEFT JOIN is suitable for other types of SUMmaries as well. To produce additional col- umns showing the total and average values of the paintings for each artist in the artist table, use this statement:
 SELECT artist.name AS painter,
 COUNT(painting.a_id) AS 'number of paintings',
 SUM(painting.price) AS 'total price',
@@ -3119,7 +3159,7 @@ GROUP BY artist.name;
 +----------+---------------------+-------------+---------------+
 
 +----------+---------------------+-------------+---------------+
-Note that COUNT( ) is zero for artists that are not represented, but SUM( ) and AVG( ) are NULL. The latter two functions return NULL when applied to a set of values with no non- NULL values. To display a sum or average value of zero in that case, modify the statement to test the value of SUM( ) or AVG( ) with COALESCE( ):
+Note that COUNT( ) is zero for artists that are not represented, but SUM( ) and AVG( ) are NULL. The latter two functions return NULL when applied to a set of values with no non- NULL values. To display a SUM or average value of zero in that case, modify the statement to test the value of SUM( ) or AVG( ) with COALESCE( ):
 SELECT artist.name AS painter,
 COUNT(painting.a_id) AS 'number of paintings',
 COALESCE(SUM(painting.price),0) AS 'total price',
@@ -3407,7 +3447,7 @@ ORDER BY driver_log.name;
 Which technique is better: the temporary table or the subquery in the FROM clause? For small tables, there might not be much difference either way. If the temporary table or subquery result is large, a general advantage of the temporary table is that you can index it after creating it and before using it in a join.
 
 See Also
-This recipe shows how to answer maximum-per-group questions by Selecting summary information into a temporary table and joining that table to the original one or by using a subquery in the FROM clause. These techniques have application in many contexts. One of them is calculation of team standings, WHERE the standings for each group of teams are deterMINed by comparing each team in the group to the team with the best record. Recipe 12.7 discusses how to do this.
+This recipe shows how to answer maximum-per-group questions by Selecting SUMmary information into a temporary table and joining that table to the original one or by using a subquery in the FROM clause. These techniques have application in many contexts. One of them is calculation of team standings, WHERE the standings for each group of teams are deterMINed by comparing each team in the group to the team with the best record. Recipe 12.7 discusses how to do this.
 
 
 ---
@@ -3434,7 +3474,7 @@ ORDER BY wins-losses DESC;
 +-------------+------+--------+
 The rows are sorted by the win-loss differential, which is how to place teams in order FROM first place to last place. But displays of team standings typically include each team’s winning percentage and a figure indicating how many games behind the leader all the other teams are. So let’s add that information to the output. Calculating the percentage is easy. It’s the ratio of wins to total games played and can be deterMINed using this expression:
 wins / (wins + losses)
-This expression involves division by zero when a team has not played any games yet. For simplicity, I’ll assume a nonzero number of games, but if you want to handle this condition, generalize the expression as follows:
+This expression involves division by zero when a team has not played any games yet. For simplicity, I’ll asSUMe a nonzero number of games, but if you want to handle this condition, generalize the expression as follows:
 IF(wins=0,0,wins/(wins+losses))
 This expression uses the fact that no division at all is necessary unless the team has won at least one game.
 DeterMINing the games-behind value is a little trickier. It’s based on the relationship of the win-loss records for two teams, calculated as the average of two values:
@@ -3533,7 +3573,7 @@ ORDER BY wl.half, wl.division, wl.wins-wl.losses DESC, PCT DESC;
 
 +------+----------+-----------------+------+------+-------+------+
 That output is somewhat difficult to read, however. To make it easier to understand, you’d likely execute the statement FROM within a program and reformat its results to display each set of team records separately. Here’s some Perl code that does that by beginning a new output group each time it encounters a new group of standings. The
-code assumes that the join statement has just been executed and that its results are available through the statement handle $sth:
+code asSUMes that the join statement has just been executed and that its results are available through the statement handle $sth:
 my ($cur_half, $cur_div) = ("", "");
 while (my ($half, $div, $team, $wins, $losses, $pct, $gb)
 = $sth->fetchrow_array ())
@@ -3556,13 +3596,13 @@ This code comes FROM the script calc_standings.pl in the joins directory of the 
 
 Using a Join to Fill or Identify Holes in a List
 Problem
-You want to produce a summary for each of several categories, but some of them are not represented in the data to be summarized. Consequently, the summary has missing categories.
+You want to produce a SUMmary for each of several categories, but some of them are not represented in the data to be SUMmarized. Consequently, the SUMmary has missing categories.
 
 Solution
-Create a reference table that lists each category and produce the summary based on a LEFT JOIN BETWEEN the list and the table containing your data. Then every category in the reference table will appear in the result, even those not present in the data to be summarized.
+Create a reference table that lists each category and produce the SUMmary based on a LEFT JOIN BETWEEN the list and the table containing your data. Then every category in the reference table will appear in the result, even those not present in the data to be SUMmarized.
 
 Discussion
-When you run a summary query, normally it produces entries only for the values that are actually present in the data. Let’s say you want to produce a time-of-day summary for the rows in the mail table. That table looks like this:
+When you run a SUMmary query, normally it produces entries only for the values that are actually present in the data. Let’s say you want to produce a time-of-day SUMmary for the rows in the mail table. That table looks like this:
 SELECT * FROM mail;
 +---------------------+---------+---------+---------+---------+---------+
 | t | sender | srchost | recipient | dsthost | size  |
@@ -3584,7 +3624,7 @@ FROM mail GROUP BY hour;
 |   22 |    1 |
 |   23 |    1 |
 +------+-------+
-Here, the summary category is hour of the day. However, the summary is “incomplete” in the sense that it includes entries only for those hours of the day represented in the mail table. To produce a summary that includes all hours of the day, even those during which no messages were sent, create a reference table that lists each category (that is, each hour):
+Here, the SUMmary category is hour of the day. However, the SUMmary is “incomplete” in the sense that it includes entries only for those hours of the day represented in the mail table. To produce a SUMmary that includes all hours of the day, even those during which no messages were sent, create a reference table that lists each category (that is, each hour):
 CREATE TABLE ref (h INT);
 INSERT INTO ref (h)
 VALUES(0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),
@@ -3599,8 +3639,8 @@ GROUP BY hour;
 +------+-------+
 
 +------+-------+
-Now the summary includes an entry for every hour of the day because the LEFT JOIN forces the output to include a row for every row in the reference table, regardless of the contents of the mail table.
-The example just shown uses the reference table with a LEFT JOIN to fill in holes in the category list. It’s also possible to use the reference table to detect holes in the dataset— that is, to deterMINe which categories are not present in the data to be summarized. The following statement shows those hours of the day during which no messages were sent by looking for reference rows for which no mail table rows have a matching cate- gory value:
+Now the SUMmary includes an entry for every hour of the day because the LEFT JOIN forces the output to include a row for every row in the reference table, regardless of the contents of the mail table.
+The example just shown uses the reference table with a LEFT JOIN to fill in holes in the category list. It’s also possible to use the reference table to detect holes in the dataset— that is, to deterMINe which categories are not present in the data to be SUMmarized. The following statement shows those hours of the day during which no messages were sent by looking for reference rows for which no mail table rows have a matching cate- gory value:
 SELECT ref.h AS hour
 FROM ref LEFT JOIN mail ON ref.h = HOUR(mail.t)
 WHERE mail.t IS NULL;
@@ -3609,10 +3649,10 @@ WHERE mail.t IS NULL;
 +------+
 
 +------+
-Reference tables that contain a list of categories are quite useful for summary state- ments, but creating such tables manually is MINd-numbing and error-prone. You might find it preferable to write a script that uses the endpoints of the range of category values to generate the reference table for you. In essence, this type of script acts as an iterator that generates a row for each value in the range. The following Perl script, make_date_list.pl, shows an example of this approach. It creates a reference table con- taining a row for every date in a particular date range. It also indexes the table so that it will be fast in large joins.
+Reference tables that contain a list of categories are quite useful for SUMmary state- ments, but creating such tables manually is MINd-numbing and error-prone. You might find it preferable to write a script that uses the endpoints of the range of category values to generate the reference table for you. In essence, this type of script acts as an iterator that generates a row for each value in the range. The following Perl script, make_date_list.pl, shows an example of this approach. It creates a reference table con- taining a row for every date in a particular date range. It also indexes the table so that it will be fast in large joins.
 #!/usr/bin/perl
 # make_date_list.pl - create a table with an entry for every date in # a given date range. The table can be used in a LEFT JOIN when
-# producing a summary, to make sure that every date appears in the # summary, regardless of whether the data to be summarized actually # contains any values for a given day.
+# producing a SUMmary, to make sure that every date appears in the # SUMmary, regardless of whether the data to be SUMmarized actually # contains any values for a given day.
 # Usage: make_date_list.pl db_name tbl_name col_name MIN_date MAX_date use strict;
 use warnings; use DBI;
 
@@ -3643,14 +3683,14 @@ foreach my $i (0 .. $days-1)
 {
 $sth->execute ($MIN_date, $i);
 }
-Reference tables generated by make_date_list.pl can be used for per-date summaries or to find dates not represented in the table. Suppose that you want to summarize the driver_log table to deterMINe how many drivers were on the road each day. The table has these rows:
+Reference tables generated by make_date_list.pl can be used for per-date SUMmaries or to find dates not represented in the table. Suppose that you want to SUMmarize the driver_log table to deterMINe how many drivers were on the road each day. The table has these rows:
 SELECT * FROM driver_log ORDER BY rec_id;
 +--------+-------+------------+-------+
 | rec_id | name  | travel_date  | miles |
 +--------+-------+------------+-------+
 
 +--------+-------+------------+-------+
-A simple summary looks like this:
+A simple SUMmary looks like this:
 SELECT travel_date, COUNT(travel_date) AS drivers
 FROM driver_log GROUP BY travel_date;
 +------------+---------+
@@ -3658,12 +3698,12 @@ FROM driver_log GROUP BY travel_date;
 +------------+---------+
 
 +------------+---------+
-However, that summary does not show dates when no drivers were active. To generate a complete summary that includes the missing dates, use make_date_list.pl. FROM the simple summary just shown, we can tell the minimum and maximum dates, so generate a reference table named ref with a date column d that spans those dates:
+However, that SUMmary does not show dates when no drivers were active. To generate a complete SUMmary that includes the missing dates, use make_date_list.pl. FROM the simple SUMmary just shown, we can tell the minimum and maximum dates, so generate a reference table named ref with a date column d that spans those dates:
 % make_date_list.pl cookbook ref d 2006-08-26 2006-09-02
 minimum date: 2006-08-26
 maximum date: 2006-09-02
 Number of days spanned by range: 8
-After creating the reference table, use it in the following statement to generate the complete summary:
+After creating the reference table, use it in the following statement to generate the complete SUMmary:
 SELECT ref.d, COUNT(driver_log.travel_date) AS drivers
 FROM ref LEFT JOIN driver_log ON ref.d = driver_log.travel_date
 GROUP BY d;
@@ -3672,7 +3712,7 @@ GROUP BY d;
 +------------+---------+
 
 +------------+---------+
-This second summary includes additional rows that show those dates when no drivers were active. To list only those no-driver dates, use this statement:
+This second SUMmary includes additional rows that show those dates when no drivers were active. To list only those no-driver dates, use this statement:
 SELECT ref.d
 FROM ref LEFT JOIN driver_log ON ref.d = driver_log.travel_date
 WHERE driver_log.travel_date IS NULL
@@ -3751,12 +3791,12 @@ These results show much more clearly than the original table that the player sta
 
 ---
 
-Finding Cumulative Sums and Running Averages
+Finding Cumulative SUMs and Running Averages
 Problem
-You have a set of observations measured over time and want to compute the cumulative sum of the observations at each measurement point. Or you want to compute a running average at each point.
+You have a set of observations measured over time and want to compute the cumulative SUM of the observations at each measurement point. Or you want to compute a running average at each point.
 
 Solution
-Use a self-join to produce the sets of successive observations at each measurement point, and then apply aggregate functions to each set of values to compute its sum or average.
+Use a self-join to produce the sets of successive observations at each measurement point, and then apply aggregate functions to each set of values to compute its SUM or average.
 
 Discussion
 Recipe 12.9 illustrates how a self-join can produce relative values FROM absolute values. A self-join can do the opposite as well, producing cumulative values at each successive stage of a set of observations. The following table shows a set of rainfall measurements taken over a series of days. The values in each row show the observation date and the amount of precipitation in inches:
@@ -3777,7 +3817,7 @@ SELECT SUM(precip) FROM rainfall WHERE date <= '2006-06-03';
 +-------------+
 |   2.00 |
 +-------------+
-If you want the cumulative figures for all days that are represented in the table, it would be tedious to compute the value for each of them separately. A self-join can do this for all days with a single statement. Use one instance of the rainfall table as a reference, and deterMINe for the date in each row the sum of the precip values in all rows occurring up through that date in another instance of the table. The following statement shows the daily and cumulative precipitation for each day:
+If you want the cumulative figures for all days that are represented in the table, it would be tedious to compute the value for each of them separately. A self-join can do this for all days with a single statement. Use one instance of the rainfall table as a reference, and deterMINe for the date in each row the SUM of the precip values in all rows occurring up through that date in another instance of the table. The following statement shows the daily and cumulative precipitation for each day:
 SELECT t1.date, t1.precip AS 'daily precip',
 SUM(t2.precip) AS 'cum. precip'
 FROM rainfall AS t1 INNER JOIN rainfall AS t2
@@ -3811,7 +3851,7 @@ SELECT date, precip FROM rainfall ORDER BY date;
 | 2006-06-03 |  0.50 |
 | 2006-06-05 |  1.00 |
 +------------+--------+
-Deleting those rows doesn’t change the cumulative sum or running average for the dates that remain, but it does change how they must be calculated. If you try the self-join again, it yields incorrect results for the days-elapsed and average precipitation columns:
+Deleting those rows doesn’t change the cumulative SUM or running average for the dates that remain, but it does change how they must be calculated. If you try the self-join again, it yields incorrect results for the days-elapsed and average precipitation columns:
 SELECT t1.date, t1.precip AS 'daily precip',
 SUM(t2.precip) AS 'cum. precip',
 COUNT(t2.precip) AS 'days elapsed',
@@ -3826,7 +3866,7 @@ GROUP BY t1.date;
 | 2006-06-03 |  0.50 |  2.00 |  2 | 1.000000 |
 | 2006-06-05 |  1.00 |  3.00 |  3 | 1.000000 |
 +------------+--------------+-------------+--------------+-------------+
-To fix the problem, it’s necessary to deterMINe the number of days elapsed a different way. Take the minimum and maximum date involved in each sum and calculate a days- elapsed value FROM them using the following expression:
+To fix the problem, it’s necessary to deterMINe the number of days elapsed a different way. Take the minimum and maximum date involved in each SUM and calculate a days- elapsed value FROM them using the following expression:
 DATEDIFF(MAX(t2.date),MIN(t2.date)) + 1
 That value must be used for the days-elapsed column and for computing the running averages. The resulting statement is as follows:
 SELECT t1.date, t1.precip AS 'daily precip',
@@ -3845,7 +3885,7 @@ GROUP BY t1.date;
 | 2006-06-05 |  1.00 |  3.00 |  5 | 0.600000 |
 +------------+--------------+-------------+--------------+-------------+
 As this example illustrates, calculation of cumulative values FROM relative values re- quires only a column that enables rows to be placed into the proper order. (For the rainfall table, that’s the date column.) Values in the column need not be sequential, or even numeric. This differs FROM calculations that produce difference values FROM cumulative values (Recipe 12.9), which require that a table have a column that contains an unbroken sequence.
-The running averages in the rainfall examples are based on dividing cumulative pre- cipitation sums by number of days elapsed as of each day. When the table has no gaps, the number of days is the same as the number of values summed, making it easy to find successive averages. When rows are missing, the calculations become more complex. What this demonstrates is that it’s necessary to consider the nature of your data and calculate averages appropriately. The next example is conceptually similar to the pre- vious ones in that it calculates cumulative sums and running averages, but it performs the computations yet another way.
+The running averages in the rainfall examples are based on dividing cumulative pre- cipitation SUMs by number of days elapsed as of each day. When the table has no gaps, the number of days is the same as the number of values SUMmed, making it easy to find successive averages. When rows are missing, the calculations become more complex. What this demonstrates is that it’s necessary to consider the nature of your data and calculate averages appropriately. The next example is conceptually similar to the pre- vious ones in that it calculates cumulative SUMs and running averages, but it performs the computations yet another way.
 The following table shows a marathon runner’s performance at each stage of a 26- kilometer run. The values in each row show the length of each stage in kilometers and how long the runner took to complete the stage. In other words, the values pertain to intervals within the marathon and thus are relative to the whole:
 SELECT stage, km, t FROM marathon ORDER BY stage;
 +-------+----+----------+
@@ -3869,7 +3909,7 @@ GROUP BY t1.stage;
 |   3 | 9 | 21 |
 |   4 | 5 | 26 |
 +-------+----+---------+
-Cumulative distances are easy to compute because they can be summed directly. The calculation for accumulating time values is a little more involved. It’s necessary to con- vert times to seconds, total the resulting values, and convert the sum back to a time value. To compute the runner’s average speed at the end of each stage, take the ratio of cumulative distance over cumulative time. Putting all this together yields the fol- lowing statement:
+Cumulative distances are easy to compute because they can be SUMmed directly. The calculation for accumulating time values is a little more involved. It’s necessary to con- vert times to seconds, total the resulting values, and convert the SUM back to a time value. To compute the runner’s average speed at the end of each stage, take the ratio of cumulative distance over cumulative time. Putting all this together yields the fol- lowing statement:
 SELECT t1.stage, t1.km, t1.t,
 SUM(t2.km) AS 'cum. km',
 SEC_TO_TIME(SUM(TIME_TO_SEC(t2.t))) AS 'cum. t',
@@ -3882,7 +3922,7 @@ GROUP BY t1.stage;
 +-------+----+----------+---------+----------+--------------+
 
 +-------+----+----------+---------+----------+--------------+
-We can see FROM this that the runner’s average pace increased a little during the second stage of the race, but then (presumably as a result of fatigue) decreased thereafter.
+We can see FROM this that the runner’s average pace increased a little during the second stage of the race, but then (preSUMably as a result of fatigue) decreased thereafter.
 
 
 ----
@@ -3902,8 +3942,8 @@ SELECT * FROM driver_log ORDER BY rec_id;
 +--------+-------+------------+-------+
 
 +--------+-------+------------+-------+
-The preceding statement sorts the rows using the ID column, which is present in the rows. But what if you want to display a list and sort it on the basis of a summary value not present in the rows? That’s a little trickier. Suppose that you want to show each driver’s rows by date, but place those drivers who drive the most miles first. You can’t do this with a summary query, because then you wouldn’t get back the individual driver rows. But you can’t do it without a summary query, either, because the summary values are required for sorting. The way out of the dilemma is to create another table con- taining the summary value per driver and then join it to the original table. That way you can produce the individual rows and also sort them by the summary values.
-To summarize the driver totals into another table, do this:
+The preceding statement sorts the rows using the ID column, which is present in the rows. But what if you want to display a list and sort it on the basis of a SUMmary value not present in the rows? That’s a little trickier. Suppose that you want to show each driver’s rows by date, but place those drivers who drive the most miles first. You can’t do this with a SUMmary query, because then you wouldn’t get back the individual driver rows. But you can’t do it without a SUMmary query, either, because the SUMmary values are required for sorting. The way out of the dilemma is to create another table con- taining the SUMmary value per driver and then join it to the original table. That way you can produce the individual rows and also sort them by the SUMmary values.
+To SUMmarize the driver totals into another table, do this:
 CREATE TABLE tmp
 SELECT name, SUM(miles) AS driver_miles FROM driver_log GROUP BY name;
 
@@ -3916,7 +3956,7 @@ SELECT * FROM tmp ORDER BY driver_miles DESC;
 | Suzi |    893 |
 | Ben   |   362 |
 +-------+--------------+
-Then use the name values to join the summary table to the driver_log table, and use the driver_miles values to sort the result. The following statement shows the mileage totals in the result. That’s only to clarify how the values are being sorted. It’s not actually necessary to display them; they’re needed only for the ORDER BY clause.
+Then use the name values to join the SUMmary table to the driver_log table, and use the driver_miles values to sort the result. The following statement shows the mileage totals in the result. That’s only to clarify how the values are being sorted. It’s not actually necessary to display them; they’re needed only for the ORDER BY clause.
 SELECT tmp.driver_miles, driver_log.*
 FROM driver_log INNER JOIN tmp
 ON driver_log.name = tmp.name
@@ -3954,7 +3994,7 @@ Use a UNION operation to combine multiple SELECT results into one.
 Discussion
 A join is useful for combining columns FROM different tables side by side. It’s not so useful when you want a result set that includes a set of rows FROM several tables, or
 multiple sets of rows FROM the same table. These are instances of the type of operation for which a UNION is useful. A UNION enables you to run several SELECT statements and combine their results. That is, rather than running multiple queries and receiving mul- tiple result sets, you receive a single result set.
-Suppose that you have two tables that list prospective and actual customers, and a third that lists vendors FROM whom you purchase supplies, and you want to create a single mailing list by merging names and addresses FROM all three tables. UNION provides a way to do this. Assume that the three tables have the following contents:
+Suppose that you have two tables that list prospective and actual customers, and a third that lists vendors FROM whom you purchase supplies, and you want to create a single mailing list by merging names and addresses FROM all three tables. UNION provides a way to do this. AsSUMe that the three tables have the following contents:
 SELECT * FROM prospect;
 +---------+-------+------------------------+
 | fname | lname | addr  |
@@ -4316,7 +4356,7 @@ SELECT * FROM employee_new
 
 
 How It Works
-The INTERSECT operator, along with UNION, UNION ALL, and MINUS, joins two or more queries together. As of Oracle Database 11g, these operators have equal precedence, and unless you override them with parentheses, they are evaluated in left-to-right order. Or, more intuitively since you usually don’t have two queries on one line, top-to-bottom order!
+The INTERSECT operator, along with UNION, UNION ALL, and MINUS, joins two or more queries together. As of SQL Database 11g, these operators have equal precedence, and unless you override them with parentheses, they are evaluated in left-to-right order. Or, more intuitively since you usually don’t have two queries on one line, top-to-bottom order!
 
 
 Tip Future ANSI SQL standards give the INTERSECT operator higher precedence than the other operators. Thus, to “bulletproof” your SQL code, use parentheses to explicitly specify evaluation order WHERE you use INTERSECT with other set operators.
@@ -4383,7 +4423,7 @@ Mapping columns with NULLs to non-NULL values in a join condition to avoid using
 create index employee_dept_fbi on employee(nvl(department_id,110));
 
 
-Tip As of Oracle Database 11g, you can now use virtual columns as an alternative to FBIs. Virtual columns are derived FROM constants, functions, and columns FROM the same table. You can define indexes on the virtual columns, which the optimizer will use in any query as it would a regular column index.
+Tip As of SQL Database 11g, you can now use virtual columns as an alternative to FBIs. Virtual columns are derived FROM constants, functions, and columns FROM the same table. You can define indexes on the virtual columns, which the optimizer will use in any query as it would a regular column index.
 
 
 Ultimately, the key to handling NULLs in join conditions is based on knowing your data. If at all possible, avoid joining on columns that may have NULLs, or ensure that every column you will join on has a default value when it is populated. If the column must have NULLs, use functions like NVL, NVL2, and COALESCE to convert NULLs before joining; you can create function-based indexes to offset any performance issues with joining on expressions. If that is not possible, understand the business rules about what NULLs mean in your database columns: do they mean zero, unknown, or not applicable? Your SQL code must reflect the business definition of columns that can have NULLs.
@@ -4396,8 +4436,8 @@ You don’t want to store redundant data in your database tables, but you want t
 
 
 Solution
-In your SELECT statements, apply Oracle built-in functions or create expressions on one or more columns in the table, creating a virtual column in the query results. For example, suppose you want to summarize total compensation for an employee, combining salary and commissions.
-In the sample tables included for the OE user FROM a default installation of Oracle, the ORDER_ITEMS
+In your SELECT statements, apply SQL built-in functions or create expressions on one or more columns in the table, creating a virtual column in the query results. For example, suppose you want to SUMmarize total compensation for an employee, combining salary and commissions.
+In the sample tables included for the OE user FROM a default installation of SQL, the ORDER_ITEMS
 table contains UNIT_PRICE and QUANTITY columns as follows:
 SELECT * FROM order_items;
 
@@ -4423,7 +4463,7 @@ Problem
 For reporting and readability purposes, you want to combine multiple columns into a single output column, eliMINating extra blank space and adding punctuation WHERE necessary.
 
 Solution
-Use Oracle string concatenation functions or operators to save space in your report and make the output more readable. For example, in the employee table, you can use the || (two vertical bars) operator or the CONCAT function to combine the employee’s first and last name:
+Use SQL string concatenation functions or operators to save space in your report and make the output more readable. For example, in the employee table, you can use the || (two vertical bars) operator or the CONCAT function to combine the employee’s first and last name:
 
 SELECT employee_id, last_name || ', ' || first_name full_name, email FROM employee
 ;
@@ -4438,10 +4478,10 @@ The query concatenates the last name, a comma, and the first name into a single 
 
 SELECT employee_id, concat(concat(last_name,', '),first_name) full_name, email FROM employee
 ;
-Because the CONCAT function only supports two operands as of Oracle Database 11g, concatenating more than two strings can make the code unreadable very fast!
+Because the CONCAT function only supports two operands as of SQL Database 11g, concatenating more than two strings can make the code unreadable very fast!
 
 How It Works
-You can apply a number of different Oracle built-in functions to make your output more readable; some Oracle shops I’ve worked in relied solely on SQL*Plus for their reporting. Applying the appropriate functions and using the right SQL*Plus commands makes the output extremely readable, even with queries returning Oracle objects, currency columns, and long character strings.
+You can apply a number of different SQL built-in functions to make your output more readable; some SQL shops I’ve worked in relied solely on SQL*Plus for their reporting. Applying the appropriate functions and using the right SQL*Plus commands makes the output extremely readable, even with queries returning SQL objects, currency columns, and long character strings.
 If your text-based columns have leading or trailing blanks (which of course should have been cleaned up on import or by the GUI form), or the column is a fixed-length CHAR column, you can get rid of leading and trailing blanks using the TRIM function, as in this example:
 
 SELECT employee_id, trim(last_name) || ', ' || trim(first_name) full_name, email FROM employee
@@ -4487,7 +4527,7 @@ Table 4-1. Mapping the Text in the ORDER_MODE Column to Numeric Values
 
 The second column of Table 4-1 contains the numeric value we want to map to for each of the possible values in the ORDER_MODE column. Here is the SQL you use to add the new column to the table:
 alter table orders add (order_mode_num number);
-Oracle versions 9i and later include the CASE statement, which is essentially a way to more easily execute procedural code within the confines of the typically non-procedural SQL command language. The CASE statement has two forms: one for simpler scenarios with a single expression that is compared to a list of constants or expressions, and a second that supports evaluation of any combination of columns and expressions. In both forms, CASE returns a single result that is assigned to a column in the SELECT query or DML statement.
+SQL versions 9i and later include the CASE statement, which is essentially a way to more easily execute procedural code within the confines of the typically non-procedural SQL command language. The CASE statement has two forms: one for simpler scenarios with a single expression that is compared to a list of constants or expressions, and a second that supports evaluation of any combination of columns and expressions. In both forms, CASE returns a single result that is assigned to a column in the SELECT query or DML statement.
 The recipe solution using the simpler form of the CASE statement is as follows:
 update orders
 set order_mode_num = case order_mode
@@ -4508,7 +4548,7 @@ when order_mode = 'direct' then 1 when order_mode = 'online' then 2 when order_m
 end
 ;
 
-Note that in this scenario you need to check for the employee order first in the list of WHEN clauses, otherwise the ORDER_MODE column will be set to 1 and no customer orders will be flagged, since both conditions check for ORDER_MODE = 'direct'. For both DECODE and CASE, the evaluation and assignment stops as soon as Oracle finds the first expression that evaluates to TRUE.
+Note that in this scenario you need to check for the employee order first in the list of WHEN clauses, otherwise the ORDER_MODE column will be set to 1 and no customer orders will be flagged, since both conditions check for ORDER_MODE = 'direct'. For both DECODE and CASE, the evaluation and assignment stops as soon as SQL finds the first expression that evaluates to TRUE.
 In the solution, the string 'direct' is translated to 1, 'online' is translated to 2, and so forth. If the ORDER_MODE column does not contain any of the strings in the list, the ORDER_MODE_NUM column is assigned 0.
 Finally, reversing the mapping in a SELECT statement for reporting purposes is very straightforward: we can use CASE or DECODE with the text and numeric values reversed. Here is an example:
 
@@ -4525,7 +4565,7 @@ WHERE order_id in (2458,2397,2355,2356)
 
 
 4 rows SELECTed
-The older DECODE statement is the most basic of the Oracle functions that converts one set of values to another; you can convert numeric codes to human-readable text values or vice versa, as we do in the previous solutions. DECODE has been available in Oracle since the earliest releases. DECODE has a variable number of arguments, but the arguments can be divided into three groups:
+The older DECODE statement is the most basic of the SQL functions that converts one set of values to another; you can convert numeric codes to human-readable text values or vice versa, as we do in the previous solutions. DECODE has been available in SQL since the earliest releases. DECODE has a variable number of arguments, but the arguments can be divided into three groups:
 The column or expression to be translated
 One or more pairs of values; the first value is the existing value and the second is the translated value
 A single default value if the column or expression to be translated does not match the first value of any of the specified pairs
@@ -4547,8 +4587,8 @@ Problem
 Results for a business report are sorted by department manager, but you need to find a way to override the sorting of NULLs so they appear WHERE you want at the beginning or end of the report.
 
 Solution
-Oracle provides two extensions to the ORDER BY clause to enable SQL developers to treat NULL values separately FROM the known data, allowing any NULL entries to sort explicitly to the beginning or end of the results.
-For our recipe, we’ll assume that the report desired is based on the department names and manager identifiers FROM the department table. This SQL SELECTs this data and uses the NULLS FIRST option to explicitly control NULL handling.
+SQL provides two extensions to the ORDER BY clause to enable SQL developers to treat NULL values separately FROM the known data, allowing any NULL entries to sort explicitly to the beginning or end of the results.
+For our recipe, we’ll asSUMe that the report desired is based on the department names and manager identifiers FROM the department table. This SQL SELECTs this data and uses the NULLS FIRST option to explicitly control NULL handling.
 
 SELECT department_name, manager_id FROM department
 ORDER BY manager_id NULLs first;
@@ -4558,7 +4598,7 @@ The results present the “unmanaged” departments first, followed by the depar
 
 
 How It Works
-Normally, Oracle sorts NULL values to the end of the results for default ascending sorts, and to the beginning of the results for descending sorts. The NULLS FIRST ORDER BY option, together with its complement, NULLS LAST, overrides Oracle’s normal sorting behavior for NULL values and places them exactly WHERE you specify: either at the beginning or end of the results.
+Normally, SQL sorts NULL values to the end of the results for default ascending sorts, and to the beginning of the results for descending sorts. The NULLS FIRST ORDER BY option, together with its complement, NULLS LAST, overrides SQL’s normal sorting behavior for NULL values and places them exactly WHERE you specify: either at the beginning or end of the results.
 Your first instinct when presented with the problem of NULL values sorting to the “wrong” end of your data might be to simply switch FROM ascending to descending sort, or vice versa. But if you think about more complex queries, subSELECTs using ROWNUM or ROWID tricks, and other queries that need to
 
 
@@ -4570,7 +4610,7 @@ Problem
 You would like to compare the data in two related tables, to show WHERE matching data exists, and to also show WHERE matching data doesn’t exist.
 
 Solution
-Oracle supports the EXISTS and NOT EXISTS predicates, allowing you to correlate the data in one table or expression with matching or missing data in another table or expression. We’ll use the hypothetical situation of needing to find which departments currently have managers. Phrasing this in a way that best illustrates the EXISTS solution, the next SQL statement finds all departments WHERE a manager is known to exist.
+SQL supports the EXISTS and NOT EXISTS predicates, allowing you to correlate the data in one table or expression with matching or missing data in another table or expression. We’ll use the hypothetical situation of needing to find which departments currently have managers. Phrasing this in a way that best illustrates the EXISTS solution, the next SQL statement finds all departments WHERE a manager is known to exist.
 
 SELECT department_name FROM department d WHERE exists
 (SELECT e.employee_id
@@ -4585,9 +4625,9 @@ SELECT department_name FROM department d WHERE not exists (SELECT e.employee_id 
 WHERE d.manager_id = e.employee_id);
 
 How It Works
-In any database, including Oracle, the EXISTS predicate answers the question, “Is there a relationship BETWEEN two data items, and by extension, what items in one set are related to items in a second set?” The NOT EXISTS variant tests the converse, “Can it definitively be said that no relationship exists BETWEEN two sets of data, based on a proposed criterion?” Each approach is referred to as correlation or a correlated subquery (literally, co-relation, sharing a relationship).
-Interestingly, Oracle bases its decision on whether satisfying data exists solely on this premise: was a matching row found that satisfied the subquery’s predicates? It’s almost too subtle, so we’ll point out the obvious thing Oracle isn’t seeking. What you SELECT in the inner correlated query doesn’t matter—it’s only the criteria that matter. So you’ll often see versions of existence tests that form their subSELECT by Selecting the value 1, the entire row using an asterisk, a literal value, or even NULL. Ultimately, it’s immaterial in this form of the recipe. The key point is the correlation expression. In our case, it’s WHERE D.MANAGER_ID = E.EMPLOYEE_ID.
-This also helps explain what Oracle is doing in the second half of the recipe, WHERE we’re looking for DEPARTMENT_NAME values for rows WHERE the MANAGER_ID doesn’t exist in the employee table. Oracle drives the query by evaluating, for each row in the outer query, whether no rows are returned by the inner correlated query. Oracle doesn’t care what data exists in other columns not in the correlation criteria. It pays to be careful using such NOT EXISTS clauses on their own—not because the logic won’t work but because against large data sets, the optimizer can decided to repeatedly scan the inner data in full, which might affect performance. In our example, so long as a manager’s ID listed for a department is not found in the employee table, the NOT EXISTS predicate will be satisfied, and department included in the results.
+In any database, including SQL, the EXISTS predicate answers the question, “Is there a relationship BETWEEN two data items, and by extension, what items in one set are related to items in a second set?” The NOT EXISTS variant tests the converse, “Can it definitively be said that no relationship exists BETWEEN two sets of data, based on a proposed criterion?” Each approach is referred to as correlation or a correlated subquery (literally, co-relation, sharing a relationship).
+Interestingly, SQL bases its decision on whether satisfying data exists solely on this premise: was a matching row found that satisfied the subquery’s predicates? It’s almost too subtle, so we’ll point out the obvious thing SQL isn’t seeking. What you SELECT in the inner correlated query doesn’t matter—it’s only the criteria that matter. So you’ll often see versions of existence tests that form their subSELECT by Selecting the value 1, the entire row using an asterisk, a literal value, or even NULL. Ultimately, it’s immaterial in this form of the recipe. The key point is the correlation expression. In our case, it’s WHERE D.MANAGER_ID = E.EMPLOYEE_ID.
+This also helps explain what SQL is doing in the second half of the recipe, WHERE we’re looking for DEPARTMENT_NAME values for rows WHERE the MANAGER_ID doesn’t exist in the employee table. SQL drives the query by evaluating, for each row in the outer query, whether no rows are returned by the inner correlated query. SQL doesn’t care what data exists in other columns not in the correlation criteria. It pays to be careful using such NOT EXISTS clauses on their own—not because the logic won’t work but because against large data sets, the optimizer can decided to repeatedly scan the inner data in full, which might affect performance. In our example, so long as a manager’s ID listed for a department is not found in the employee table, the NOT EXISTS predicate will be satisfied, and department included in the results.
 
 
 Caution Correlated subqueries satisfy an important problem-solving niche, but it’s crucial to remember the nature of NULL values when using either EXISTS or NOT EXISTS. NULL values are not equivalent to any other value, including other NULL values. This means that a NULL in the outer part of a correlated query will never satisfy the
@@ -4601,8 +4641,8 @@ Problem
 In order to produce a concise result in one query, you need to change the column returned on a row-by- row basis, conditional on a value FROM another row. You want to avoid awkward mixes of unions, subqueries, aggregation, and other inelegant techniques.
 
 Solution
-For circumstances WHERE you need to conditionally branch or alternate BETWEEN source data, Oracle provides the CASE statement. CASE mimics the traditional switch or case statement found in many programMINg languages like C or Java.
-To bring focus to our example, we’ll assume our problem is far more tangible and straightforward. We want to find the date employee in the shipping department (with the DEPARTMENT_ID of 50) started their current job. We know their initial hire date with the firm is tracked in the HIRE_DATE column on the employee table, but if they’ve had a promotion or changed roles, the date when they commenced their new position can be inferred FROM the END_DATE of their previous position in the HR.JOB_HISTORY table. We need to branch BETWEEN HIRE_DATE or END_DATE for each employee of the shipping department accordingly, as shown in the next SQL statement.
+For circumstances WHERE you need to conditionally branch or alternate BETWEEN source data, SQL provides the CASE statement. CASE mimics the traditional switch or case statement found in many programMINg languages like C or Java.
+To bring focus to our example, we’ll asSUMe our problem is far more tangible and straightforward. We want to find the date employee in the shipping department (with the DEPARTMENT_ID of 50) started their current job. We know their initial hire date with the firm is tracked in the HIRE_DATE column on the employee table, but if they’ve had a promotion or changed roles, the date when they commenced their new position can be inferred FROM the END_DATE of their previous position in the HR.JOB_HISTORY table. We need to branch BETWEEN HIRE_DATE or END_DATE for each employee of the shipping department accordingly, as shown in the next SQL statement.
 
 SELECT e.employee_id, case
 when old.job_id IS NULL then e.hire_date else old.end_date end
@@ -4638,7 +4678,7 @@ WHERE e.department_id = 50 ORDER BY e.employee_id;
 
 
 …
-The results show the data that drove the CASE function’s decision in our recipe. The values in bold were the results returned by our recipe. For the first, second, fourth, and fifth rows shown, END_DATE FROM the HR.JOB_HISTORY table IS NULL, so the CASE operation returned the HIRE_DATE. For the third row, with EMPLOYEE_ID 122, END_DATE has a date value, and thus was returned in preference to HIRE_DATE when exaMINed by our original recipe. There is a shorthand form of the CASE statement known as the Simple CASE that only operates against one column or expression and has THEN clauses for possible values. This wouldn’t have suited us as Oracle limits the use of NULL with the Simple CASE in awkward ways.
+The results show the data that drove the CASE function’s decision in our recipe. The values in bold were the results returned by our recipe. For the first, second, fourth, and fifth rows shown, END_DATE FROM the HR.JOB_HISTORY table IS NULL, so the CASE operation returned the HIRE_DATE. For the third row, with EMPLOYEE_ID 122, END_DATE has a date value, and thus was returned in preference to HIRE_DATE when exaMINed by our original recipe. There is a shorthand form of the CASE statement known as the Simple CASE that only operates against one column or expression and has THEN clauses for possible values. This wouldn’t have suited us as SQL limits the use of NULL with the Simple CASE in awkward ways.
 
 ---
 
@@ -4648,8 +4688,8 @@ While querying some data, you need to sort by an optional value, and WHERE that 
 
 
 Solution
-Oracle supports the use of almost all of its expressions and functions in the ORDER BY clause. This includes the ability to use the CASE statement and simple and complex functions like arithmetic operators to dynamically control ordering. For our recipe, we’ll tackle a situation WHERE we want to show employee ordered by highest-paid to lowest-paid.
-For those with a commission, we want to assume the commission is earned but don’t want to actually calculate and show this value; we simply want to order on the implied result. The following SQL leverages the CASE statement in the ORDER BY clause to conditionally branch sorting logic for those with and without a COMMISSION_PCT value.
+SQL supports the use of almost all of its expressions and functions in the ORDER BY clause. This includes the ability to use the CASE statement and simple and complex functions like arithmetic operators to dynamically control ordering. For our recipe, we’ll tackle a situation WHERE we want to show employee ordered by highest-paid to lowest-paid.
+For those with a commission, we want to asSUMe the commission is earned but don’t want to actually calculate and show this value; we simply want to order on the implied result. The following SQL leverages the CASE statement in the ORDER BY clause to conditionally branch sorting logic for those with and without a COMMISSION_PCT value.
 
 SELECT employee_id, last_name, salary, commission_pct FROM employee
 ORDER BY case
@@ -4665,8 +4705,8 @@ We can see FROM just the first few rows of results how the conditional branching
 Even though employee 101 and 102 have a higher base salary, the ORDER BY clause using CASE has correctly positioned employee 145 and 146 based on their included commission percentage.
 
 How It Works
-The SELECTion of data for our results follows Oracle’s normal approach, so employee identifiers, last names, and so forth are fetched FROM the employee table. For the purposes of ordering the data using our CASE expression, Oracle performs additional calculations that aren’t shown in the results. All the candidate result rows that have a non-NULL commission value have the product of COMMISSION_PCT and SALARY calculated and then used to compare with the SALARY figures for all other employee for ordering purposes.
-The next SELECT statement helps you visualize the data Oracle is deriving for the ordering calculation.
+The SELECTion of data for our results follows SQL’s normal approach, so employee identifiers, last names, and so forth are fetched FROM the employee table. For the purposes of ordering the data using our CASE expression, SQL performs additional calculations that aren’t shown in the results. All the candidate result rows that have a non-NULL commission value have the product of COMMISSION_PCT and SALARY calculated and then used to compare with the SALARY figures for all other employee for ordering purposes.
+The next SELECT statement helps you visualize the data SQL is deriving for the ordering calculation.
 
 SELECT employee_id, last_name, commission_pct, salary, salary * (1+commission_pct) sal_x_comm
 FROM employee;
@@ -4675,13 +4715,13 @@ FROM employee;
 
 …
 
-The values in bold show the calculations Oracle used for ordering when evaluating the data via the CASE expression in the ORDER BY clause. The general form of the CASE expression can be expressed simply as follows.
+The values in bold show the calculations SQL used for ordering when evaluating the data via the CASE expression in the ORDER BY clause. The general form of the CASE expression can be expressed simply as follows.
 case
 when <expression, column, etc.> then <expression, column, literal, etc.> when <expression, column, etc.> then <expression, column, literal, etc.>
 …
 else <default expression for unmatched cases> end
 
-We won’t needlessly repeat what the Oracle manual covers in plenty of detail. In short, the CASE expression evaluates the first WHEN clause for a match and if satisfied, performs the THEN expression. If the first WHEN clause isn’t satisfied, it tries the second WHEN clause, and so on. If no matches are found, the ELSE default expression is evaluated.
+We won’t needlessly repeat what the SQL manual covers in plenty of detail. In short, the CASE expression evaluates the first WHEN clause for a match and if satisfied, performs the THEN expression. If the first WHEN clause isn’t satisfied, it tries the second WHEN clause, and so on. If no matches are found, the ELSE default expression is evaluated.
 
 ---
 
@@ -4690,7 +4730,7 @@ Problem
 In working with data FROM a subSELECT, you need to deal with ambiguous situations WHERE in some cases the subSELECT will return a single (scalar) value, and in other cases multiple values.
 
 Solution
-Oracle supports three expressions that allow a subSELECT to be compared based on a single column of results. The operators ANY, SOME, and ALL allow one or more single-column values FROM a subSELECT to be compared to data in an outer SELECT. Using these operators allows you to deal with situations WHERE you’d like to code your SQL to handle comparisons with flexible set sizes.
+SQL supports three expressions that allow a subSELECT to be compared based on a single column of results. The operators ANY, SOME, and ALL allow one or more single-column values FROM a subSELECT to be compared to data in an outer SELECT. Using these operators allows you to deal with situations WHERE you’d like to code your SQL to handle comparisons with flexible set sizes.
 Our recipe focuses on using these expressions for a concrete business problem. The order-entry system tracks product information in the OE.PRODUCT_INFORMATION table, including the LIST_PRICE value. However, we know discounts are often offered, so we’d like to get an approximate idea of which items have never sold at full price. To do this, we could do a precise correlated subquery of every sale against list price. Before doing that, a very quick approximation can be done to see if any LIST_PRICE value is
 
 
@@ -4706,7 +4746,7 @@ PRODUCT_ID  PRODUCT_NAME
 These results mean at least three items—two desks and a laptop—have never sold a full price.
 
 How It Works
-Our example’s use of the ALL expression allows Oracle to compare the UNIT_PRICE values FROM every sale, to see if any known sale price was greater than the LIST_PRICE for an item. Breaking down the steps that make this approach useful, we can first look at the subSELECT.
+Our example’s use of the ALL expression allows SQL to compare the UNIT_PRICE values FROM every sale, to see if any known sale price was greater than the LIST_PRICE for an item. Breaking down the steps that make this approach useful, we can first look at the subSELECT.
 
 SELECT unit_price FROM oe.order_items
 
@@ -4721,7 +4761,7 @@ UNIT_PRICE
 665 rows SELECTed.
 Based on those results, our outer SELECT statement compares each LIST_PRICE FROM the OE.PRODUCTION_INFORMATION table with every item in the list, as we are using the ALL expression. If the LIST_PRICE is greater than all of the returned values, the expression resolves to true, and the product is included in the results. WHERE even one of the UNIT_PRICE values returned exceeds the LIST_PRICE of an item, the expression is false and that row is discarded FROM further consideration.
 If you review that logic, you’ll realize this is not a precise calculation of every item that didn’t sell for full price. Rather, it’s just a quick approximation, though one that shows off the ALL technique quite well.
-The alternatives SOME and ANY, which are effectively synonyms, resolve the true/false deterMINation based on only needing one item in the subSELECT to satisfy the SOME/ANY condition. Oracle will happily
+The alternatives SOME and ANY, which are effectively synonyms, resolve the true/false deterMINation based on only needing one item in the subSELECT to satisfy the SOME/ANY condition. SQL will happily
 
 
 accept more than one item matching the SOME/ANY criteria, but only needs to deterMINe one value to evaluate the subSELECT.
