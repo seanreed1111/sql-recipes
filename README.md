@@ -2631,8 +2631,8 @@ ORDER BY employee_id;
 ### Problem
 ### You are joining two tables by one or more common columns, but you want to make sure to return all rows in the first table regardless of a matching row in the second. For example, you are joining the employee and department tables, but some employee lack department assignments.
 
-Solution
-Use an `OUTER JOIN`. In SQL’s sample database, the HR user maintains the employee and DEPARTMENT tables; assigning a department to an employee is optional. There are 107 employee in the employee table. Using a standard join BETWEEN employee and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the employee table, you can use LEFT OUTER JOIN to include all rows in the employee table and matching rows in DEPARTMENTS, if any:
+### Solution
+### Use an `OUTER JOIN`. In SQL’s sample database, the HR user maintains the employee and DEPARTMENT tables; assigning a department to an employee is optional. There are 107 employee in the employee table. Using a standard join BETWEEN employee and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the employee table, you can use LEFT OUTER JOIN to include all rows in the employee table and matching rows in DEPARTMENTS, if any:
 
 ```sql
 SELECT 
