@@ -166,10 +166,10 @@ WHERE
 
 # SUMmarizing the Values in a Column
 ## Problem
-## You need to SUMmarize data in a column in some way. For example, you have been asked to report on the average salary paid per employee, as well as the total salary budget, number of employee, highest and lowest earners, and more.
+## You need to summarize data in a column in some way. For example, you have been asked to report on the average salary paid per employee, as well as the total salary budget, number of employee, highest and lowest earners, and more.
 
 ## Solution
-## You don’t need to calculate a total and count the number of employee separately to deterMINe the average salary. The AVG function calculates average salary for you, as shown in the next SELECT statement.
+## You don’t need to calculate a total and count the number of employee separately to determine the average salary. The AVG function calculates average salary for you, as shown in the next SELECT statement.
 
 ```sql
 SELECT AVG(salary) FROM employee;
@@ -259,7 +259,7 @@ FROM driver_log;
 
 # SUMmarizing with MIN( ) and MAX( )
 ## Problem
-## You need to deterMINe the smallest or largest of a set of values.
+## You need to determine the smallest or largest of a set of values.
 
 ## Solution
 ## Use MIN( ) to find the smallest value, MAX( ) to find the largest.
@@ -267,7 +267,7 @@ FROM driver_log;
 ## Discussion
 ## Finding smallest or largest values is somewhat akin to sorting, except that instead of producing an entire set of sorted values, you SELECT only a single value at one end or the other of the sorted range. This kind of operation applies to questions about smallest, largest, oldest, newest, most expensive, least expensive, and so forth. One way to find such values is to use the MIN( ) and MAX( ) functions.
 
-## Because MIN( ) and MAX( ) deterMINe the extreme values in a set, they’re useful for characterizing ranges:
+## Because MIN( ) and MAX( ) determine the extreme values in a set, they’re useful for characterizing ranges:
 ## What date range is represented by the rows in the mail table? What are the smallest and largest messages sent?
 ```sql
 SELECT
@@ -375,7 +375,7 @@ SELECT SUM(pop) FROM states;
 ## Use `DISTINCT` to SELECT unique values to count them.
 
 ## Discussion
-## One summary operation that doesn’t use aggregate functions is to deterMINe which values or rows are contained in a dataset by eliMINating duplicates. Do this with DISTINCT. DISTINCT is useful for boiling down a query result, and often is combined with ORDER BY to place the values in more mean- ingful order. For example, to deterMINe the names of the drivers listed in the driver_log table, use the following statement:
+## One summary operation that doesn’t use aggregate functions is to determine which values or rows are contained in a dataset by eliMINating duplicates. Do this with DISTINCT. DISTINCT is useful for boiling down a query result, and often is combined with ORDER BY to place the values in more mean- ingful order. For example, to determine the names of the drivers listed in the driver_log table, use the following statement:
 
 ```sql
 SELECT DISTINCT name FROM driver_log ORDER BY name;
@@ -411,7 +411,7 @@ SELECT name FROM driver_log;
 +-------+
 ```
 
-## To deterMINe how many different drivers there are, use COUNT(DISTINCT):
+## To determine how many different drivers there are, use COUNT(DISTINCT):
 ```
 SELECT COUNT(DISTINCT name) FROM driver_log;
 ```
@@ -460,7 +460,7 @@ SELECT COUNT(DISTINCT sender, recipient) FROM mail;
 ```
 
 ```
-DISTINCT works with expressions, too, not just column values. To deterMINe the num- ber of hours of the day during which messages in the mail are sent, count the distinct HOUR( ) values:
+DISTINCT works with expressions, too, not just column values. To determine the num- ber of hours of the day during which messages in the mail are sent, count the distinct HOUR( ) values:
 ```
 
 ```sql
@@ -524,7 +524,7 @@ WHERE pop = (SELECT MAX(population) FROM states);
 ## Use a GROUP BY clause to arrange rows into groups.
 
 ## Discussion
-## The summary statements shown so far calculate summary values over all rows in the result set. For example, the following statement deterMINes the number of records in the mail table, and thus the total number of mail messages that have been sent:
+## The summary statements shown so far calculate summary values over all rows in the result set. For example, the following statement determines the number of records in the mail table, and thus the total number of mail messages that have been sent:
 ```sql
 SELECT COUNT(*) FROM mail;
 ```
@@ -537,7 +537,7 @@ SELECT COUNT(*) FROM mail;
 +----------+
 ```
 
-## Sometimes it’s desirable to break a set of rows into subgroups and SUMmarize each group. Do this by using aggregate functions in conjunction with a GROUP BY clause. To deterMINe the number of messages per sender, group the rows by sender name, count how many times each name occurs, and display the names with the counts:
+## Sometimes it’s desirable to break a set of rows into subgroups and summarize each group. Do this by using aggregate functions in conjunction with a GROUP BY clause. To determine the number of messages per sender, group the rows by sender name, count how many times each name occurs, and display the names with the counts:
 ```sql
 SELECT sender, COUNT(*) FROM mail
 GROUP BY sender;
@@ -550,7 +550,7 @@ GROUP BY sender;
 | phil    |   5      |
 | tricia  |   2      |
 +---------+----------+
-That query SUMmarizes the same column that is used for grouping (`sender`), but that’s not always necessary. Suppose that you want a quick characterization of the mail table, showing for each `sender` listed in it the total amount of traffic sent (in bytes) and the average number of bytes per message. In this case, you still use the `sender` column to place the rows in groups, but the summary functions operate on the size values:
+That query summarizes the same column that is used for grouping (`sender`), but that’s not always necessary. Suppose that you want a quick characterization of the mail table, showing for each `sender` listed in it the total amount of traffic sent (in bytes) and the average number of bytes per message. In this case, you still use the `sender` column to place the rows in groups, but the summary functions operate on the size values:
 
 ```sql
 SELECT sender,
@@ -742,7 +742,7 @@ GROUP BY subject;
 
 ## It makes a lot of sense for aggregate functions to ignore NULL values. If they followed the usual SQL arithmetic rules, adding NULL to any other value would produce a NULL result. That would make aggregate functions really difficult to use because you’d have to filter out NULL values every time you performed a summary, to avoid getting a NULL result. Ugh. By ignoring NULL values, aggregate functions become a lot more convenient.
 
-## However, be aware that even though aggregate functions may ignore NULL values, some of them can still produce NULL as a result. This happens if there’s nothing to SUMmarize, which occurs if the set of values is empty or contains only NULL values. The following query is the same as the previous one, with one small difference. It selects only NULL test scores, so there’s nothing for the aggregate functions to operate on:
+## However, be aware that even though aggregate functions may ignore NULL values, some of them can still produce NULL as a result. This happens if there’s nothing to summarize, which occurs if the set of values is empty or contains only NULL values. The following query is the same as the previous one, with one small difference. It selects only NULL test scores, so there’s nothing for the aggregate functions to operate on:
 
 ```sql
 SELECT 
@@ -766,7 +766,7 @@ GROUP BY subject;
 +---------+---+-------+---------+--------+---------+
 ```
 
-## For COUNT( ), the number of scores per subject is zero and is reported that way. On the other hand, SUM( ) , AVG( ), MIN( ), and MAX( ) return NULL when there are no values to SUMmarize. If you don’t want these functions to produce NULL in the query output, use `COALESCE( )` to map their results appropriately:
+## For COUNT( ), the number of scores per subject is zero and is reported that way. On the other hand, SUM( ) , AVG( ), MIN( ), and MAX( ) return NULL when there are no values to summarize. If you don’t want these functions to produce NULL in the query output, use `COALESCE( )` to map their results appropriately:
 
 ```sql
 SELECT 
@@ -819,7 +819,7 @@ FROM experiment;
 |   3     |
 +---------+
 ```
-## Missing and nonmissing counts can be deterMINed for subgroups as well. The following query does so for each subject, providing an easy way to assess the extent to which the experiment has been completed:
+## Missing and nonmissing counts can be determined for subgroups as well. The following query does so for each subject, providing an easy way to assess the extent to which the experiment has been completed:
 ```sql
 SELECT 
     subject,
@@ -859,7 +859,7 @@ WHERE COUNT(*) > 3
 GROUP BY name;
 ```
 
-## The problem here is that `WHERE` specifies the initial constraints that deterMINe which rows to `SELECT`, but the value of `COUNT( )` can be deterMINed only after the rows have been selected. The solution is to put the `COUNT( )` expression in a `HAVING` clause instead. HAVING is analogous to WHERE, but it applies to group characteristics rather than to single rows. That is, `HAVING` operates on the already selected and grouped set of rows, applying additional constraints based on aggregate function results that aren’t known during the initial selection process. The preceding query therefore should be written like this:
+## The problem here is that `WHERE` specifies the initial constraints that determine which rows to `SELECT`, but the value of `COUNT( )` can be determined only after the rows have been selected. The solution is to put the `COUNT( )` expression in a `HAVING` clause instead. HAVING is analogous to WHERE, but it applies to group characteristics rather than to single rows. That is, `HAVING` operates on the already selected and grouped set of rows, applying additional constraints based on aggregate function results that aren’t known during the initial selection process. The preceding query therefore should be written like this:
 
 ```sql
 -- This is correct
@@ -901,7 +901,7 @@ HAVING count > 3;
 
 ---
 
-# Using Counts to DeterMINe Whether Values Are Unique
+# Using Counts to determine Whether Values Are Unique
 ## Problem
 ## You want to know whether table values are unique.
 
@@ -910,7 +910,7 @@ HAVING count > 3;
 
 ## Discussion
 ## DISTINCT eliMINates duplicates but doesn’t show which values actually were duplicated in the original data. You can use HAVING to find unique values in situations to which DISTINCT does not apply. HAVING can tell you which values were unique or nonunique.
-## The following statements show the days on which only one driver was active, and the days on which more than one driver was active. They’re based on using HAVING and COUNT( ) to deterMINe which travel_date values are unique or nonunique:
+## The following statements show the days on which only one driver was active, and the days on which more than one driver was active. They’re based on using HAVING and COUNT( ) to determine which travel_date values are unique or nonunique:
 ```sql
 SELECT travel_date, COUNT(travel_date)
 FROM driver_log
@@ -1008,7 +1008,7 @@ HAVING count > 1;
 
 # Categorizing Noncategorical Data
 ## Problem
-## You need to SUMmarize a set of values that are not naturally categorical.
+## You need to summarize a set of values that are not naturally categorical.
 ## Solution
 ## Use an expression to group the values into categories.
 
@@ -1026,7 +1026,7 @@ FROM states;
 +------------+------------------------------------+
 |   50              |           50                |
 +------------+------------------------------------+
-## In situations like this, WHERE values do not group nicely into a small number of sets, you can use a transformation that forces them into categories. Begin by deterMINing the range of population values:
+## In situations like this, WHERE values do not group nicely into a small number of sets, you can use a transformation that forces them into categories. Begin by determining the range of population values:
 ```sql
 SELECT 
     MIN(population), 
@@ -1262,8 +1262,8 @@ HAVING  count =
 ## Use GROUP BY to place temporal values into categories of the appropriate duration. Often this involves using expressions to EXTRACT the significant parts of dates or times.
 
 ## Discussion
-## To put rows in time order, use an ORDER BY clause to sort a column that has a temporal type. If instead you want to SUMmarize rows based on groupings into time intervals, you need to deterMINe how to categorize each row into the proper interval and use GROUP BY to group them accordingly.
-## For example, to deterMINe how many drivers were on the road and how many miles were driven each day, group the rows in the driver_log table by date:
+## To put rows in time order, use an ORDER BY clause to sort a column that has a temporal type. If instead you want to summarize rows based on groupings into time intervals, you need to determine how to categorize each row into the proper interval and use GROUP BY to group them accordingly.
+## For example, to determine how many drivers were on the road and how many miles were driven each day, group the rows in the driver_log table by date:
 ```sql
 SELECT 
     travel_date,
@@ -1299,7 +1299,7 @@ GROUP BY weekday;
 ---
 # SUMmarizing Data for Different Groups
 ## Problem
-## You want to SUMmarize data in a column, but you don’t want to SUMmarize over all the rows in a table. You want to divide the rows into groups, and then SUMmarize the column separately for each group. For example, you need to know the average salary paid per department.
+## You want to summarize data in a column, but you don’t want to summarize over all the rows in a table. You want to divide the rows into groups, and then summarize the column separately for each group. For example, you need to know the average salary paid per department.
 
 ## Solution
 ## Use SQL’s GROUP BY feature to group common subsets of data together to apply functions like COUNT, MIN, MAX, SUM, and AVG. This SQL statement shows how to use an aggregate function on subgroups of your data with GROUP BY.
@@ -1990,7 +1990,7 @@ FROM driver_log GROUP BY name;
 +-------+--------------+------------------------+
 ```
 
-## Another type of problem that uses different levels of summary information occurs when you want to compare per-group summary values with the corresponding overall SUM- mary value. Suppose that you want to deterMINe which drivers had a lower average miles per day than the group average. Calculate the overall average in a subquery, and then compare each driver’s average to the overall average using a `HAVING` clause:
+## Another type of problem that uses different levels of summary information occurs when you want to compare per-group summary values with the corresponding overall SUM- mary value. Suppose that you want to determine which drivers had a lower average miles per day than the group average. Calculate the overall average in a subquery, and then compare each driver’s average to the overall average using a `HAVING` clause:
 
 ```sql
 SELECT 
@@ -2175,7 +2175,7 @@ ORDER BY 1,2,3,4;
 
 
 ## Solution
-## SQL’s COUNT feature can be used to count materialized results as well as actual rows in tables. The next SELECT statement uses a subquery to count the instances of jobs held across tables, and then SUMmarizes those counts. In effect, this is a count of counts against data resulting FROM a query, rather than anything stored directly in SQL.
+## SQL’s COUNT feature can be used to count materialized results as well as actual rows in tables. The next SELECT statement uses a subquery to count the instances of jobs held across tables, and then summarizes those counts. In effect, this is a count of counts against data resulting FROM a query, rather than anything stored directly in SQL.
 
 ```sql
 SELECT jh.JobsHeld, COUNT(*) as StaffCount FROM
@@ -2514,7 +2514,7 @@ ORDER BY <desired ordering column>)
 duplicate_row_count FROM <your_table_here>)
 WHERE duplicate_row_count > 1)
 /
-Simply plug in the value for your table in place of the marker <your_table_here>, and the columns you wish to use to deterMINe duplication in place of equivalent column placeholders, and you’re in business!
+Simply plug in the value for your table in place of the marker <your_table_here>, and the columns you wish to use to determine duplication in place of equivalent column placeholders, and you’re in business!
 
 ---
 
@@ -2621,7 +2621,7 @@ ORDER BY employee_id;
 # Using UNION removes the duplicate rows. You can have one ORDER BY at the end of the query to order the results. In this example, the two employee tables have two rows in common (some people need to work two or three jobs to make ends meet!), so instead of returning 11 rows, the UNION query returns nine.
 
 # How It Works
-# Note that for the UNION operator to remove duplicate rows, all columns in a given row must be equal to the same columns in one or more other rows. When SQL processes a UNION, it must perform a sort/merge to deterMINe which rows are duplicates. Thus, your execution time will likely be more than running each SELECT individually. If you know there are no duplicates within and across each SELECT statement, you can use UNION ALL to combine the results without checking for duplicates.
+# Note that for the UNION operator to remove duplicate rows, all columns in a given row must be equal to the same columns in one or more other rows. When SQL processes a UNION, it must perform a sort/merge to determine which rows are duplicates. Thus, your execution time will likely be more than running each SELECT individually. If you know there are no duplicates within and across each SELECT statement, you can use UNION ALL to combine the results without checking for duplicates.
 # If there are duplicates, it will not cause an error; you will merely get duplicate rows in your result set.
 
 ---
@@ -2988,7 +2988,7 @@ GROUP BY artist.name;
 ```
 
 ## Note that the summary statements produce output only for those artists in the artist table for whom you actually have acquired paintings. (For example, Monet is listed in the artist table but is not present in the summary because you don’t have any of his paintings yet.) If you want the summary to include all artists, even if you have none of their paintings yet, you must use a different kind of join—specifically, an outer join:
-## Joins written with the comma operator or INNER JOIN are inner joins, which means that they produce a result only for values in one table that match values in another table.
+## Joins written with the comma operator or INNER JOIN are INNER JOINs, which means that they produce a result only for values in one table that match values in another table.
 ## An outer join can produce those matches as well, but also can show you which values in one table are missing FROM the other. 
 
 The `table_name.column_name` notation that qualifies a column name with a table name is **always strongly preferred** in a join.  SQL allows you to just use `column_name` if the name appears in only one of the joined tables, but  best practice says you should only do it when you are pulling data from one table. In that case, SQL can determine without ambiguity which table the column comes from, and no table name qualifier is necessary. 
@@ -3069,24 +3069,42 @@ AND
     p.state = s.abbrev;
 ```
 
-For complicated statements that SELECT many columns it is true that aliases can save a lot of typing. But since it is easier to read more complex queries with proper, clear aliases, learn how to type! In addition, aliases are not only convenient but necessary for some types of statements, as will become evident when we get to the topic of self-joins (Recipe 12.3).
+## For complicated statements that SELECT many columns it is true that aliases can save a lot of typing. In addition, aliases are not only convenient but necessary for some types of statements, as will become evident when we get to the topic of self-joins. Also, since it is easier to read more complex queries with proper, clear aliases with more than one character, learn how to type!
 
 ---
 
-Finding Rows with No Match in Another Table
-Problem
-You want to find rows in one table that have no match in another. Or you want to produce a list on the basis of a join BETWEEN tables, and you want the list to include an entry for every row in the first table, even when there are no matches in the second table.
+# Finding Rows with No Match in Another Table
+## Problem
+## You want to find rows in one table that have no match in another. Or you want to produce a list on the basis of a join BETWEEN tables, and you want the list to include an entry for every row in the first table, even when there are no matches in the second table.
 
-Solution
-Use an outer join—a LEFT JOIN or a RIGHT JOIN.
+## Solution
+## Use an outer join — either a LEFT JOIN or a RIGHT JOIN.
 
-Discussion
-Recipe 12.1 focused on inner joins, which are joins that find matches BETWEEN two tables. However, the answers to some questions require deterMINing which rows do not have a match (or, stated another way, which rows have values that are missing FROM the other table). For example, you might want to know which artists in the artist table you don’t yet have any paintings by. The same kind of question occurs in other contexts. Some examples:
-You’re working in sales. You have a list of potential customers, and another list of people who have placed orders. To focus your efforts on people who are not yet actual customers, you want to find people in the first list who are not in the second.
-You have one list of baseball players, and another list of players who have hit home runs, and you want to know which players in the first list have not hit a home run. The answer is deterMINed by finding those players in the first list who are not in the second.
-For these types of questions, it’s necessary to use an outer join. Like an inner join, an outer join can find matches BETWEEN tables. But unlike an inner join, an outer join can also deterMINe which rows in one table have no match in another. Two types of outer join are LEFT JOIN and RIGHT JOIN.
-To see why outer joins are useful, let’s consider the problem of deterMINing which artists in the artist table are missing FROM the painting table. At present, the tables are small, so it’s easy to exaMINe them visually:
-SELECT * FROM artist ORDER BY a_id;
+## Discussion
+## INNER JOINs are joins that find *matches* between two tables. However, the answers to some questions require determining which rows do not have a match (or, stated another way, which rows have values that are missing FROM the other table). For example, you might want to know which artists in the artist table you don’t yet have any paintings by. The same kind of question occurs in other contexts. Some examples:
+> You’re working in sales. You have a list of potential customers, and another list of people who have placed orders. To focus your efforts on people who are not yet actual customers, you want to find people in the first list who are not in the second.
+
+> You have one list of baseball players, and another list of players who have hit home runs, and you want to know which players in the first list have not hit a home run. The answer is determined by finding those players in the first list who are not in the second.
+
+## For these types of questions, it’s necessary to use an OUTER JOIN. Like an `INNER JOIN`, an outer join can find matches BETWEEN tables. But unlike an `INNER JOIN`, an outer join can also determine which rows in one table have no match in another. Two types of outer join are `LEFT OUTER JOIN` and `RIGHT OUTER JOIN`. They are abbreviated as simply `LEFT JOIN` and `RIGHT JOIN` in most written SQL queries.
+
+## To see why outer joins are useful, let’s consider the problem of determining which artists in the artist table are missing from the painting table. At present, the tables are small, so it’s easy to examine them visually:
+
+```sql
+SELECT * 
+FROM 
+    artist 
+ORDER BY 
+    a_id;
+
+SELECT * 
+FROM 
+    painting 
+ORDER BY 
+    a_id, p_id;
+```
+
+```
 +------+----------+
 | a_id | name   |
 +------+----------+
@@ -3096,66 +3114,141 @@ SELECT * FROM artist ORDER BY a_id;
 |   4 | Picasso |
 |   5 | Renoir  |
 +------+----------+
-SELECT * FROM painting ORDER BY a_id, p_id;
+
 +------+------+-------------------+-------+-------+
 | a_id | p_id | title   | state | price |
 +------+------+-------------------+-------+-------+
 
 +------+------+-------------------+-------+-------+
-By looking at the tables, you can see that you have no paintings by Monet or Picasso (there are no painting rows with an a_id value of 2 or 4). But as you acquire more paintings and the tables get larger, it won’t be so easy to eyeball them and answer the question by inspection. Can you answer it using SQL? Sure, although first attempts at a solution generally look something like the following statement, which uses a not- equal condition to look for mismatches BETWEEN the two tables:
-SELECT * FROM artist INNER JOIN painting
-ON artist.a_id != painting.a_id;
+
+```
+
+## By looking at the tables, you can see that you have no paintings by Monet or Picasso (there are no painting rows with an a_id value of 2 or 4). But as you acquire more paintings and the tables get larger, it won’t be so easy to eyeball them and answer the question by inspection. Can you answer it using SQL? Sure, although first attempts at a solution generally look something like the following statement, which uses a not equal condition to look for mismatches between the two tables:
+
+```sql
+-- this is wrong
+SELECT * 
+FROM 
+    artist 
+INNER JOIN 
+    painting
+ON 
+    artist.a_id != painting.a_id;
+```
+
+## That output obviously is not correct. (For example, it falsely indicates that each painting was painted by several different artists.) The problem is that the statement produces a list of all combinations of values from the two tables in which the artist ID values aren’t the same, whereas what you really need is a list of values in artist that aren’t present at all in painting. 
+
+## The trouble here is that an INNER JOIN can only produce results based on combinations of values that are present in both tables. It can’t tell you anything about values that are missing from one of them. 
+
+## When faced with the problem of finding values in one table that have no match in (or that are missing from) another table, you should get in the habit of thinking, “Aha, that’s a LEFT JOIN problem.” 
+
+## A `LEFT JOIN` is one type of outer join: it’s similar to an `INNER JOIN` in that it attempts to match rows in the first (left) table with the rows in the second (right) table. But in addition, if a left table row has no match in the right table, a `LEFT JOIN` still produces a row —- one in which all the columns from the right table are set to `NULL`. This means you can find values that are missing FROM the right table by looking for `NULL`. It’s easier to understand how this happens by working in stages. Begin with an INNER JOIN that displays matching rows:
+
+```sql
+SELECT * 
+FROM 
+    artist 
+INNER JOIN 
+    painting
+ON 
+    artist.a_id = painting.a_id;
+```
+
+```
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
 +------+----------+------+------+-------------------+-------+-------+
 
-|   4 | Picasso |   5 | 6 | Les Deux Soeurs | NE    |   64 |
 +------+----------+------+------+-------------------+-------+-------+
-That output obviously is not correct. (For example, it falsely indicates that each painting was painted by several different artists.) The problem is that the statement produces a list of all combinations of values FROM the two tables in which the artist ID values aren’t the same, WHEREas what you really need is a list of values in artist that aren’t present at all in painting. The trouble here is that an inner join can only produce results based on combinations of values that are present in both tables. It can’t tell you anything about values that are missing FROM one of them.
-When faced with the problem of finding values in one table that have no match in (or that are missing FROM) another table, you should get in the habit of thinking, “Aha, that’s a LEFT JOIN problem.” A LEFT JOIN is one type of outer join: it’s similar to an inner join in that it attempts to match rows in the first (left) table with the rows in the second (right) table. But in addition, if a left table row has no match in the right table, a LEFT JOIN still produces a row—one in which all the columns FROM the right table are set to NULL. This means you can find values that are missing FROM the right table by looking for NULL. It’s easier to understand how this happens by working in stages. Begin with an inner join that displays matching rows:
-SELECT * FROM artist INNER JOIN painting
-ON artist.a_id = painting.a_id;
-+------+----------+------+------+-------------------+-------+-------+
-| a_id | name   | a_id | p_id | title   | state | price |
-+------+----------+------+------+-------------------+-------+-------+
+```
 
-+------+----------+------+------+-------------------+-------+-------+
-In this output, the first a_id column comes FROM the artist table and the second one comes FROM the painting table.
-Now compare that result with the output you get FROM a LEFT JOIN. A LEFT JOIN is written much like an INNER JOIN:
-SELECT * FROM artist LEFT JOIN painting
-ON artist.a_id = painting.a_id;
+## In this output, the first a_id column comes FROM the artist table and the second one comes from the painting table.Now compare that result with the output you get from a `LEFT JOIN`. A `LEFT JOIN` is written much like an `INNER JOIN`:
+
+```sql
+SELECT * 
+FROM 
+    artist 
+LEFT JOIN 
+    painting
+ON 
+    artist.a_id = painting.a_id;
+```
+
+```
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
 +------+----------+------+------+-------------------+-------+-------+
 
 |   5 | Renoir  |   5 | 6 | Les Deux Soeurs | NE    |   64 |
 +------+----------+------+------+-------------------+-------+-------+
-The output is similar to that FROM the inner join, except that the LEFT JOIN also produces at least one output row for every artist row, including those that have no painting table match. For those output rows, all the columns FROM painting are set to NULL. These are rows that the inner join does not produce.
-Next, to restrict the output only to the nonmatched artist rows, add a WHERE clause that looks for NULL values in any painting column that cannot otherwise contain NULL. This filters out the rows that the inner join produces, leaving those produced only by the outer join:
-SELECT * FROM artist LEFT JOIN painting
-ON artist.a_id = painting.a_id
-WHERE painting.a_id IS NULL;
+```
+
+## The output is similar to that from the INNER JOIN, except that the `LEFT JOIN` also produces at least one output row for every artist row, including those that have no painting table match. For those output rows, all the columns from painting are set to `NULL`. These are rows that the `INNER JOIN` does not produce.
+## Next, to restrict the output only to the nonmatched artist rows, add a `WHERE` clause that looks for `NULL` values in any painting column that cannot otherwise contain `NULL`. This filters out the rows that the `INNER JOIN` produces, leaving those produced only by the outer join:
+
+```sql
+SELECT * 
+FROM 
+    artist 
+LEFT JOIN 
+    painting
+ON 
+    artist.a_id = painting.a_id
+WHERE 
+    painting.a_id IS NULL;
+```
+```
 +------+---------+------+------+-------+-------+-------+
 | a_id | name   | a_id | p_id | title | state | price |
 +------+---------+------+------+-------+-------+-------+
 |   2 | Monet   | NULL | NULL | NULL | NULL | NULL |
 |   4 | Picasso | NULL | NULL | NULL  | NULL  |  NULL |
 +------+---------+------+------+-------+-------+-------+
-Finally, to show only the artist table values that are missing FROM the painting table, shorten the output column list to include only columns FROM the artist table. The result is that the LEFT JOIN lists those left-table rows containing a_id values that are not present in the right table:
-SELECT artist.* FROM artist LEFT JOIN painting
-ON artist.a_id = painting.a_id
-WHERE painting.a_id IS NULL;
+```
+
+## Finally, to show only the artist table values that are missing from the painting table, shorten the output column list to include only columns from the artist table. The result is that the `LEFT JOIN` lists those left-table rows containing `a_id` values that are not present in the right table:
+
+```sql
+SELECT 
+    artist.* 
+FROM 
+    artist 
+LEFT JOIN 
+    painting
+ON 
+    artist.a_id = painting.a_id
+WHERE 
+    painting.a_id IS NULL;
+```
+
+```
 +------+---------+
 | a_id | name   |
 +------+---------+
 |   2 | Monet   |
 |   4 | Picasso |
 +------+---------+
-A similar kind of operation can be used to report each left-table value along with an indicator as to whether it’s present in the right table. To do this, perform a LEFT JOIN that counts the number of times each left-table value occurs in the right table. A count of zero indicates that the value is not present. The following statement lists each artist FROM the artist table and shows whether you have any paintings by the artist:
-SELECT artist.name,
-IF(COUNT(painting.a_id)>0,'yes','no') AS 'in collection'
-FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
-GROUP   BY  artist.name;
+```
+
+## A similar kind of operation can be used to report each left-table value along with an indicator as to whether it’s present in the right table. To do this, perform a `LEFT JOIN` that counts the number of times each left-table value occurs in the right table. A count of zero indicates that the value is not present. The following statement lists each artist from the artist table and shows whether you have any paintings by the artist:
+
+```sql
+SELECT 
+    artist.name,
+    (CASE WHEN 
+        COUNT(painting.a_id)>0 THEN 'yes' ELSE 'no' 
+    END) AS 'in collection'
+FROM 
+    artist 
+LEFT JOIN 
+    painting 
+ON  
+    artist.a_id = painting.a_id
+GROUP BY  
+    artist.name;
+```
+
+```
 +----------+---------------+
 | name  | in collection |
 +----------+---------------+
@@ -3165,11 +3258,25 @@ GROUP   BY  artist.name;
 | Renoir    | yes   |
 | Van Gogh | yes    |
 +----------+---------------+
-A RIGHT JOIN is another kind of outer join. It is like LEFT JOIN but reverses the roles of the left and right tables. Semantically, RIGHT JOIN forces the matching process to pro- duce a row FROM each table in the right table, even in the absence of a corresponding row in the left table. Syntactically, tbl1 LEFT JOIN tbl2 is equivalent to tbl2 RIGHT JOIN tbl1. This means that you would rewrite the preceding LEFT JOIN as follows to convert it to a RIGHT JOIN that produces the same results:
-SELECT artist.name,
-IF(COUNT(painting.a_id)>0,'yes','no') AS 'in collection'
-FROM painting RIGHT JOIN artist ON artist.a_id = painting.a_id
-GROUP   BY  artist.name;
+```
+
+## A `RIGHT JOIN` is another kind of outer join. It is like LEFT JOIN but reverses the roles of the left and right tables. Semantically, `RIGHT JOIN` forces the matching process to produce a row from each table in the right table, even in the absence of a corresponding row in the left table. Syntactically, 'artist' `LEFT JOIN` 'painting' is equivalent to 'painting' `RIGHT JOIN` 'artist'. This means that you would rewrite the preceding `LEFT JOIN` as follows to convert it to a `RIGHT JOIN` that produces the same results:
+
+```sql
+SELECT 
+    artist.name,
+    (CASE WHEN 
+        COUNT(painting.a_id)>0 THEN 'yes' ELSE 'no' 
+    END) AS 'in collection'
+FROM 
+    painting 
+RIGHT JOIN 
+    artist 
+ON  
+    artist.a_id = painting.a_id
+GROUP BY  
+    artist.name;
+```
 +----------+---------------+
 | name  | in collection |
 +----------+---------------+
@@ -3179,13 +3286,14 @@ GROUP   BY  artist.name;
 | Renoir    | yes   |
 | Van Gogh | yes    |
 +----------+---------------+
-ElseWHERE in this book, I’ll generally refer only to LEFT JOIN for brevity, but such refer- ences apply to RIGHT JOIN as well if you reverse the roles of the tables.
+
+I’ll generally prefer using `LEFT JOIN` in this document, but just note such anything I say applies to `RIGHT JOIN` as well if you reverse the roles of the tables.
 
 
-See Also
-As shown in this section, LEFT JOIN is useful for finding values with no match in another table or for showing whether each value is matched. LEFT JOIN may also be used to
-produce a summary that includes all items in a list, even those for which there’s nothing to SUMmarize. This is very common for characterizing the relationship BETWEEN a master table and a detail table. For example, a LEFT JOIN can produce “total sales per customer” reports that list all customers, even those who haven’t bought anything during the summary period. (See Recipe 12.4 for information about master-detail lists.)
-You can also use LEFT JOIN to perform consistency checking when you receive two datafiles that are supposed to be related, and you want to deterMINe whether they really are. (That is, you want to check the integrity of their relationship.) Import each file into a MySQL table, and then run a couple of LEFT JOIN statements to deterMINe whether there are unattached rows in one table or the other—that is, rows that have no match in the other table. Recipe 12.13 discusses how to identify (and optionally delete) these unattached rows.
+## Notes
+## `LEFT JOIN` is useful for finding values with no match in another table or for showing whether each value is matched. `LEFT JOIN` may also be used to produce a summary that includes all items in a list, even those for which there’s nothing to summarize. This is very common for characterizing the relationship between a master table and a detail table. For example, a `LEFT JOIN` can produce “total sales per customer” reports that list all customers, even those who haven’t bought anything during the summary period.
+
+## You can also use `LEFT JOIN` to perform consistency checking when you receive two datafiles that are supposed to be related, and you want to determine whether they really are. (That is, you want to check the integrity of their relationship.) Import each file into a MySQL table, and then run a couple of LEFT JOIN statements to determine whether there are unattached rows in one table or the other, i.e., rows that have no match in the other table. 
 
 ---
 
@@ -3347,11 +3455,11 @@ Problem
 Two related tables have a master-detail relationship, and you want to produce a list that shows each master row with its detail rows or a list that produces a summary of the detail rows for each master row.
 
 Solution
-This is a one-to-many relationship. The solution to this problem involves a join, but the type of join depends on the question you want answered. To produce a list con- taining only master rows for which some detail row exists, use an inner join based on the primary key in the master table. To produce a list that includes entries for all master rows, even those that have no detail rows, use an outer join.
+This is a one-to-many relationship. The solution to this problem involves a join, but the type of join depends on the question you want answered. To produce a list con- taining only master rows for which some detail row exists, use an INNER JOIN based on the primary key in the master table. To produce a list that includes entries for all master rows, even those that have no detail rows, use an outer join.
 
 Discussion
 It’s often useful to produce a list FROM two related tables. For tables that have a master- detail or parent-child relationship, a given row in one table might be matched by several rows in the other. This recipe suggests some questions of this type that you can ask (and answer), using the artist and painting tables FROM earlier in the chapter.
-One form of master-detail question for these tables is, “Which artist painted each painting?” This is a simple inner join that matches each painting row to its corre- sponding artist row based on the artist ID values:
+One form of master-detail question for these tables is, “Which artist painted each painting?” This is a simple INNER JOIN that matches each painting row to its corre- sponding artist row based on the artist ID values:
 SELECT artist.name, painting.title
 FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
 ORDER BY name, title;
@@ -3365,7 +3473,7 @@ ORDER BY name, title;
 | Van Gogh | The Potato Eaters |
 | Van Gogh | The Rocks  |
 +----------+-------------------+
-An inner join suffices as long as you want to list only master rows that have detail rows. However, another form of master-detail question you can ask is, “Which paintings did each artist paint?” That question is similar but not quite identical. It will have a different answer if there are artists listed in the artist table that are not represented in the painting table, and the question requires a different statement to produce the proper answer. In that case, the join output should include rows in one table that have no match in the other. That’s a form of “find the nonmatching rows” problem that requires an outer join (Recipe 12.2). Thus, to list each artist row, whether there are any paint ing rows for it, use a LEFT JOIN:
+An INNER JOIN suffices as long as you want to list only master rows that have detail rows. However, another form of master-detail question you can ask is, “Which paintings did each artist paint?” That question is similar but not quite identical. It will have a different answer if there are artists listed in the artist table that are not represented in the painting table, and the question requires a different statement to produce the proper answer. In that case, the join output should include rows in one table that have no match in the other. That’s a form of “find the nonmatching rows” problem that requires an outer join (Recipe 12.2). Thus, to list each artist row, whether there are any paint ing rows for it, use a LEFT JOIN:
 SELECT artist.name, painting.title
 FROM artist LEFT JOIN painting ON artist.a_id = painting.a_id
 ORDER BY name, title;
@@ -3382,7 +3490,7 @@ ORDER BY name, title;
 | Van Gogh | The Rocks  |
 +----------+-------------------+
 The rows in the result that have NULL in the title column correspond to artists that are listed in the artist table for whom you have no paintings.
-The same principles apply when producing SUMmaries using master and detail tables. For example, to SUMmarize your art collection by number of paintings per painter, you might ask, “How many paintings are there per artist in the painting table?” To find the answer based on artist ID, you can count up the paintings easily with this statement:
+The same principles apply when producing SUMmaries using master and detail tables. For example, to summarize your art collection by number of paintings per painter, you might ask, “How many paintings are there per artist in the painting table?” To find the answer based on artist ID, you can count up the paintings easily with this statement:
 SELECT a_id, COUNT(a_id) AS count FROM painting GROUP BY a_id;
 +------+-------+
 | a_id | count |
@@ -3593,7 +3701,7 @@ WHERE p.name = 'Billy';
 
 Finding Rows Containing Per-Group minimum or maximum Values
 Problem
-You want to find which row within each group of rows in a table contains the maximum or minimum value for a given column. For example, you want to deterMINe the most expensive painting in your collection for each artist.
+You want to find which row within each group of rows in a table contains the maximum or minimum value for a given column. For example, you want to determine the most expensive painting in your collection for each artist.
 
 Solution
 Create a temporary table to hold the per-group maximum or minimum values, and then join the temporary table with the original one to pull out the matching row for each group. If you prefer a single-query solution, use a subquery in the FROM clause rather than a temporary table.
@@ -3730,7 +3838,7 @@ ORDER BY driver_log.name;
 Which technique is better: the temporary table or the subquery in the FROM clause? For small tables, there might not be much difference either way. If the temporary table or subquery result is large, a general advantage of the temporary table is that you can index it after creating it and before using it in a join.
 
 See Also
-This recipe shows how to answer maximum-per-group questions by Selecting summary information into a temporary table and joining that table to the original one or by using a subquery in the FROM clause. These techniques have application in many contexts. One of them is calculation of team standings, WHERE the standings for each group of teams are deterMINed by comparing each team in the group to the team with the best record. Recipe 12.7 discusses how to do this.
+This recipe shows how to answer maximum-per-group questions by Selecting summary information into a temporary table and joining that table to the original one or by using a subquery in the FROM clause. These techniques have application in many contexts. One of them is calculation of team standings, WHERE the standings for each group of teams are determined by comparing each team in the group to the team with the best record. Recipe 12.7 discusses how to do this.
 
 
 ---
@@ -3740,7 +3848,7 @@ Problem
 You want to compute team standings FROM their win-loss records, including the games- behind (GB) values.
 
 Solution
-DeterMINe which team is in first place, and then join that result to the original rows.
+determine which team is in first place, and then join that result to the original rows.
 
 Discussion
 Standings for sports teams that compete against each other typically are ranked ac- cording to who has the best win-loss record, and the teams not in first place are assigned a “games-behind” value indicating how many games out of first place they are. This section shows how to calculate those values. The first example uses a table containing a single set of team records to illustrate the logic of the calculations. The second example uses a table containing several sets of records (that is, the records for all teams in both divisions of a league, for both halves of the season). In this case, it’s necessary to use a join to perform the calculations independently for each group of teams.
@@ -3755,12 +3863,12 @@ ORDER BY wins-losses DESC;
 | Devils Lake | 19 |    31 |
 | Cavalier  |   15 |    32 |
 +-------------+------+--------+
-The rows are sorted by the win-loss differential, which is how to place teams in order FROM first place to last place. But displays of team standings typically include each team’s winning percentage and a figure indicating how many games behind the leader all the other teams are. So let’s add that information to the output. Calculating the percentage is easy. It’s the ratio of wins to total games played and can be deterMINed using this expression:
+The rows are sorted by the win-loss differential, which is how to place teams in order FROM first place to last place. But displays of team standings typically include each team’s winning percentage and a figure indicating how many games behind the leader all the other teams are. So let’s add that information to the output. Calculating the percentage is easy. It’s the ratio of wins to total games played and can be determined using this expression:
 wins / (wins + losses)
 This expression involves division by zero when a team has not played any games yet. For simplicity, I’ll assume a nonzero number of games, but if you want to handle this condition, generalize the expression as follows:
 IF(wins=0,0,wins/(wins+losses))
 This expression uses the fact that no division at all is necessary unless the team has won at least one game.
-DeterMINing the games-behind value is a little trickier. It’s based on the relationship of the win-loss records for two teams, calculated as the average of two values:
+determining the games-behind value is a little trickier. It’s based on the relationship of the win-loss records for two teams, calculated as the average of two values:
 The number of games the second-place team must win to have the same number of wins as the first-place team
 The number of games the first-place team must lose to have the same number of losses as the second-place team
 For example, suppose two teams A and B have the following win-loss records:
@@ -3775,8 +3883,8 @@ A. Mathematically, the games-behind calculation for the two teams can be express
 ((winsA - winsB) + (lossesB - lossesA)) / 2
 With a little rearrangement of terms, the expression becomes:
 ((winsA - lossesA) - (winsB - lossesB)) / 2
-The second expression is equivalent to the first, but it has each factor written as a single team’s win-loss differential, rather than as a comparison BETWEEN teams. This makes it easier to work with, because each factor can be deterMINed independently FROM a single
-team record. The first factor represents the first-place team’s win-loss differential, so if we calculate that value first, all the other teams GB values can be deterMINed in relation to it.
+The second expression is equivalent to the first, but it has each factor written as a single team’s win-loss differential, rather than as a comparison BETWEEN teams. This makes it easier to work with, because each factor can be determined independently FROM a single
+team record. The first factor represents the first-place team’s win-loss differential, so if we calculate that value first, all the other teams GB values can be determined in relation to it.
 The first-place team is the one with the largest win-loss differential. To find that value and save it in a variable, use this statement:
 SET @wl_diff = (SELECT MAX(wins-losses) FROM standings1);
 
@@ -3879,10 +3987,10 @@ This code comes FROM the script calc_standings.pl in the joins directory of the 
 
 Using a Join to Fill or Identify Holes in a List
 Problem
-You want to produce a summary for each of several categories, but some of them are not represented in the data to be SUMmarized. Consequently, the summary has missing categories.
+You want to produce a summary for each of several categories, but some of them are not represented in the data to be summarized. Consequently, the summary has missing categories.
 
 Solution
-Create a reference table that lists each category and produce the summary based on a LEFT JOIN BETWEEN the list and the table containing your data. Then every category in the reference table will appear in the result, even those not present in the data to be SUMmarized.
+Create a reference table that lists each category and produce the summary based on a LEFT JOIN BETWEEN the list and the table containing your data. Then every category in the reference table will appear in the result, even those not present in the data to be summarized.
 
 Discussion
 When you run a summary query, normally it produces entries only for the values that are actually present in the data. Let’s say you want to produce a time-of-day summary for the rows in the mail table. That table looks like this:
@@ -3897,7 +4005,7 @@ SELECT * FROM mail;
 | 2006-05-14 09:31:37 | gene    | venus | barb  | mars  |   2291 |
 | 2006-05-14 11:52:17 | phil    | mars  | tricia | saturn | 5781 |
 ...
-To deterMINe how many messages were sent for each hour of the day, use the following statement:
+To determine how many messages were sent for each hour of the day, use the following statement:
 SELECT HOUR(t) AS hour, COUNT(HOUR(t)) AS count
 FROM mail GROUP BY hour;
 +------+-------+
@@ -3923,7 +4031,7 @@ GROUP BY hour;
 
 +------+-------+
 Now the summary includes an entry for every hour of the day because the LEFT JOIN forces the output to include a row for every row in the reference table, regardless of the contents of the mail table.
-The example just shown uses the reference table with a LEFT JOIN to fill in holes in the category list. It’s also possible to use the reference table to detect holes in the dataset— that is, to deterMINe which categories are not present in the data to be SUMmarized. The following statement shows those hours of the day during which no messages were sent by looking for reference rows for which no mail table rows have a matching cate- gory value:
+The example just shown uses the reference table with a LEFT JOIN to fill in holes in the category list. It’s also possible to use the reference table to detect holes in the dataset— that is, to determine which categories are not present in the data to be summarized. The following statement shows those hours of the day during which no messages were sent by looking for reference rows for which no mail table rows have a matching cate- gory value:
 SELECT ref.h AS hour
 FROM ref LEFT JOIN mail ON ref.h = HOUR(mail.t)
 WHERE mail.t IS NULL;
@@ -3935,7 +4043,7 @@ WHERE mail.t IS NULL;
 Reference tables that contain a list of categories are quite useful for summary state- ments, but creating such tables manually is MINd-numbing and error-prone. You might find it preferable to write a script that uses the endpoints of the range of category values to generate the reference table for you. In essence, this type of script acts as an iterator that generates a row for each value in the range. The following Perl script, make_date_list.pl, shows an example of this approach. It creates a reference table con- taining a row for every date in a particular date range. It also indexes the table so that it will be fast in large joins.
 #!/usr/bin/perl
 # make_date_list.pl - create a table with an entry for every date in # a given date range. The table can be used in a LEFT JOIN when
-# producing a summary, to make sure that every date appears in the # summary, regardless of whether the data to be SUMmarized actually # contains any values for a given day.
+# producing a summary, to make sure that every date appears in the # summary, regardless of whether the data to be summarized actually # contains any values for a given day.
 # Usage: make_date_list.pl db_name tbl_name col_name MIN_date MAX_date use strict;
 use warnings; use DBI;
 
@@ -3944,7 +4052,7 @@ use warnings; use DBI;
 # Check number of arguments
 @ARGV == 5 or die "$usage\n";
 my ($db_name, $tbl_name, $col_name, $MIN_date, $MAX_date) = @ARGV; # ... connect to database (not shown) ...
-# DeterMINe the number of days spanned by the date range.
+# determine the number of days spanned by the date range.
 
 my $days = $dbh->SELECTrow_array (qq{ SELECT DATEDIFF(?,?) + 1 },
 undef, $MAX_date, $MIN_date);
@@ -3966,7 +4074,7 @@ foreach my $i (0 .. $days-1)
 {
 $sth->execute ($MIN_date, $i);
 }
-Reference tables generated by make_date_list.pl can be used for per-date SUMmaries or to find dates not represented in the table. Suppose that you want to SUMmarize the driver_log table to deterMINe how many drivers were on the road each day. The table has these rows:
+Reference tables generated by make_date_list.pl can be used for per-date SUMmaries or to find dates not represented in the table. Suppose that you want to summarize the driver_log table to determine how many drivers were on the road each day. The table has these rows:
 SELECT * FROM driver_log ORDER BY rec_id;
 +--------+-------+------------+-------+
 | rec_id | name  | travel_date  | miles |
@@ -4017,7 +4125,7 @@ Solution
 Use a self-join that matches up pairs of adjacent rows and calculates the differences BETWEEN members of each pair.
 
 Discussion
-Self-joins are useful when you have a set of absolute (or cumulative) values that you want to convert to relative values representing the differences BETWEEN successive pairs of rows. For example, if you take an automobile trip and write down the total miles traveled at each stopping point, you can compute the difference BETWEEN successive points to deterMINe the distance FROM one stop to the next. Here is such a table that shows the stops for a trip FROM San Antonio, Texas to Madison, Wisconsin. Each row shows the total miles driven as of each stop:
+Self-joins are useful when you have a set of absolute (or cumulative) values that you want to convert to relative values representing the differences BETWEEN successive pairs of rows. For example, if you take an automobile trip and write down the total miles traveled at each stopping point, you can compute the difference BETWEEN successive points to determine the distance FROM one stop to the next. Here is such a table that shows the stops for a trip FROM San Antonio, Texas to Madison, Wisconsin. Each row shows the total miles driven as of each stop:
 SELECT seq, city, miles FROM trip_log ORDER BY seq;
 +-----+------------------+-------+
 | seq | city    | miles |
@@ -4052,7 +4160,7 @@ FROM player_stats ORDER BY id;
 |  4 | 2006-07-31 | 196 | 49 | 0.250 |
 |  5 | 2006-08-31 | 304 | 98 | 0.322 |
 +----+------------+-----+----+-------+
-The last column of the query result also shows the player’s batting average as of each date. This column is not stored in the table but is easily computed as the ratio of hits to at-bats. The result provides a general idea of how the player’s hitting performance changed over the course of the season, but it doesn’t give a very informative picture of how the player did during each individual month. To deterMINe that, it’s necessary to calculate relative differences BETWEEN pairs of rows. This is easily done with a self-join that matches each row n with row n +1 to calculate differences BETWEEN pairs of at-bats and hits values. These differences enable computation of batting average during each month:
+The last column of the query result also shows the player’s batting average as of each date. This column is not stored in the table but is easily computed as the ratio of hits to at-bats. The result provides a general idea of how the player’s hitting performance changed over the course of the season, but it doesn’t give a very informative picture of how the player did during each individual month. To determine that, it’s necessary to calculate relative differences BETWEEN pairs of rows. This is easily done with a self-join that matches each row n with row n +1 to calculate differences BETWEEN pairs of at-bats and hits values. These differences enable computation of batting average during each month:
 SELECT
 t1.id AS id1, t2.id AS id2,
 t2.date,
@@ -4093,14 +4201,14 @@ SELECT date, precip FROM rainfall ORDER BY date;
 | 2006-06-04 |  0.00 |
 | 2006-06-05 |  1.00 |
 +------------+--------+
-To calculate cumulative rainfall for a given day, add that day’s precipitation value with the values for all the previous days. For example, deterMINe the cumulative rainfall as of 2006-06-03 like this:
+To calculate cumulative rainfall for a given day, add that day’s precipitation value with the values for all the previous days. For example, determine the cumulative rainfall as of 2006-06-03 like this:
 SELECT SUM(precip) FROM rainfall WHERE date <= '2006-06-03';
 +-------------+
 | SUM(precip) |
 +-------------+
 |   2.00 |
 +-------------+
-If you want the cumulative figures for all days that are represented in the table, it would be tedious to compute the value for each of them separately. A self-join can do this for all days with a single statement. Use one instance of the rainfall table as a reference, and deterMINe for the date in each row the SUM of the precip values in all rows occurring up through that date in another instance of the table. The following statement shows the daily and cumulative precipitation for each day:
+If you want the cumulative figures for all days that are represented in the table, it would be tedious to compute the value for each of them separately. A self-join can do this for all days with a single statement. Use one instance of the rainfall table as a reference, and determine for the date in each row the SUM of the precip values in all rows occurring up through that date in another instance of the table. The following statement shows the daily and cumulative precipitation for each day:
 SELECT t1.date, t1.precip AS 'daily precip',
 SUM(t2.precip) AS 'cum. precip'
 FROM rainfall AS t1 INNER JOIN rainfall AS t2
@@ -4149,7 +4257,7 @@ GROUP BY t1.date;
 | 2006-06-03 |  0.50 |  2.00 |  2 | 1.000000 |
 | 2006-06-05 |  1.00 |  3.00 |  3 | 1.000000 |
 +------------+--------------+-------------+--------------+-------------+
-To fix the problem, it’s necessary to deterMINe the number of days elapsed a different way. Take the minimum and maximum date involved in each SUM and calculate a days- elapsed value FROM them using the following expression:
+To fix the problem, it’s necessary to determine the number of days elapsed a different way. Take the minimum and maximum date involved in each SUM and calculate a days- elapsed value FROM them using the following expression:
 DATEDIFF(MAX(t2.date),MIN(t2.date)) + 1
 That value must be used for the days-elapsed column and for computing the running averages. The resulting statement is as follows:
 SELECT t1.date, t1.precip AS 'daily precip',
@@ -4226,7 +4334,7 @@ SELECT * FROM driver_log ORDER BY rec_id;
 
 +--------+-------+------------+-------+
 The preceding statement sorts the rows using the ID column, which is present in the rows. But what if you want to display a list and sort it on the basis of a summary value not present in the rows? That’s a little trickier. Suppose that you want to show each driver’s rows by date, but place those drivers who drive the most miles first. You can’t do this with a summary query, because then you wouldn’t get back the individual driver rows. But you can’t do it without a summary query, either, because the summary values are required for sorting. The way out of the dilemma is to create another table con- taining the summary value per driver and then join it to the original table. That way you can produce the individual rows and also sort them by the summary values.
-To SUMmarize the driver totals into another table, do this:
+To summarize the driver totals into another table, do this:
 CREATE TABLE tmp
 SELECT name, SUM(miles) AS driver_miles FROM driver_log GROUP BY name;
 
@@ -4445,7 +4553,7 @@ Solution
 Use a LEFT JOIN to identify unmatched values in each table. If there are any and you want to get rid of them, use a multiple-table DELETE statement. It’s also possible to identify or remove nonmatching rows by using NOT IN subqueries.
 
 Discussion
-Inner joins are useful for identifying relationships, and outer joins are useful for iden- tifying the lack of relationship. This property of outer joins is valuable when you have datasets that are supposed to be related but for which the relationship might be imperfect.
+INNER JOINs are useful for identifying relationships, and outer joins are useful for iden- tifying the lack of relationship. This property of outer joins is valuable when you have datasets that are supposed to be related but for which the relationship might be imperfect.
 Mismatches BETWEEN datasets can occur if you receive two datafiles FROM an external source that are supposed to be related but for which the integrity of the relationship actually is imperfect. It can also occur as an anticipated consequence of a deliberate action. Suppose that an online discussion board uses a parent table that lists discussion topics and a child table that rows the articles posted for each topic. If you purge the child table of old article rows, that may result in any given topic row in the parent table no longer HAVING any children. If so, the lack of recent postings for the topic indicates that it is probably dead and that the parent row in the topic table can be deleted, too. In such a situation, you delete a set of child rows with the explicit recognition that the operation may strand parent rows and cause them to become eligible for being deleted as well.
 However you arrive at the point WHERE related tables have unmatched rows, you can analyze and modify them using SQL statements. Specifically, restoring their relation- ship is a matter of identifying the unattached rows and then deleting them:
 To identify unattached rows, use a LEFT JOIN, because this is a “find unmatched rows” problem. (See Recipe 12.2 for information about LEFT JOIN.)
@@ -4580,14 +4688,14 @@ ON artist.a_id = painting.a_id AND painting.state = states.abbrev
 };
 $sth = $dbh->prepare ($stmt);
 $sth->execute ();
-# DeterMINe the number of columns in result set rows two ways: # - Check the NUM_OF_FIELDS statement handle attribute
+# determine the number of columns in result set rows two ways: # - Check the NUM_OF_FIELDS statement handle attribute
 # - Fetch a row into a hash and see how many keys the hash contains
 $count1 = $sth->{NUM_OF_FIELDS};
 $ref = $sth->fetchrow_hashref ();
 $count2 = keys (%{$ref});
 print "The statement is: $stmt\n";
 print "According to NUM_OF_FIELDS, the result set has $count1 columns\n"; print "The column names are: " . join sort (",", @{$sth->{NAME}})) . "\n"; print "According to the row hash size, the result set has $count2 columns\n"; print "The column names are: " . join sort (",", @{$sth->{NAME}})) . "\n";
-The script issues the statement and then deterMINes the number of columns in the result, first by checking the NUM_OF_FIELDS attribute and then by fetching a row into a hash and counting the number of hash keys. Executing this script results in the fol- lowing output:
+The script issues the statement and then determines the number of columns in the result, first by checking the NUM_OF_FIELDS attribute and then by fetching a row into a hash and counting the number of hash keys. Executing this script results in the fol- lowing output:
 According to NUM_OF_FIELDS, the result set has 4 columns The column names are: name,name,title,price
 According to the row hash size, the result set has 3 columns The column names are: name,price,title
 There is a problem here: the column counts don’t match. The second count is 3 (not
@@ -4719,7 +4827,7 @@ You don’t want to store redundant data in your database tables, but you want t
 
 
 Solution
-In your SELECT statements, apply SQL built-in functions or create expressions on one or more columns in the table, creating a virtual column in the query results. For example, suppose you want to SUMmarize total compensation for an employee, combining salary and commissions.
+In your SELECT statements, apply SQL built-in functions or create expressions on one or more columns in the table, creating a virtual column in the query results. For example, suppose you want to summarize total compensation for an employee, combining salary and commissions.
 In the sample tables included for the OE user FROM a default installation of SQL, the ORDER_ITEMS
 table contains UNIT_PRICE and QUANTITY columns as follows:
 SELECT * FROM order_items;
@@ -4961,7 +5069,7 @@ WHERE e.department_id = 50 ORDER BY e.employee_id;
 
 
 …
-The results show the data that drove the CASE function’s decision in our recipe. The values in bold were the results returned by our recipe. For the first, second, fourth, and fifth rows shown, END_DATE FROM the HR.JOB_HISTORY table IS NULL, so the CASE operation returned the HIRE_DATE. For the third row, with EMPLOYEE_ID 122, END_DATE has a date value, and thus was returned in preference to HIRE_DATE when exaMINed by our original recipe. There is a shorthand form of the CASE statement known as the Simple CASE that only operates against one column or expression and has THEN clauses for possible values. This wouldn’t have suited us as SQL limits the use of NULL with the Simple CASE in awkward ways.
+The results show the data that drove the CASE function’s decision in our recipe. The values in bold were the results returned by our recipe. For the first, second, fourth, and fifth rows shown, END_DATE FROM the HR.JOB_HISTORY table IS NULL, so the CASE operation returned the HIRE_DATE. For the third row, with EMPLOYEE_ID 122, END_DATE has a date value, and thus was returned in preference to HIRE_DATE when examined by our original recipe. There is a shorthand form of the CASE statement known as the Simple CASE that only operates against one column or expression and has THEN clauses for possible values. This wouldn’t have suited us as SQL limits the use of NULL with the Simple CASE in awkward ways.
 
 ---
 
@@ -5047,7 +5155,7 @@ If you review that logic, you’ll realize this is not a precise calculation of 
 The alternatives SOME and ANY, which are effectively synonyms, resolve the true/false deterMINation based on only needing one item in the subSELECT to satisfy the SOME/ANY condition. SQL will happily
 
 
-accept more than one item matching the SOME/ANY criteria, but only needs to deterMINe one value to evaluate the subSELECT.
+accept more than one item matching the SOME/ANY criteria, but only needs to determine one value to evaluate the subSELECT.
 
 
 ---
