@@ -589,7 +589,7 @@ GROUP BY sender, srchost;
 | tricia  |   2      |
 +---------+----------+
 
-## The preceding examples in this section have used COUNT( ), SUM( ), and AVG( ) for per- group SUMmaries. You can use MIN( ) or MAX( ), too. With a GROUP BY clause, they will tell you the smallest or largest value per group. The following query groups mail table rows by message sender, displaying for each the size of the largest message sent and the date of the most recent message:
+## The preceding examples in this section have used COUNT( ), SUM( ), and AVG( ) for per- group summaries. You can use MIN( ) or MAX( ), too. With a GROUP BY clause, they will tell you the smallest or largest value per group. The following query groups mail table rows by message sender, displaying for each the size of the largest message sent and the date of the most recent message:
 
 ```sql
 SELECT sender, MAX(size), MAX(t) FROM mail GROUP BY sender;
@@ -684,7 +684,7 @@ Output
 
 ---
 
-## SUMmaries and NULL Values
+## summaries and NULL Values
 ## Problem
 ## You’re SUMmarizing a set of values that may include NULL values and you need to know how to interpret the results.
 
@@ -842,7 +842,7 @@ GROUP BY subject;
 
 # Selecting Only Groups with Certain Characteristics
 ## Problem
-## You want to calculate group SUMmaries using AVG, MIN, MAX, etc, but display the results only for those groups that match certain criteria.
+## You want to calculate group summaries using AVG, MIN, MAX, etc, but display the results only for those groups that match certain criteria.
 
 ## Solution
 ## Use a HAVING clause.
@@ -1254,7 +1254,7 @@ HAVING  count =
 
 ---
 
-# Date-Based SUMmaries
+# Date-Based summaries
 ## Problem
 ## You want to produce a summary based on date or time values.
 
@@ -2186,7 +2186,7 @@ GROUP BY jh.JobsHeld;
 ```
 
 ## How It Works
-## The key to our recipe is the flexibility of the COUNT function, which can be used for far more than just physically counting the number of rows in a table. You can count anything you can represent in a result. This means you can count derived data, inferred data, and transient calculations and determinations. Our recipe uses nested subSELECTs and counts at two levels, and is best understood starting FROM the inside and working out.
+## The key to our recipe is the flexibility of the COUNT function, which can be used for far more than just physically counting the number of rows in a table. You can count anything you can represent in a result. This means you can count derived data, inferred data, and transient calculations and determinations. Our recipe uses nested subselects and counts at two levels, and is best understood starting FROM the inside and working out.
 ## We know an employee’s current position is tracked in the employee table, and that each instance of previous positions with the organization is recorded in the HR.JOB_HISTORY table. We can’t just count the entries in HR.JOB_HISTORY and add one for the employee’ current positions, because staff who have never changed jobs don’t have an entry in `job_history`.
 ## Instead, we perform a `UNION ALL` of the employee_id values across both employee and `job_history`, building a basic result set that repeats an `employee_id` for every position an employee has held.
 
@@ -2565,7 +2565,7 @@ WHERE
 ```
 
 ## Starting with the anchor value of 0 in the LAG, we see the day of the month for a sale as NEXT_SALE, and the day of the previous sale as PREV_SALE. You can probably already visually spot the gaps, but it’s much easier to let SQL do that for you too. This is WHERE our outer query does its very simple arithmetic.
-## The driving query over the SALESDAYS subquery SELECTs the PREV_SALE and NEXT_SALE values FROM the results, based on this predicate.
+## The driving query over the SALESDAYS subquery selects the PREV_SALE and NEXT_SALE values FROM the results, based on this predicate.
 ### `WHERE next_sale - prev_sale > 1`
 
 ## We know the days of sales are consecutive if they’re out by more than one day. We wrap up by ordering the results by the PREV_SALE column, so that we get a natural ordering FROM start of month to end of month.
@@ -2759,7 +2759,7 @@ SELECT * FROM artist ORDER BY a_id;
 ```
 
 ### Each table contains partial information about your collection. For example, the artist table doesn’t tell you which paintings each artist produced, and the painting table lists artist IDs but not their names. To use the information in both tables, you can ask MySQL to show you various combinations of artists and paintings by writing a query that performs a join. A join names two or more tables after the FROM keyword. In the output column list, you can name columns FROM any or all the joined tables, or use expressions that are based on those columns, tbl_name.* to SELECT all columns FROM a given table, or * to SELECT all columns FROM all tables.
-## The simplest join involves two tables and SELECTs all columns FROM each. With no restrictions, the join generates output for all combinations of rows (that is, the Cartesian product). The following complete join BETWEEN the artist and painting tables shows this:
+## The simplest join involves two tables and selects all columns FROM each. With no restrictions, the join generates output for all combinations of rows (that is, the Cartesian product). The following complete join BETWEEN the artist and painting tables shows this:
 ```sql
 SELECT * FROM artist, painting;
 ```
@@ -3293,25 +3293,37 @@ I’ll generally prefer using `LEFT JOIN` in this document, but just note such a
 ## Notes
 ## `LEFT JOIN` is useful for finding values with no match in another table or for showing whether each value is matched. `LEFT JOIN` may also be used to produce a summary that includes all items in a list, even those for which there’s nothing to summarize. This is very common for characterizing the relationship between a master table and a detail table. For example, a `LEFT JOIN` can produce “total sales per customer” reports that list all customers, even those who haven’t bought anything during the summary period.
 
-## You can also use `LEFT JOIN` to perform consistency checking when you receive two datafiles that are supposed to be related, and you want to determine whether they really are. (That is, you want to check the integrity of their relationship.) Import each file into a MySQL table, and then run a couple of LEFT JOIN statements to determine whether there are unattached rows in one table or the other, i.e., rows that have no match in the other table. 
+## You can also use `LEFT JOIN` to perform consistency checking when you receive two datafiles that are supposed to be related, and you want to determine whether they really are. (That is, you want to check the integrity of their relationship.) Import each file into a SQL table, and then run a couple of `LEFT JOIN` statements to determine whether there are unattached rows in one table or the other, i.e., rows that have no match in the other table. 
 
 ---
 
-Comparing a Table to Itself
-Problem
-You want to compare rows in a table to other rows in the same table. For example, you want to find all paintings in your collection by the artist who painted The Potato Eat- ers. Or you want to know which states listed in the states table joined the Union in the same year as New York. Or you want to know which states did not join the Union in the same year as any other state.
+# Self Joins - Comparing a Table to Itself
+## Problem
+## You want to compare rows in a table to other rows in the same table. For example, you want to find all paintings in your collection by the artist who painted The Potato Eat- ers. Or you want to know which states listed in the states table joined the Union in the same year as New York. Or you want to know which states did not join the Union in the same year as any other state.
 
-Solution
-Problems that require comparing a table to itself involve an operation known as a self- join. It’s performed much like other joins, except that you must always use table aliases so that you can refer to the same table different ways within the statement.
+## Solution
+## Problems that require comparing a table to itself involve an operation known as a self join. It’s performed much like other joins, except that you must always use table aliases so that you can refer to the same table different ways within the statement.
 
-Discussion
-A special case of joining one table to another occurs when both tables are the same. This is called a self-join. Although many people find the idea confusing or strange to think about at first, it’s perfectly legal. It’s likely that you’ll find yourself using self-joins quite often because they are so important.
-A tip-off that you need a self-join is when you want to know which pairs of elements in a table satisfy some condition. For example, suppose that your favorite painting is The Potato Eaters, and you want to identify all the items in your collection that were done by the artist who painted it. Do so as follows:
-Identify the row in the painting table that contains the title The Potato Eaters, so that you can refer to its a_id value.
-Use the a_id value to match other rows in the table that have the same a_id value.
-Display the titles FROM those matching rows.
-The artist ID and painting titles that we begin with look like this:
-SELECT a_id, title FROM painting ORDER BY a_id;
+## Discussion
+## A special case of joining one table to another occurs when both tables are the same. This is called a self-join. Although many people find the idea confusing or strange to think about at first, it’s perfectly legal. It’s likely that you’ll find yourself using self-joins quite often because they are so important.
+## A tip-off that you need a self-join is when you want to know which pairs of elements in a table satisfy some condition. For example, suppose that your favorite painting is 'The Potato Eaters', and you want to identify all the items in your collection that were done by the artist who painted it. Do so as follows:
+
+1. Identify the row in the painting table that contains the title 'The Potato Eaters', so that you can refer to its a_id value.
+1. Use the `a_id` value to match other rows in the table that have the same `a_id` value.
+1. Display the titles from those matching rows.
+
+## The artist ID and painting titles that we begin with look like this:
+
+```sql
+SELECT 
+    a_id, 
+    title 
+FROM 
+    painting 
+ORDER BY 
+    a_id;
+```
+```
 +------+-------------------+
 | a_id | title  |
 +------+-------------------+
@@ -3322,14 +3334,22 @@ SELECT a_id, title FROM painting ORDER BY a_id;
 |   3 | The Rocks   |
 |   5 | Les Deux Soeurs |
 +------+-------------------+
-A two-step method for picking out the right titles without a join is to look up the artist’s ID with one statement and then use the ID in a second statement to SELECT rows that match it:
-SELECT @id := a_id FROM painting WHERE title = 'The Potato Eaters';
-+-------------+
-| @id := a_id |
-+-------------+
-|   3 |
-+-------------+
-SELECT title FROM painting WHERE a_id = @id;
+```
+
+## A two-step method for picking out the right titles without a join is to look up the artist’s ID with one statement and then use the ID in a subquery to SELECT rows that match it:
+
+```sql
+SELECT 
+    title 
+FROM painting 
+WHERE 
+    a_id = (SELECT a_id 
+            FROM painting 
+            WHERE title = 'The Potato Eaters'
+            );
+```
+
+```
 +-------------------+
 | title |
 +-------------------+
@@ -3337,17 +3357,38 @@ SELECT title FROM painting WHERE a_id = @id;
 | The Potato Eaters |
 | The Rocks |
 +-------------------+
-A different solution that requires only a single statement is to use a self-join. The trick to this lies in figuring out the proper notation to use. First attempts at writing a state- ment that joins a table to itself often look something like this:
-SELECT title
-FROM painting INNER JOIN painting
-ON a_id = a_id;
+```
+
+## A different solution that requires only a single statement is to use a self-join. The trick to this lies in figuring out the proper notation to use. First attempts at writing a statement that joins a table to itself often look something like this:
+
+```sql
+-- This is wrong
+SELECT 
+    title
+FROM 
+    painting 
+INNER JOIN 
+    painting
+ON 
+    a_id = a_id;  
 WHERE title = 'The Potato Eaters';
-ERROR 1066 (42000): Not unique table/alias: 'painting'
-The problem with that statement is that the column references are ambiguous. MySQL can’t tell which instance of the painting table any given column name refers to. The solution is to give at least one instance of the table an alias so that you can distinguish column references by using different table qualifiers. The following statement shows how to do this, using the aliases p1 and p2 to refer to the painting table different ways:
-SELECT p2.title
-FROM painting AS p1 INNER JOIN painting AS p2
-ON p1.a_id = p2.a_id
-WHERE p1.title = 'The Potato Eaters';
+```
+The correct solution is to give at least one instance of the table an **alias** so that you can distinguish column references by using different table qualifiers. The following statement shows how to do this, using the aliases p1 and p2 to refer to the painting table different ways:
+
+```sql
+-- This is correct
+SELECT 
+    p2.title
+FROM 
+    painting AS p1 
+INNER JOIN 
+    painting AS p2
+ON 
+    p1.a_id = p2.a_id
+WHERE 
+    p1.title = 'The Potato Eaters';
+```
+```
 +-------------------+
 | title |
 +-------------------+
@@ -3355,34 +3396,43 @@ WHERE p1.title = 'The Potato Eaters';
 | The Potato Eaters |
 | The Rocks |
 +-------------------+
-The statement output illustrates something typical of self-joins: when you begin with a reference value in one table instance (The Potato Eaters) to find matching rows in a second table instance (paintings by the same artist), the output includes the reference value. That makes sense: after all, the reference matches itself. If you want to find only other paintings by the same artist, explicitly exclude the reference value FROM the output:
-SELECT p2.title
-FROM painting AS p1 INNER JOIN painting AS p2
-ON p1.a_id = p2.a_id
-WHERE p1.title = 'The Potato Eaters' AND p2.title != 'The Potato Eaters';
+```
+
+## The statement output illustrates something typical of self-joins: when you begin with a reference value in one table instance ('The Potato Eaters') to find matching rows in a second table instance (paintings by the same artist), the output includes the reference value. That makes sense: after all, the reference matches itself. If you want to find only **other** paintings by the same artist, explicitly exclude the reference value from the output by specifying that you don’t want output rows to have the same title as the reference, whatever that title happens to be:
+
+```sql
+SELECT 
+    p2.title
+FROM 
+    painting AS p1 
+INNER JOIN 
+    painting AS p2
+ON 
+    p1.a_id = p2.a_id
+WHERE 
+    p1.title = 'The Potato Eaters' 
+AND p2.title != p1.title
+```
+```
 +--------------+
 | title |
 +--------------+
 | Starry Night |
 | The Rocks |
 +--------------+
-A more general way to exclude the reference value without naMINg it literally is to specify that you don’t want output rows to have the same title as the reference, whatever that title happens to be:
-SELECT p2.title
-FROM painting AS p1 INNER JOIN painting AS p2
-ON p1.a_id = p2.a_id
-WHERE p1.title = 'The Potato Eaters' AND p2.title != p1.title
-+--------------+
-| title |
-+--------------+
-| Starry Night |
-| The Rocks |
-+--------------+
-The preceding statements use comparisons of ID values to match rows in the two table instances, but any kind of value can be used. For example, to use the states table to answer the question “Which states joined the Union in the same year as New York?,” perform a temporal pairwise comparison based on the year part of the dates in the table’s statehood column:
+```
+
+## The preceding statements use comparisons of ID values to match rows in the two table instances, but any kind of value can be used. For example, to use the states table to answer the question “Which states joined the Union in the same year as New York?,” perform a temporal pairwise comparison based on the year part of the dates in the table’s statehood column:
+
+```sql
 SELECT s2.name, s2.statehood
 FROM states AS s1 INNER JOIN states AS s2
 ON YEAR(s1.statehood) = YEAR(s2.statehood)
 WHERE s1.name = 'New York'
 ORDER BY s2.name;
+```
+
+```
 +----------------+------------+
 | name  | statehood |
 +----------------+------------+
@@ -3395,12 +3445,18 @@ ORDER BY s2.name;
 | South Carolina | 1788-05-23 |
 | Virginia  | 1788-06-25 |
 +----------------+------------+
-Here again, the reference value (New York) appears in the output. If you want to prevent that, add to the ON expression a term that explicitly excludes the reference:
+```
+
+## Here again, the reference value (New York) appears in the output. If you want to prevent that, add to the ON expression a term that explicitly excludes the reference:
+
+```sql
 SELECT s2.name, s2.statehood
 FROM states AS s1 INNER JOIN states AS s2
 ON YEAR(s1.statehood) = YEAR(s2.statehood) AND s1.name != s2.name
 WHERE s1.name = 'New York'
 ORDER BY s2.name;
+```
+```
 +----------------+------------+
 | name  | statehood |
 +----------------+------------+
@@ -3412,26 +3468,31 @@ ORDER BY s2.name;
 | South Carolina | 1788-05-23 |
 | Virginia  | 1788-06-25 |
 +----------------+------------+
-Like the problem of finding other paintings by the painter of The Potato Eaters, the statehood problem can be solved by using a user-defined variable and two statements. That will always be true when you’re seeking matches for just one particular row in your table. Other problems require finding matches for several rows, in which case the two-statement method will not work. Suppose that you want to find each pair of states that joined the Union in the same year. In this case, the output potentially can include any pair of rows FROM the states table. There is no fixed reference value, so you cannot store the reference in a variable. A self-join is perfect for this problem:
+```
+
+## Like the problem of finding other paintings by the painter of The Potato Eaters, the statehood problem can be solved by using a user-defined variable and two statements. That will always be true when you’re seeking matches for just one particular row in your table. Other problems require finding matches for several rows, in which case the two-statement method will not work. Suppose that you want to find each pair of states that joined the Union in the same year. In this case, the output potentially can include any pair of rows FROM the states table. There is no fixed reference value, so you cannot store the reference in a variable. A self-join is perfect for this problem:
+
+```sql
 SELECT YEAR(s1.statehood) AS year,
 s1.name AS name1, s1.statehood AS statehood1,
 s2.name AS name2, s2.statehood AS statehood2
 FROM states AS s1 INNER JOIN states AS s2
 ON YEAR(s1.statehood) = YEAR(s2.statehood) AND s1.name != s2.name
 ORDER BY year, s1.name, s2.name;
-+------+----------------+------------+----------------+------------+
-| year | name1  | statehood1 | name2    | statehood2 |
-+------+----------------+------------+----------------+------------+
+```
 
+## The condition in the ON clause that requires state pair names not to be identical elimi- nates the trivially duplicate rows showing that each state joined the Union in the same year as itself. But you’ll notice that each remaining pair of states still appears twice. For example, there is one row that lists Delaware and New Jersey, and another that lists New Jersey and Delaware. This is often the case with self-joins: they produce pairs of rows that contain the same values, but for which the values are not in the same order. For techniques that eliMINate these “near duplicates” FROM the query result, see Rec- ipe 14.5.
+## Some self-join problems are of the “Which values are not matched by other rows in the table?” variety. An instance of this is the question “Which states did not join the Union in the same year as any other state?” Finding these states is a “nonmatch” problem, which is the type of problem that typically involves a LEFT JOIN. In this case, the solution uses a LEFT JOIN of the states table to itself:
 
-+------+----------------+------------+----------------+------------+
-The condition in the ON clause that requires state pair names not to be identical elimi- nates the trivially duplicate rows showing that each state joined the Union in the same year as itself. But you’ll notice that each remaining pair of states still appears twice. For example, there is one row that lists Delaware and New Jersey, and another that lists New Jersey and Delaware. This is often the case with self-joins: they produce pairs of rows that contain the same values, but for which the values are not in the same order. For techniques that eliMINate these “near duplicates” FROM the query result, see Rec- ipe 14.5.
-Some self-join problems are of the “Which values are not matched by other rows in the table?” variety. An instance of this is the question “Which states did not join the Union in the same year as any other state?” Finding these states is a “nonmatch” problem, which is the type of problem that typically involves a LEFT JOIN. In this case, the solution uses a LEFT JOIN of the states table to itself:
+```
 SELECT s1.name, s1.statehood
 FROM states AS s1 LEFT JOIN states AS s2
 ON YEAR(s1.statehood) = YEAR(s2.statehood) AND s1.name != s2.name
 WHERE s2.name IS NULL
 ORDER BY s1.name;
+```
+
+```
 +----------------+------------+
 | name  | statehood |
 +----------------+------------+
@@ -3447,10 +3508,12 @@ ORDER BY s1.name;
 | West Virginia  | 1863-06-20 |
 | Wisconsin | 1848-05-29 |
 +----------------+------------+
-For each row in the states table, the statement SELECTs rows in which the state has a statehood value in the same year, not including that state itself. For rows HAVING no such match, the LEFT JOIN forces the output to contain a row anyway, with all the s2 columns set to NULL. Those rows identify the states with no other state that joined the Union in the same year.
+```
+
+## For each row in the states table, the statement selects rows in which the state has a statehood value in the same year, not including that state itself. For rows having no such match, the `LEFT JOIN` forces the output to contain a row anyway, with all the s2 columns set to `NULL`. Those rows identify the states with no other state that joined the Union in the same year.
 
 ---
-Producing Master-Detail Lists and SUMmaries
+Producing Master-Detail Lists and summaries
 Problem
 Two related tables have a master-detail relationship, and you want to produce a list that shows each master row with its detail rows or a list that produces a summary of the detail rows for each master row.
 
@@ -3490,7 +3553,7 @@ ORDER BY name, title;
 | Van Gogh | The Rocks  |
 +----------+-------------------+
 The rows in the result that have NULL in the title column correspond to artists that are listed in the artist table for whom you have no paintings.
-The same principles apply when producing SUMmaries using master and detail tables. For example, to summarize your art collection by number of paintings per painter, you might ask, “How many paintings are there per artist in the painting table?” To find the answer based on artist ID, you can count up the paintings easily with this statement:
+The same principles apply when producing summaries using master and detail tables. For example, to summarize your art collection by number of paintings per painter, you might ask, “How many paintings are there per artist in the painting table?” To find the answer based on artist ID, you can count up the paintings easily with this statement:
 SELECT a_id, COUNT(a_id) AS count FROM painting GROUP BY a_id;
 +------+-------+
 | a_id | count |
@@ -3538,7 +3601,7 @@ GROUP BY artist.name;
 +----------+-------+
 Now every artist appears to have at least one painting. Why the difference? The cause of the problem is that the statement uses COUNT(*) rather than COUNT(painting.a_id). The way LEFT JOIN works for unmatched rows in the left table is that it generates a row with all the columns FROM the right table set to NULL. In the example, the right table is painting. The statement that uses COUNT(painting.a_id) works correctly, because COUNT
 ( expr ) counts only non-NULL values. The statement that uses COUNT(*) works incor- rectly because it counts rows, even those containing NULL that correspond to missing artists.
-LEFT JOIN is suitable for other types of SUMmaries as well. To produce additional col- umns showing the total and average values of the paintings for each artist in the artist table, use this statement:
+LEFT JOIN is suitable for other types of summaries as well. To produce additional col- umns showing the total and average values of the paintings for each artist in the artist table, use this statement:
 SELECT artist.name AS painter,
 COUNT(painting.a_id) AS 'number of paintings',
 SUM(painting.price) AS 'total price',
@@ -4074,7 +4137,7 @@ foreach my $i (0 .. $days-1)
 {
 $sth->execute ($MIN_date, $i);
 }
-Reference tables generated by make_date_list.pl can be used for per-date SUMmaries or to find dates not represented in the table. Suppose that you want to summarize the driver_log table to determine how many drivers were on the road each day. The table has these rows:
+Reference tables generated by make_date_list.pl can be used for per-date summaries or to find dates not represented in the table. Suppose that you want to summarize the driver_log table to determine how many drivers were on the road each day. The table has these rows:
 SELECT * FROM driver_log ORDER BY rec_id;
 +--------+-------+------------+-------+
 | rec_id | name  | travel_date  | miles |
@@ -4979,7 +5042,7 @@ Results for a business report are sorted by department manager, but you need to 
 
 Solution
 SQL provides two extensions to the ORDER BY clause to enable SQL developers to treat NULL values separately FROM the known data, allowing any NULL entries to sort explicitly to the beginning or end of the results.
-For our recipe, we’ll assume that the report desired is based on the department names and manager identifiers FROM the department table. This SQL SELECTs this data and uses the NULLS FIRST option to explicitly control NULL handling.
+For our recipe, we’ll assume that the report desired is based on the department names and manager identifiers FROM the department table. This SQL selects this data and uses the NULLS FIRST option to explicitly control NULL handling.
 
 SELECT department_name, manager_id FROM department
 ORDER BY manager_id NULLs first;
@@ -4990,7 +5053,7 @@ The results present the “unmanaged” departments first, followed by the depar
 
 How It Works
 Normally, SQL sorts NULL values to the end of the results for default ascending sorts, and to the beginning of the results for descending sorts. The NULLS FIRST ORDER BY option, together with its complement, NULLS LAST, overrides SQL’s normal sorting behavior for NULL values and places them exactly WHERE you specify: either at the beginning or end of the results.
-Your first instinct when presented with the problem of NULL values sorting to the “wrong” end of your data might be to simply switch FROM ascending to descending sort, or vice versa. But if you think about more complex queries, subSELECTs using ROWNUM or ROWID tricks, and other queries that need to
+Your first instinct when presented with the problem of NULL values sorting to the “wrong” end of your data might be to simply switch FROM ascending to descending sort, or vice versa. But if you think about more complex queries, subselects using ROWNUM or ROWID tricks, and other queries that need to
 
 
 preserve data order while getting NULL values moved, you’ll see that NULLS FIRST and NULLS LAST have real utility. Using them guarantees WHERE the NULL values appear, regardless of how the data values are sorted.
@@ -5116,7 +5179,7 @@ We won’t needlessly repeat what the SQL manual covers in plenty of detail. In 
 
 ---
 
-5-7. OvercoMINg Issues and Errors when SubSELECTs Return Unexpected Multiple Values
+5-7. OvercoMINg Issues and Errors when Subselects Return Unexpected Multiple Values
 Problem
 In working with data FROM a subSELECT, you need to deal with ambiguous situations WHERE in some cases the subSELECT will return a single (scalar) value, and in other cases multiple values.
 
