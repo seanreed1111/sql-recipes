@@ -2859,43 +2859,99 @@ AND
     painting.state = states.abbrev;
 ```
 
-Another common use of three-way joins is for enumerating many-to-many relation- ships. See Recipe 12.5 for an example.
-By including appropriate conditions in your joins, you can answer very specific ques- tions, such as the following:
-Which paintings did Van Gogh paint? To answer this question, use the a_id value to find matching rows, add a WHERE clause to restrict output to those rows that contain the artist name, and SELECT the title FROM those rows:
-SELECT painting.title
-FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
-WHERE artist.name = 'Van Gogh';
+## Another common use of three-way joins is for enumerating many-to-many relation- ships. 
+## By including appropriate conditions in your joins, you can answer very specific questions, such as the following:
+
+### Which paintings did Van Gogh paint? 
+
+## To answer this question, use the a_id value to find matching rows, add a `WHERE` clause to restrict output to those rows that contain the artist name, and `SELECT` the title from those rows:
+
+```sql
+SELECT 
+    painting.title
+FROM 
+    artist 
+INNER JOIN 
+    painting 
+ON 
+    artist.a_id = painting.a_id
+WHERE 
+    artist.name = 'Van Gogh';
+```
 +-------------------+
-| title |
+| title             |
 +-------------------+
-| Starry Night  |
+| Starry Night      |
 | The Potato Eaters |
-| The Rocks |
+| The Rocks         |
 +-------------------+
-Who painted the Mona Lisa? Again you use the a_id column to join the rows, but this time the WHERE clause restricts output to those rows that contain the title, and you SELECT the artist name FROM those rows:
-SELECT artist.name
-FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
-WHERE painting.title = 'The Mona Lisa';
+
+### Here's another question: Who painted the Mona Lisa? 
+
+## Again you use the a_id column to join the rows, but this time the WHERE clause restricts output to those rows that contain the title, and you SELECT the artist name from those rows:
+
+```sql
+SELECT 
+    artist.name
+FROM 
+    artist 
+INNER JOIN 
+    painting 
+ON 
+    artist.a_id = painting.a_id
+WHERE 
+    painting.title = 'The Mona Lisa';
+```
+```
 +----------+
 | name  |
 +----------+
 | Da Vinci |
 +----------+
-Which artists’ paintings did you purchase in Kentucky or Indiana? This is some- what similar to the previous statement, but it tests a different column (a_id) in the painting table to deterMINe which rows to join with the artist table:
+```
+
+## Which artists’ paintings did you purchase in Kentucky or Indiana? This is somewhat similar to the previous statement, but it tests a different column (a_id) in the painting table to determine which rows to join with the artist table:
+
+```sql
 SELECT DISTINCT artist.name
-FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
-WHERE painting.state IN ('KY','IN');
+FROM 
+    artist 
+INNER JOIN 
+    painting 
+ON 
+    artist.a_id = painting.a_id
+WHERE 
+    painting.state IN ('KY','IN');
+```
+
+```
 +----------+
-| name  |
+| name     |
 +----------+
 | Da Vinci |
 | Van Gogh |
 +----------+
-The statement also uses DISTINCT to display each artist name just once. Try it with- out DISTINCT and you’ll see that Van Gogh is listed twice; that’s because you obtained two Van Goghs in Kentucky.
-Joins can also be used with aggregate functions to produce SUMmaries. For exam- ple, to find out how many paintings you have per artist, use this statement:
-SELECT artist.name, COUNT(*) AS 'number of paintings'
-FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
-GROUP BY artist.name;
+```
+
+## The statement also uses DISTINCT to display each artist name just once. Try it with- out DISTINCT and you’ll see that Van Gogh is listed twice; that’s because you obtained two Van Goghs in Kentucky.
+
+## Joins can also be used with aggregate functions to produce summaries. For example, to find out how many paintings you have per artist, use this statement:
+
+```sql
+SELECT 
+    artist.name, 
+    COUNT(*) AS 'number of paintings'
+FROM 
+    artist 
+INNER JOIN 
+    painting 
+ON 
+    artist.a_id = painting.a_id
+GROUP BY 
+    artist.name;
+```
+
+```
 +----------+---------------------+
 | name  | number of paintings |
 +----------+---------------------+
@@ -2903,13 +2959,25 @@ GROUP BY artist.name;
 | Renoir    |   1 |
 | Van Gogh |    3 |
 +----------+---------------------+
-A more elaborate statement might also show how much you paid for each artist’s paintings, in total and on average:
-SELECT artist.name,
-COUNT(*) AS 'number of paintings',
-SUM(painting.price) AS 'total price',
-AVG(painting.price) AS 'average price'
-FROM artist INNER JOIN painting ON artist.a_id = painting.a_id
+```
+
+## A more elaborate statement might also show how much you paid for each artist’s paintings, in total and on average:
+
+```sql
+SELECT 
+    artist.name,
+    COUNT(*) AS 'number of paintings',
+    SUM(painting.price) AS 'total price',
+    AVG(painting.price) AS 'average price'
+FROM 
+    artist 
+INNER JOIN 
+    painting 
+ON artist.a_id = painting.a_id
 GROUP BY artist.name;
+```
+
+```
 +----------+---------------------+-------------+---------------+
 | name  | number of paintings | total price | average price |
 +----------+---------------------+-------------+---------------+
@@ -2917,17 +2985,42 @@ GROUP BY artist.name;
 | Renoir    |   1 | 64 |    64.0000 |
 | Van Gogh |    3 | 148 |   49.3333 |
 +----------+---------------------+-------------+---------------+
-Note that the summary statements produce output only for those artists in the artist table for whom you actually have acquired paintings. (For example, Monet is listed in the artist table but is not present in the summary because you don’t have any of his paintings yet.) If you want the summary to include all artists, even if you have none of their paintings yet, you must use a different kind of join—specifically, an outer join:
-Joins written with the comma operator or INNER JOIN are inner joins, which means that they produce a result only for values in one table that match values in another table.
-An outer join can produce those matches as well, but also can show you which values in one table are missing FROM the other. Recipe 12.2 introduces outer joins.
+```
 
+## Note that the summary statements produce output only for those artists in the artist table for whom you actually have acquired paintings. (For example, Monet is listed in the artist table but is not present in the summary because you don’t have any of his paintings yet.) If you want the summary to include all artists, even if you have none of their paintings yet, you must use a different kind of join—specifically, an outer join:
+## Joins written with the comma operator or INNER JOIN are inner joins, which means that they produce a result only for values in one table that match values in another table.
+## An outer join can produce those matches as well, but also can show you which values in one table are missing FROM the other. 
 
-The tbl_name.col_name notation that qualifies a column name with a table name is always allowable in a join but can be shortened to just col_name if the name appears in only one of the joined tables. In that case, MySQL can deterMINe without ambiguity which table the column comes FROM, and no table name qualifier is necessary. We can’t do that for the following join. Both tables have an a_id column, so the column reference is ambiguous:
-SELECT * FROM artist INNER JOIN painting ON a_id = a_id;
-ERROR 1052 (23000): Column 'a_id' in on clause is ambiguous
-By contrast, the following query is unambiguous. Each instance of a_id is qualified with the appropriate table name, only artist has a name column, and only painting has title and state columns:
-SELECT name, title, state FROM artist INNER JOIN painting
-ON artist.a_id = painting.a_id;
+The `table_name.column_name` notation that qualifies a column name with a table name is **always strongly preferred** in a join.  SQL allows you to just use `column_name` if the name appears in only one of the joined tables, but  best practice says you should only do it when you are pulling data from one table. In that case, SQL can determine without ambiguity which table the column comes from, and no table name qualifier is necessary. 
+
+## We can’t do that for the following join. Both tables have an `a_id` column, so the column reference is ambiguous:
+
+```sql
+-- This WILL NOT RUN, gives an error
+SELECT * 
+FROM artist 
+INNER JOIN 
+painting 
+ON a_id = a_id;
+```
+
+## By contrast, the following query is unambiguous. Each instance of `a_id` is qualified with the appropriate table name, only artist has a name column, and only painting has title and state columns. To make the meaning of a statement clearer to human readers, it’s often useful to qualify column names with table names even when that’s not strictly necessary as far as SQL is concerned. In other words, you should **ALWAYS** include the table name for columns when you do a join for proper documentation. Your future self will thank you later!
+
+```sql
+-- Preferred readable query
+SELECT 
+    artist.name, 
+    painting.title, 
+    painting.state 
+FROM 
+    artist 
+INNER JOIN 
+    painting
+ON 
+    artist.a_id = painting.a_id;
+```
+
+```
 +----------+-------------------+-------+
 | name  | title | state |
 +----------+-------------------+-------+
@@ -2938,18 +3031,48 @@ ON artist.a_id = painting.a_id;
 | Van Gogh | The Rocks  | IA    |
 | Renoir    | Les Deux Soeurs   | NE    |
 +----------+-------------------+-------+
-To make the meaning of a statement clearer to human readers, it’s often useful to qualify column names even when that’s not strictly necessary as far as MySQL is concerned. I tend to use qualified names in join examples for that reason.
-If you don’t want to write complete table names when qualifying column references, give each table a short alias and refer to its columns using the alias. The following two statements are equivalent:
-SELECT artist.name, painting.title, states.name, painting.price FROM artist INNER JOIN painting INNER JOIN states
-ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
+```
 
-SELECT a.name, p.title, s.name, p.price
-FROM artist AS a INNER JOIN painting AS p INNER JOIN states AS s ON a.a_id = p.a_id AND p.state = s.abbrev;
-In AS alias_name clauses, the AS is optional.
-For complicated statements that SELECT many columns, aliases can save a lot of typing. In addition, aliases are not only convenient but necessary for some types of statements, as will become evident when we get to the topic of self-joins (Recipe 12.3).
+## You will also see aliases used in lieu of table names, like this:
 
+```sql
+-- less readable single letter table alias using `AS` keyword
+SELECT 
+    a.name, 
+    p.title, 
+    s.name, 
+    p.price
+FROM artist AS a 
+INNER JOIN painting AS p 
+INNER JOIN states AS s 
+ON 
+    a.a_id = p.a_id 
+AND 
+    p.state = s.abbrev;
+```
+
+## In `AS` alias clauses, the word `AS` is actually optional. So, online and in books you might see the above written like this: 
+
+```sql
+-- less readable single letter table alias without using `AS` keyword
+SELECT 
+    a.name, 
+    p.title, 
+    s.name, 
+    p.price
+FROM artist a 
+INNER JOIN painting p 
+INNER JOIN states s 
+ON 
+    a.a_id = p.a_id 
+AND 
+    p.state = s.abbrev;
+```
+
+For complicated statements that SELECT many columns it is true that aliases can save a lot of typing. But since it is easier to read more complex queries with proper, clear aliases, learn how to type! In addition, aliases are not only convenient but necessary for some types of statements, as will become evident when we get to the topic of self-joins (Recipe 12.3).
 
 ---
+
 Finding Rows with No Match in Another Table
 Problem
 You want to find rows in one table that have no match in another. Or you want to produce a list on the basis of a join BETWEEN tables, and you want the list to include an entry for every row in the first table, even when there are no matches in the second table.
