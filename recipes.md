@@ -1,4 +1,9 @@
 # Retrieving Data
+
+## Querying data from SQL tables is probably the most common task you will perform as a developer or data analyst, and maybe even as a DBA—though probably not as the ETL (Extraction, Transformation, and Loading) tool expert. Quite often, you may query only one table for a small subset of rows, but sooner or later you will have to join multiple tables together. That’s the beauty of a relational database, WHERE the access paths to the data are not fixed: you can join tables that have common columns, or even tables that do not have common columns (at your own peril!).
+
+
+
 ## Problem
 ## You want to retrieve specific row and column data from a specific table.
 
@@ -1254,7 +1259,7 @@ HAVING  count =
 ## You want to produce a summary based on date or time values.
 
 ## Solution
-## Use GROUP BY to place temporal values into categories of the appropriate duration. Often this involves using expressions to extract the significant parts of dates or times.
+## Use GROUP BY to place temporal values into categories of the appropriate duration. Often this involves using expressions to EXTRACT the significant parts of dates or times.
 
 ## Discussion
 ## To put rows in time order, use an ORDER BY clause to sort a column that has a temporal type. If instead you want to SUMmarize rows based on groupings into time intervals, you need to deterMINe how to categorize each row into the proper interval and use GROUP BY to group them accordingly.
@@ -1811,7 +1816,7 @@ SELECT
 FROM housewares;
 ```
 ```
-Any of those fixed-length substrings of the id values can be used for sorting, either alone or in combination. To sort by product category, extract the category value and use it in the `ORDER BY` clause:
+Any of those fixed-length substrings of the id values can be used for sorting, either alone or in combination. To sort by product category, EXTRACT the category value and use it in the `ORDER BY` clause:
 ```
 
 ```sql
@@ -1829,7 +1834,7 @@ SELECT * FROM housewares ORDER BY LEFT(id,3);
 | KIT01729JP | microwave oven   |
 +------------+------------------+
 ```
-## To sort rows by product serial number, use `MID()` to extract the middle five characters from the `id` values, beginning with the fourth:
+## To sort rows by product serial number, use `MID()` to EXTRACT the middle five characters from the `id` values, beginning with the fourth:
 
 ```sql
 SELECT * FROM housewares ORDER BY MID(id,4,5);
@@ -2357,7 +2362,7 @@ ORDER BY 1;
 
 
 ## How It Works
-## Our SELECT statement for a rolling average starts by Selecting some straightforward values. The month number is extracted FROM the ORDER_DATE field using the TO_CHAR() function with the MM format string to obtain the month’s number. We choose the month number rather than the name so that the output is sorted as a person would expect.
+## Our SELECT statement for a rolling average starts by Selecting some straightforward values. The month number is EXTRACTed FROM the ORDER_DATE field using the TO_CHAR() function with the MM format string to obtain the month’s number. We choose the month number rather than the name so that the output is sorted as a person would expect.
 
 ## Next up is a normal aggregate of the ORDER_TOTAL field using the traditional SUM function. No magic there. We then introduce an OLAP AVG function, which is where the detail of our rolling average is managed. That part of the statement looks like this.
 
@@ -2491,6 +2496,8 @@ FROM SELECT
     FROM employee) 
 WHERE staff_row > 1
 ```
+
+# FIX THIS SECTION 
 This outer query looks simple, because it is! We simply SELECT the ROWID values FROM the results of our innermost query, WHERE the calculated STAFF_ROW value is greater than 1. That means that we only SELECT the ROWID values for the second Janette King, Allan McEwen, and Patrick Sully, like this.
 ROWID
 AAARAgAAFAAAABYAA4 AAARAgAAFAAAABYAA6 AAARAgAAFAAAABYAA5
@@ -2510,183 +2517,215 @@ WHERE duplicate_row_count > 1)
 Simply plug in the value for your table in place of the marker <your_table_here>, and the columns you wish to use to deterMINe duplication in place of equivalent column placeholders, and you’re in business!
 
 ---
-2-16. Finding Sequence Gaps in a Table
-Problem
-You want to find all gaps in the sequence of numbers or in dates and times in your data. The gaps could be in dates recorded for a given action, or in some other data with a logically consecutive nature.
 
-Solution
-SQL’s `LAG` and `LEAD`  OLAP functions let you compare the current row of results with a preceding row. The general format of `LAG` looks like this
-`LAG` (column or expression, preceding row offset, default for first row)
+# Finding Sequence Gaps in a Table
+## Problem
+## You want to find all gaps in the sequence of numbers or in dates and times in your data. The gaps could be in dates recorded for a given action, or in some other data with a logically consecutive nature.
 
-The column or expression is the value to be compared with LAGging (preceding) values. The preceding row offset indicates how many rows prior to the current row the `LAG` should act against. We’ve used ‘1’ in the following listing to mean the row one prior to the current row. The default for `LAG` indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We instruct SQL to use 0 as the default anchor value, to handle the case WHERE we look for the day prior to the first of the month.
-The WITH query alias approach can be used in almost all situations WHERE a subquery is used, to
-relocate the subquery details ahead of the main query. This aids readability and refactoring of the code if required at a later date.
-This recipe looks for gaps in the sequence of days on which orders were made for the month of November 1999:
-with salesdays as
-(SELECT extract(day FROM order_date) next_sale, LAG(extract(day FROM order_date),1,0)
-over (ORDER BY extract(day FROM order_date)) prev_sale FROM oe.orders
-WHERE order_date BETWEEN '01-NOV-1999' and '30-NOV-1999') SELECT prev_sale, next_sale
+## Solution
+## SQL’s `LAG` and `LEAD`  OLAP functions let you compare the current row of results with a preceding row. The general format of `LAG` looks like this 
+###`LAG` (column or expression, preceding row offset, default for first row)
+
+##The column or expression is the value to be compared with lagging (preceding) values. The preceding row offset indicates how many rows prior to the current row the `LAG` should act against. We’ve used ‘1’ in the following listing to mean the row one prior to the current row. The default for `LAG` indicates what value to use as a precedent for the first row, as there is no row zero in a table or result. We instruct SQL to use 0 as the default anchor value, to handle the case WHERE we look for the day prior to the first of the month.
+## The WITH query alias approach can be used in almost all situations WHERE a subquery is used, to relocate the subquery details ahead of the main query. This aids readability and refactoring of the code if required at a later date.
+## This recipe looks for gaps in the sequence of days on which orders were made for the month of November 1999:
+
+```sql
+WITH salesdays AS
+    (SELECT EXTRACT(day FROM order_date) AS next_sale, 
+        LAG(EXTRACT(day FROM order_date),1,0) OVER (ORDER BY EXTRACT(day FROM order_date)) AS prev_sale 
+        FROM orders
+    WHERE order_date BETWEEN '01-NOV-1999'::date and '30-NOV-1999'::date
+    ) 
+
+SELECT 
+    prev_sale, 
+    next_sale
 FROM salesdays
-WHERE next_sale - prev_sale > 1 ORDER BY prev_sale;
-Our query exposes the gaps, in days, BETWEEN sales for the month of November 1999.
+WHERE next_sale - prev_sale > 1 
+ORDER BY prev_sale;
+```
+
+## Our query exposes the gaps, in days, between sales for the month of November 1999.
 
 
-The results indicate that after an order was recorded on the first of the month, no subsequent order was recorded until the 10th. Then a four-day gap followed to the 14th, and so on. An astute sales manager might well use this data to ask what the sales team was doing on those gap days, and why no orders came in!
+## The results indicate that after an order was recorded on the first of the month, no subsequent order was recorded until the 10th. Then a four-day gap followed to the 14th, and so on. An astute sales manager might well use this data to ask what the sales team was doing on those gap days, and why no orders came in!
 
-How It Works
-The query starts by using the WITH clause to name a subquery with an alias in an out-of-order fashion. The subquery is then referenced with an alias, in this case SALESDAYS.
-The SALESDAYS subquery calculates two fields. First, it uses the EXTRACT function to return the numeric day value FROM the ORDER_DATE date field, and labels this data as NEXT_SALE. The `LAG` OLAP function is then used to calculate the number for the day in the month (again using the EXTRACT method) of the ORDER_DATE of the preceding row in the results, which becomes the PREV_SALE result value. This makes more sense when you visualize the output of just the subquery SELECT statement
+## How It Works
+## The query starts by using the `WITH` clause to name a subquery with an alias in an out-of-order fashion. The subquery is then referenced with an alias, in this case `salesdays`.
+## The SALESDAYS subquery calculates two fields. First, it uses the `EXTRACT` function to return the numeric day value FROM the ORDER_DATE date field, and labels this data as NEXT_SALE. The `LAG` OLAP function is then used to calculate the number for the day in the month (again using the `EXTRACT` method) of the ORDER_DATE of the preceding row in the results, which becomes the PREV_SALE result value. This makes more sense when you visualize the output of just the subquery SELECT statement
 
-SELECT extract(day FROM order_date) next_sale, LAG(extract(day FROM order_date),1,0)
-over (ORDER BY extract(day FROM order_date)) prev_sale FROM oe.orders
-WHERE order_date BETWEEN '01-NOV-1999' and '30-NOV-1999'
-The results would look like this if executed independently.
-NEXT_SALE PREV_SALE
+```sql
+SELECT 
+    EXTRACT(day FROM order_date) AS next_sale, 
+    LAG(EXTRACT(day FROM order_date),1,0) OVER (ORDER BY EXTRACT(day FROM order_date)) AS prev_sale 
+FROM orders
+WHERE 
+    order_date BETWEEN '01-NOV-1999'::date and '30-NOV-1999'::date
+```
 
+## Starting with the anchor value of 0 in the LAG, we see the day of the month for a sale as NEXT_SALE, and the day of the previous sale as PREV_SALE. You can probably already visually spot the gaps, but it’s much easier to let SQL do that for you too. This is WHERE our outer query does its very simple arithmetic.
+## The driving query over the SALESDAYS subquery SELECTs the PREV_SALE and NEXT_SALE values FROM the results, based on this predicate.
+### `WHERE next_sale - prev_sale > 1`
 
-Starting with the anchor value of 0 in the LAG, we see the day of the month for a sale as NEXT_SALE, and the day of the previous sale as PREV_SALE. You can probably already visually spot the gaps, but it’s much easier to let SQL do that for you too. This is WHERE our outer query does its very simple arithmetic.
-The driving query over the SALESDAYS subquery SELECTs the PREV_SALE and NEXT_SALE values FROM the results, based on this predicate.
+## We know the days of sales are consecutive if they’re out by more than one day. We wrap up by ordering the results by the PREV_SALE column, so that we get a natural ordering FROM start of month to end of month.
+## Our query could have been written the traditional way, with the subquery in the FROM clause like this.
 
-
+```sql
+SELECT 
+    prev_sale, 
+    next_sale
+FROM (
+    SELECT EXTRACT(day FROM order_date) AS next_sale, 
+    LAG(EXTRACT(day FROM order_date),1,0) OVER (ORDER BY EXTRACT(day FROM order_date)) AS prev_sale 
+    FROM orders
+    WHERE order_date BETWEEN '01-NOV-1999'::date and '30-NOV-1999'::date
+    ) 
 WHERE next_sale - prev_sale > 1
-
-We know the days of sales are consecutive if they’re out by more than one day. We wrap up by ordering the results by the PREV_SALE column, so that we get a natural ordering FROM start of month to end of month.
-Our query could have been written the traditional way, with the subquery in the FROM clause like
-this.
-SELECT prev_sale, next_sale
-FROM (SELECT extract(day FROM order_date) next_sale, LAG(extract(day FROM order_date),1,0)
-over (ORDER BY extract(day FROM order_date)) prev_sale FROM oe.orders
-WHERE order_date BETWEEN '01-NOV-1999' and '30-NOV-1999') WHERE next_sale - prev_sale > 1
 ORDER BY prev_sale
-/
-The approach to take is largely a question of style and readability. We prefer the WITH approach on those occasions WHERE it greatly increases the readability of your SQL statements.
+```
+
+## The approach to take is largely a question of style and readability. We prefer the WITH approach on those occasions WHERE it greatly increases the readability of your SQL statements.
 
 
-
-
-Querying data FROM SQL tables is probably the most common task you will perform as a developer or data analyst, and maybe even as a DBA—though probably not as the ETL (Extraction, Transformation, and Loading) tool expert. Quite often, you may query only one table for a small subset of rows, but sooner or later you will have to join multiple tables together. That’s the beauty of a relational database, WHERE the access paths to the data are not fixed: you can join tables that have common columns, or even tables that do not have common columns (at your own peril!).
-In this chapter we’ll cover solutions for joining two or more tables and retrieving the results based on the existence of desired rows in both tables (equi-join), rows that may exist only in one table or the other (left or right outer joins), or joining two tables together and including all rows FROM both tables, matching WHERE possible (full outer joins).
-But wait, there’s more! SQL (and the SQL language standard) contains a number of constructs that help you retrieve rows FROM tables based on the existence of the same rows in another table with the same column values for the selected rows in a query. These constructs include the INTERSECT, UNION, UNION ALL, and MINUS operators. The results FROM queries using these operators can in some cases be obtained using the standard table-join syntax, but if you’re working with more than just a couple of columns, the query becomes unwieldy, hard to read, and hard to maintain.
-You may also need to update rows in one table based on matching or non-matching values in another table, so we’ll provide a couple of recipes on correlated queries and correlated updates using the IN/EXISTS SQL constructs as well.
-Of course, no discussion of table manipulation would be complete without delving into the unruly
-child of the query world, the Cartesian join. There are cases WHERE you want to join two or more tables without a join condition, and we’ll give you a recipe for that scenario.
-Most of the examples in this chapter are based on the schemas in the EXAMPLE tablespace created
-during an SQL Database installation when you specify “Include Sample Schemas.” Those sample schemas aren’t required to understand the solutions in this chapter, but they give you the opportunity to try out the solutions on a pre-populated set of tables and even delve further into the intricacies of table joins.
 
 ---
 
-3-2. Stacking Query Results Vertically
-Problem
-You want to combine the results FROM two SELECT statements into a single result set.
+# Stacking Query Results Vertically
+
+## Problem
+## You want to combine the results FROM two SELECT statements into a single result set.
 
 
-Solution
-Use the UNION operator. UNION combines the results of two or more queries and removes duplicates FROM the entire result set. In SQL’s mythical company, the employee in the employee_ACT table need to be merged with employee FROM a recent corporate acquisition. The recently acquired company’s employee table employee_NEW has the same exact format as the existing employee_ACT table, so it should be easy to use UNION to combine the two tables into a single result set as follows:
-SELECT employee_id, first_name, last_name FROM employee_act;
+## Solution
+## Use the UNION operator. UNION combines the results of two or more queries and removes duplicates FROM the entire result set. In SQL’s mythical company, the employee in the employee_ACT table need to be merged with employee FROM a recent corporate acquisition. The recently acquired company’s employee table employee_new has the same exact format as the existing employee_act table, so it should be easy to use UNION to combine the two tables into a single result set as follows:
+
+SELECT 
+    employee_id, 
+    first_name, 
+    last_name 
+FROM employee_act 
+
+UNION
+
+SELECT 
+    employee_id, 
+    first_name, 
+    last_name 
+FROM employee_new 
+ORDER BY employee_id;
 
 
-SELECT employee_id, first_name, last_name FROM employee_new;
 
 
+# Using UNION removes the duplicate rows. You can have one ORDER BY at the end of the query to order the results. In this example, the two employee tables have two rows in common (some people need to work two or three jobs to make ends meet!), so instead of returning 11 rows, the UNION query returns nine.
 
-SELECT employee_id, first_name, last_name FROM employee_act union
-SELECT employee_id, first_name, last_name FROM employee_new ORDER BY employee_id
-;
-
-
-
-
-Using UNION removes the duplicate rows. You can have one ORDER BY at the end of the query to order the results. In this example, the two employee tables have two rows in common (some people need to work two or three jobs to make ends meet!), so instead of returning 11 rows, the UNION query returns nine.
-
-How It Works
-Note that for the UNION operator to remove duplicate rows, all columns in a given row must be equal to the same columns in one or more other rows. When SQL processes a UNION, it must perform a sort/merge to deterMINe which rows are duplicates. Thus, your execution time will likely be more than running each SELECT individually. If you know there are no duplicates within and across each SELECT statement, you can use UNION ALL to combine the results without checking for duplicates.
-If there are duplicates, it will not cause an error; you will merely get duplicate rows in your result set.
+# How It Works
+# Note that for the UNION operator to remove duplicate rows, all columns in a given row must be equal to the same columns in one or more other rows. When SQL processes a UNION, it must perform a sort/merge to deterMINe which rows are duplicates. Thus, your execution time will likely be more than running each SELECT individually. If you know there are no duplicates within and across each SELECT statement, you can use UNION ALL to combine the results without checking for duplicates.
+# If there are duplicates, it will not cause an error; you will merely get duplicate rows in your result set.
 
 ---
 
-3-3. Writing an Optional Join
-Problem
-You are joining two tables by one or more common columns, but you want to make sure to return all rows in the first table regardless of a matching row in the second. For example, you are joining the employee and department tables, but some employee lack department assignments.
+# Writing an Optional Join
+
+## Problem
+## You are joining two tables by one or more common columns, but you want to make sure to return all rows in the first table regardless of a matching row in the second. For example, you are joining the employee and department tables, but some employee lack department assignments.
 
 Solution
-Use an outer join. In SQL’s sample database, the HR user maintains the employee and DEPARTMENT tables; assigning a department to an employee is optional. There are 107 employee in the employee table. Using a standard join BETWEEN employee and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the employee table, you can use LEFT OUTER JOIN to include all rows in the employee table and matching rows in DEPARTMENTS, if any:
+Use an `OUTER JOIN`. In SQL’s sample database, the HR user maintains the employee and DEPARTMENT tables; assigning a department to an employee is optional. There are 107 employee in the employee table. Using a standard join BETWEEN employee and DEPARTMENTS only returns 106 rows, however, since one employee is not assigned a department. To return all rows in the employee table, you can use LEFT OUTER JOIN to include all rows in the employee table and matching rows in DEPARTMENTS, if any:
 
-SELECT employee_id, last_name, first_name, department_id, department_name FROM employee
-left outer join departments using(department_id)
-;
+```sql
+SELECT 
+    employee_id, 
+    last_name, 
+    first_name, 
+    department_id, 
+    department_name 
+FROM employee
+LEFT OUTER JOIN 
+    departments USING(department_id);
+```
 
+## How It Works
+## When two tables are joined using `LEFT OUTER JOIN`, the query returns all the rows in the table to the left of the `LEFT OUTER JOIN` clause, as you might expect. Rows in the table on the right side of the `LEFT OUTER JOIN`clause are matched when possible. If there is no match, columns FROM the table on the right side will contain NULL values in the results.
 
-There are now 107 rows in the result set instead of 106; Kimberely Grant is included even though she does not currently have a department assigned.
+## As you might expect, there is a RIGHT OUTER JOIN as well (in both cases, the OUTER keyword is optional). You can rewrite the solution as follows:
 
-How It Works
-When two tables are joined using LEFT OUTER JOIN, the query returns all the rows in the table to the left of the LEFT OUTER JOIN clause, as you might expect. Rows in the table on the right side of the LEFT OUTER JOIN clause are matched when possible. If there is no match, columns FROM the table on the right side will contain NULL values in the results.
-As you might expect, there is a RIGHT OUTER JOIN as well (in both cases, the OUTER keyword is
-optional). You can rewrite the solution as follows:
-
-SELECT employee_id, last_name, first_name, department_id, department_name FROM departments
-right outer join employee using(department_id)
-;
+```sql
+SELECT 
+    employee_id, 
+    last_name, 
+    first_name, 
+    department_id, 
+    department_name 
+FROM departments
+RIGHT OUTER JOIN 
+    employee USING(department_id);
+```
 The results are identical, and which format you use depends on readability and style.
-The query can be written using the ON clause as well, just as with an equi-join (inner join). And for versions of SQL before 9i, you must use SQL’s somewhat obtuse and proprietary outer-join syntax with the characters (+) on the side of the query that is missing rows, as in this example:
 
-SELECT employee_id, last_name, first_name, e.department_id, department_name FROM employee e, departments d
-WHERE e.department_id = d.department_id (+)
-;
-Needless to say, if you can use ANSI SQL-99 syntax, by all means do so for clarity and ease of maintenance.
 
 ---
 
-3-4. Making a Join Optional in Both Directions
-Problem
-All of the tables in your query have at least a few rows that don’t match rows in the other tables, but you still want to return all rows FROM all tables and show the mismatches in the results. For example, you want to reduce the number of reports by including mismatches FROM both tables instead of HAVING one report for each scenario.
+## Making a Join Optional in Both Directions
+## Problem
+## All of the tables in your query have at least a few rows that don’t match rows in the other tables, but you still want to return all rows FROM all tables and show the mismatches in the results. For example, you want to reduce the number of reports by including mismatches FROM both tables instead of HAVING one report for each scenario.
 
-Solution
-Use FULL OUTER JOIN. As you might expect, a full outer join BETWEEN two or more tables will return all rows in each table of the query and match WHERE possible. You can use FULL OUTER JOIN with the employee and DEPARTMENT table as follows:
+## Solution
+## Use FULL OUTER JOIN. As you might expect, a full outer join BETWEEN two or more tables will return all rows in each table of the query and match WHERE possible. You can use FULL OUTER JOIN with the employee and DEPARTMENT table as follows:
 
-
-SELECT employee_id, last_name, first_name, department_id, department_name FROM employee
-full outer join departments using(department_id)
-;
-
-
-123 rows selected
-
-
-Note The OUTER keyword is optional when using a FULL, LEFT, or RIGHT join. It does add documentation value to your query, making it clear that mismatched rows FROM one or both tables will be in the results.
-
-
-Using FULL OUTER JOIN is a good way to view, at a glance, mismatches BETWEEN two tables. In the preceding output, you can see an employee without a department as well as several departments that have no employee.
-
-How It Works
-Trying to accomplish a full outer join before SQL9i was a bit inelegant: you had to perform a UNION of two outer joins (a left and a right outer join) using the proprietary SQL syntax as follows:
-
-SELECT employee_id, last_name, first_name, e.department_id, department_name FROM employee e, departments d
-WHERE e.department_id = d.department_id (+) union
-SELECT employee_id, last_name, first_name, e.department_id, department_name FROM employee e, departments d
-WHERE e.department_id (+) = d.department_id
-;
-Running two separate queries, then removing duplicates, takes more time to execute than using the
-FULL OUTER JOIN syntax, WHERE only one pass on each table is required.
+```sql
+SELECT 
+    employee_id, 
+    last_name, 
+    first_name, 
+    department_id, 
+    department_name 
+FROM employee
+FULL OUTER JOIN 
+    departments using(department_id);
+```
 
 
-You can tweak the FULL OUTER JOIN to produce only the mismatched records as follows:
-SELECT employee_id, last_name, first_name, department_id, department_name FROM employee
-full outer join departments using(department_id) WHERE employee_id IS NULL or department_name IS NULL
-;
+## Note: The OUTER keyword is optional when using a FULL, LEFT, or RIGHT join. It does add documentation value to your query, making it clear that mismatched rows FROM one or both tables will be in the results.
+
+
+## Using `FULL OUTER JOIN` is a good way to view, at a glance, mismatches between two tables. In the preceding output, you can see an employee without a department as well as several departments that have no employee.
+
+## You can tweak the `FULL OUTER JOIN` to produce only the mismatched records as follows:
+
+```sql
+SELECT 
+    employee_id, 
+    last_name, 
+    first_name, 
+    department_id, 
+    department_name 
+FROM 
+    employee
+FULL OUTER JOIN 
+    departments USING(department_id) 
+    WHERE 
+        employee_id IS NULL OR department_name IS NULL;
+```
+
 ---
 
-Finding Rows in One Table That Match Rows in Another
-Problem
-You need to write a query that uses information FROM more than one table.
+# Finding Rows in One Table That Match Rows in Another
+## Problem
+## You need to write a query that uses information FROM more than one table.
 
-Solution
-Use a join—that is, a query that lists multiple tables in its FROM clause and tells SQL how to match information FROM them.
+## Solution
+Use a join—that is, a query that lists multiple tables in its `FROM` clause and tells SQL how to match information from them.
 
-Discussion
-The essential idea behind a join is that it combines rows in one table with rows in one or more other tables. Joins enable you to combine information FROM multiple tables when each table contains only part of the information in which you’re interested. Out- put rows FROM a join contain more information than rows FROM either table by itself.
-A complete join that produces all possible row combinations is called a Cartesian prod- uct. For example, joining each row in a 100-row table to each row in a 200-row table produces a result containing 100 × 200, or 20,000 rows. With larger tables, or joins BETWEEN more than two tables, the result set for a Cartesian product can easily become immense. Because of that, and because you rarely want all the combinations anyway, a join normally includes an ON or USING clause that specifies how to join rows BETWEEN tables. (This requires that each table have one or more columns of common information
-that can be used to link them together logically.) You can also include a WHERE clause that restricts which of the joined rows to SELECT. Each of these clauses narrows the focus of the query.
-This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches BETWEEN tables. Later recipes show how to identify mismatches BETWEEN tables (Recipe 12.2) and how to compare a table to itself (Recipe 12.3). The examples assume that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
+## Discussion
+## The essential idea behind a join is that it combines rows in one table with rows in one or more other tables. Joins enable you to combine information FROM multiple tables when each table contains only part of the information in which you’re interested. Output rows FROM a join contain more information than rows FROM either table by itself.
+
+## A complete join that produces all possible row combinations is called a Cartesian product. For example, joining each row in a 100-row table to each row in a 200-row table produces a result containing 100 × 200, or 20,000 rows. With larger tables, or joins BETWEEN more than two tables, the result set for a Cartesian product can easily become immense. Because of that, and because you rarely want all the combinations anyway, a join normally includes an ON or USING clause that specifies how to join rows BETWEEN tables. (This requires that each table have one or more columns of common information that can be used to link them together logically.) You can also include a WHERE clause that restricts which of the joined rows to SELECT. Each of these clauses narrows the focus of the query.
+
+## This recipe introduces basic join syntax and demonstrates how joins help you answer specific types of questions when you are looking for matches BETWEEN tables. Later recipes show how to identify mismatches BETWEEN tables and how to compare a table to itself. The examples assume that you have an art collection and use the following two tables to record your acquisitions. artist lists those painters whose works you want to collect, and painting lists each painting that you’ve actually purchased:
+
+```sql
 CREATE TABLE artist (
 a_id INT UNSIGNED NOT NULL AUTO_INCREMENT, # artist ID
 name  VARCHAR(30) NOT NULL, # artist name PRIMARY KEY (a_id),
@@ -2700,8 +2739,14 @@ state VARCHAR(2) NOT NULL,  # state WHERE purchased
 price INT UNSIGNED, # purchase price (dollars) INDEX (a_id),
 PRIMARY KEY (p_id)
 );
-You’ve just begun the collection, so the tables contain only the following rows:
+```
+
+## You’ve just begun the collection, so the tables contain only the following rows:
+```sql
 SELECT * FROM artist ORDER BY a_id;
+```
+
+```
 +------+----------+
 | a_id | name   |
 +------+----------+
@@ -2711,77 +2756,109 @@ SELECT * FROM artist ORDER BY a_id;
 |   4 | Picasso |
 |   5 | Renoir  |
 +------+----------+
-SELECT * FROM painting ORDER BY a_id, p_id;
-+------+------+-------------------+-------+-------+
-| a_id | p_id | title   | state | price |
-+------+------+-------------------+-------+-------+
+```
 
-+------+------+-------------------+-------+-------+
-The low values in the price column of the painting table betray the fact that your collection actually contains only cheap facsimiles, not the originals. Well, that’s all right: who can afford the originals?
-Each table contains partial information about your collection. For example, the artist table doesn’t tell you which paintings each artist produced, and the painting table lists artist IDs but not their names. To use the information in both tables, you can ask MySQL to show you various combinations of artists and paintings by writing a query that performs a join. A join names two or more tables after the FROM keyword. In the output column list, you can name columns FROM any or all the joined tables, or use expressions that are based on those columns, tbl_name .* to SELECT all columns FROM a given table, or * to SELECT all columns FROM all tables.
-The simplest join involves two tables and SELECTs all columns FROM each. With no re- strictions, the join generates output for all combinations of rows (that is, the Cartesian product). The following complete join BETWEEN the artist and painting tables shows this:
+### Each table contains partial information about your collection. For example, the artist table doesn’t tell you which paintings each artist produced, and the painting table lists artist IDs but not their names. To use the information in both tables, you can ask MySQL to show you various combinations of artists and paintings by writing a query that performs a join. A join names two or more tables after the FROM keyword. In the output column list, you can name columns FROM any or all the joined tables, or use expressions that are based on those columns, tbl_name.* to SELECT all columns FROM a given table, or * to SELECT all columns FROM all tables.
+## The simplest join involves two tables and SELECTs all columns FROM each. With no restrictions, the join generates output for all combinations of rows (that is, the Cartesian product). The following complete join BETWEEN the artist and painting tables shows this:
+```sql
 SELECT * FROM artist, painting;
+```
 +------+----------+------+------+-------------------+-------+-------+
 | a_id | name   | a_id | p_id | title   | state | price |
 +------+----------+------+------+-------------------+-------+-------+
 
 +------+----------+------+------+-------------------+-------+-------+
-The statement output illustrates why a complete join generally is not useful: it produces a lot of output, and the result is not meaningful. Clearly, you’re not maintaining these tables to match every artist with every painting, which is what the preceding statement does. An unrestricted join in this case produces nothing of value.
-To answer questions meaningfully, you must combine the two tables in a way that produces only the relevant matches. Doing so is a matter of including appropriate join conditions. For example, to produce a list of paintings together with the artist names, you can associate rows FROM the two tables using a simple WHERE clause that matches up values in the artist ID column that is common to both tables and that serves as the link BETWEEN them:
-SELECT * FROM artist, painting
-WHERE artist.a_id = painting.a_id;
-+------+----------+------+------+-------------------+-------+-------+
-| a_id | name   | a_id | p_id | title   | state | price |
-+------+----------+------+------+-------------------+-------+-------+
 
-+------+----------+------+------+-------------------+-------+-------+
-The column names in the WHERE clause include table qualifiers to make it clear which a_id values to compare. The output indicates who painted each painting, and, con- versely, which paintings by each artist are in your collection.
-Another way to write the same join is to use INNER JOIN rather than the comma operator and indicate the matching conditions with an ON clause:
-SELECT * FROM artist INNER JOIN painting
-ON artist.a_id = painting.a_id;
-+------+----------+------+------+-------------------+-------+-------+
-| a_id | name   | a_id | p_id | title   | state | price |
-+------+----------+------+------+-------------------+-------+-------+
+## A complete join generally is not useful: it produces a lot of output, and the result is not meaningful. Clearly, you’re not maintaining these tables to match every artist with every painting, which is what the preceding statement does. An unrestricted join in this case produces nothing of value.
 
-+------+----------+------+------+-------------------+-------+-------+
-In the special case that the matched columns have the same name in both tables and are compared using the = operator, you can use an INNER JOIN with a USING clause instead. This requires no table qualifiers, and each join column is named only once:
-SELECT * FROM artist INNER JOIN painting
+## To answer questions meaningfully, you must combine the two tables in a way that produces only the relevant matches. Doing so is a matter of including appropriate join conditions. For example, to produce a list of paintings together with the artist names, you can associate rows FROM the two tables using a simple WHERE clause that matches up values in the artist ID column that is common to both tables and that serves as the link BETWEEN them:
+
+```sql
+-- This works, but don't do this
+SELECT * 
+FROM 
+    artist, painting
+WHERE 
+    artist.a_id = painting.a_id;
+```
+
+## The above query works, but it is much more common and considered best practice to use  `INNER JOIN` rather than the comma operator and indicate the matching conditions with an `ON` clause:
+
+```sql
+-- DO THIS. YOUR FIRST JOIN
+SELECT * 
+FROM artist 
+INNER JOIN 
+    painting
+ON 
+    artist.a_id = painting.a_id;
+```
+
+## In the special case that the matched columns have the same name in both tables AND are compared using the = operator, you can use an `INNER JOIN` with a `USING` clause instead. This requires no table qualifiers, and each join column is named only once:
+
+```sql
+SELECT * 
+FROM artist 
+INNER JOIN painting
 USING(a_id);
-+------+----------+------+-------------------+-------+-------+
-| a_id | name   | p_id | title  | state | price |
-+------+----------+------+-------------------+-------+-------+
+```
 
-+------+----------+------+-------------------+-------+-------+
-Note that when you write a query with a USING clause, SELECT * returns only one instance of each join column (a_id).
-Any of ON, USING, or WHERE can include comparisons, so how do you know which join conditions to put in each clause? As a rule of thumb, it’s conventional to use ON or USING to specify how to join the tables, and the WHERE clause to restrict which of the joined rows to SELECT. For example, to join tables based on the a_id column, but SELECT only rows for paintings obtained in Kentucky, use an ON (or USING) clause to match the rows in the two tables, and a WHERE clause to test the state column:
-SELECT * FROM artist INNER JOIN painting
-ON artist.a_id = painting.a_id
-WHERE painting.state = 'KY';
-+------+----------+------+------+-------------------+-------+-------+
-| a_id | name   | a_id | p_id | title   | state | price |
-+------+----------+------+------+-------------------+-------+-------+
+## Note:  when you write a query with a USING clause, SELECT * returns only one instance of each join column (a_id).
 
-+------+----------+------+------+-------------------+-------+-------+
-The preceding queries use SELECT * to SELECT all columns. To be more SELECTive about which columns a statement should display, provide a list that names only those columns in which you’re interested:
-SELECT artist.name, painting.title, painting.state, painting.price
-FROM artist INNER JOIN painting
-ON artist.a_id = painting.a_id
-WHERE painting.state = 'KY';
-+----------+-------------------+-------+-------+
-| name  | title | state | price |
-+----------+-------------------+-------+-------+
-| Van Gogh | Starry Night   | KY    |   48 |
-| Van Gogh | The Potato Eaters | KY |   67 |
-+----------+-------------------+-------+-------+
-You’re not limited to two tables when writing joins. Suppose that you prefer to see complete state names rather than abbreviations in the preceding query result. The states table used in earlier chapters maps state abbreviations to names, so you can add it to the previous query to display names:
-SELECT artist.name, painting.title, states.name, painting.price
-FROM artist INNER JOIN painting INNER JOIN states
-ON artist.a_id = painting.a_id AND painting.state = states.abbrev;
-+----------+-------------------+----------+-------+
-| name  | title | name  | price |
-+----------+-------------------+----------+-------+
+## Any of `ON`, `USING`, or `WHERE` can include comparisons, so how do you know which join conditions to put in each clause? As a rule of thumb, it’s conventional and expected for you to use `ON` or `USING` to specify how to join the tables, and the `WHERE` clause to restrict which of the joined rows to SELECT. 
 
-+----------+-------------------+----------+-------+
+## For example, to join tables based on the a_id column, but SELECT only rows for paintings obtained in Kentucky, use an ON (or USING) clause to match the rows in the two tables, and a WHERE clause to test the state column:
+
+```sql
+SELECT * 
+FROM 
+    artist 
+INNER JOIN 
+    painting
+ON 
+    artist.a_id = painting.a_id
+WHERE 
+    painting.state = 'KY';
+```
+
+## The preceding queries use `SELECT *` to select all columns. To be more selective about which columns a statement should display, provide a list that names only those columns in which you’re interested:
+
+```sql
+SELECT 
+    artist.name, 
+    painting.title, 
+    painting.state, 
+    painting.price
+FROM 
+    artist 
+INNER JOIN 
+    painting
+ON 
+    artist.a_id = painting.a_id
+WHERE 
+    painting.state = 'KY';
+```
+
+## You’re not limited to two tables when writing joins. Suppose that you prefer to see complete state names rather than abbreviations in the preceding query result. Suppose you have a states table that maps state abbreviations to names. You can add it to the previous query to display names:
+
+```sql
+SELECT 
+    artist.name, 
+    painting.title, 
+    states.name, 
+    painting.price
+FROM 
+    artist 
+INNER JOIN 
+    painting 
+INNER JOIN 
+    states
+ON 
+    artist.a_id = painting.a_id 
+AND 
+    painting.state = states.abbrev;
+```
+
 Another common use of three-way joins is for enumerating many-to-many relation- ships. See Recipe 12.5 for an example.
 By including appropriate conditions in your joins, you can answer very specific ques- tions, such as the following:
 Which paintings did Van Gogh paint? To answer this question, use the a_id value to find matching rows, add a WHERE clause to restrict output to those rows that contain the artist name, and SELECT the title FROM those rows:
@@ -4730,7 +4807,7 @@ To bring focus to our example, we’ll assume our problem is far more tangible a
 SELECT e.employee_id, case
 when old.job_id IS NULL then e.hire_date else old.end_date end
 job_start_date
-FROM employee e left outer join hr.job_history old on e.employee_id = old.employee_id
+FROM employee e LEFT OUTER JOIN hr.job_history old on e.employee_id = old.employee_id
 WHERE e.department_id = 50 ORDER BY e.employee_id;
 Our results are very straightforward, hiding the complexity that went into picking the correct
 
@@ -4752,9 +4829,9 @@ WHEREas for employee that have had promotions, the CASE statement switches the S
 SELECT e.employee_id, old.end_date…
 
 The beauty is in not HAVING to explicitly code these statements yourself, and for far more complex uses of CASE, not HAVING to code many dozens or hundreds of statement combinations.
-To explore the solution FROM the data’s perspective, the following SQL statement extracts the employee identifier and the hire and end dates using the same left outer join as our recipe.
+To explore the solution FROM the data’s perspective, the following SQL statement EXTRACTs the employee identifier and the hire and end dates using the same LEFT OUTER JOIN as our recipe.
 
-SELECT e.employee_id, e.hire_date, old.end_date end FROM employee e left outer join hr.job_history old on e.employee_id = old.employee_id
+SELECT e.employee_id, e.hire_date, old.end_date end FROM employee e LEFT OUTER JOIN hr.job_history old on e.employee_id = old.employee_id
 
 WHERE e.department_id = 50 ORDER BY e.employee_id;
 
