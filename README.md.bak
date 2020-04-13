@@ -3756,7 +3756,7 @@ ORDER BY state;
 1. Store each team name, year, and record once in a table named euchre_team.
 1. Store each player name and city of residence once in a table named
 euchre_player.
-1. Create a third table, euchre_link, that stores team-player associations and serves as a link, or bridge, BETWEEN the two primary tables. To minimize the information stored in this table, assign unique IDs to each team and player within their respec- tive tables, and store only those IDs in the euchre_link table.
+1. Create a third table, euchre_link, that stores team-player associations and serves as a link, or bridge, BETWEEN the two primary tables. To MINimize the information stored in this table, assign unique IDs to each team and player within their respec- tive tables, and store only those IDs in the euchre_link table.
 The resulting team and player tables look like this:
 SELECT * FROM euchre_team;
 +----+----------+------+------+--------+
