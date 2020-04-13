@@ -3757,8 +3757,13 @@ ORDER BY state;
 1. Store each player name and city of residence once in a table named
 euchre_player.
 1. Create a third table, euchre_link, that stores team-player associations and serves as a link, or bridge, BETWEEN the two primary tables. To minimize the information stored in this table, assign unique IDs to each team and player within their respec- tive tables, and store only those IDs in the euchre_link table.
-The resulting team and player tables look like this:
+
+### The resulting team and player tables look like this:
+
+```sql
 SELECT * FROM euchre_team;
+```
+```
 +----+----------+------+------+--------+
 | id | name | year | wins | losses |
 +----+----------+------+------+--------+
@@ -3771,7 +3776,12 @@ SELECT * FROM euchre_team;
 |  7 | Stars    | 2006 |    5 | 7 |
 |  8 | Sceptres | 2006 |    2 | 10 |
 +----+----------+------+------+--------+
+```
+
+```sql
 SELECT * FROM euchre_player;
+```
+```
 +----+----------+---------+
 | id | name | city  |
 +----+----------+---------+
@@ -3784,93 +3794,141 @@ SELECT * FROM euchre_player;
 |  7 | Nigel    | London |
 |  8 | Maurice | Leeds  |
 +----+----------+---------+
-The euchre_link table associates teams and players as follows:
+```
+
+### The euchre_link table associates teams and players as follows:
+
+```sql
 SELECT * FROM euchre_link;
-+---------+-----------+
-| team_id | player_id |
-+---------+-----------+
+```
+
+### To answer questions about the teams or players using these tables, you need to perform a three-way join, using the link table to relate the two primary tables to each other. Here are some examples:
+
+### Q: List all the pairings that show the teams and who played on them. 
 
 
-+---------+-----------+
-To answer questions about the teams or players using these tables, you need to perform a three-way join, using the link table to relate the two primary tables to each other. Here are some examples:
-List all the pairings that show the teams and who played on them. This statement enumerates all the correspondences BETWEEN the euchre_team and euchre_player tables and reproduces the information that was originally in the nonnormal euchre table:
-SELECT t.name, t.year, t.wins, t.losses, p.name, p.city
-FROM euchre_team AS t INNER JOIN euchre_link AS l
-INNER JOIN euchre_player AS p
-ON t.id = l.team_id AND p.id = l.player_id
-ORDER BY t.year, t.wins DESC, p.name;
-+----------+------+------+--------+----------+---------+
-| name  | year | wins | losses | name   | city  |
-+----------+------+------+--------+----------+---------+
+```sql
+SELECT 
+    t.name, 
+    t.year, 
+    t.wins, 
+    t.losses, 
+    p.name, 
+    p.city
+FROM 
+    euchre_team AS team 
+INNER JOIN 
+    euchre_link AS link
+INNER JOIN 
+    euchre_player AS player
+ON 
+    team.id = link.team_id AND player.id = link.player_id
+ORDER BY 
+    team.year, team.wins DESC
+```
+### The above query enumerates all the correspondences between the euchre_team and euchre_player tables and reproduces the information that was originally in the nonnormal euchre table:
 
-+----------+------+------+--------+----------+---------+
-List the members for a particular team (the 2005 Crowns):
+### Q: List the members for a particular team (the 2005 Crowns):
+
+```sql
 SELECT p.name, p.city
 FROM euchre_team AS t INNER JOIN euchre_link AS l
 INNER JOIN euchre_player AS p
 ON t.id = l.team_id AND p.id = l.player_id
 AND t.name = 'Crowns' AND t.year = 2005;
+```
+```
 +--------+--------+
 | name  | city  |
 +--------+--------+
 | Tony  | Derry |
 | Melvin | Dublin |
 +--------+--------+
-List the teams that a given player (Billy) has been a member of:
+```
+
+### Q: List the teams that a given player (Billy) has been a member of:
+```sql
 SELECT t.name, t.year, t.wins, t.losses
 FROM euchre_team AS t INNER JOIN euchre_link AS l
 INNER JOIN euchre_player AS p
 ON t.id = l.team_id AND p.id = l.player_id
 WHERE p.name = 'Billy';
+```
+
+```
 +----------+------+------+--------+
 | name  | year | wins | losses |
 +----------+------+------+--------+
 | Kings | 2005 |    10 |    2 |
 | Sceptres | 2006 | 2 | 10 |
 +----------+------+------+--------+
+```
 
 ---
 
-Finding Rows Containing Per-Group minimum or maximum Values
-Problem
-You want to find which row within each group of rows in a table contains the maximum or minimum value for a given column. For example, you want to determine the most expensive painting in your collection for each artist.
+### Finding Rows Containing Per-Group Minimum or Maximum Values
+### Problem
+### You want to find which row within each group of rows in a table contains the maximum or minimum value for a given column. For example, you want to determine the most expensive painting in your collection for each artist.
 
-Solution
-Create a temporary table to hold the per-group maximum or minimum values, and then join the temporary table with the original one to pull out the matching row for each group. If you prefer a single-query solution, use a subquery in the FROM clause rather than a temporary table.
+### Solution
+### Create a temporary table to hold the per-group maximum or minimum values, and then join the temporary table with the original one to pull out the matching row for each group. If you prefer a single-query solution, use a subquery in the FROM clause rather than a temporary table.
 
-Discussion
-Many questions involve finding largest or smallest values in a particular table column, but it’s also common to want to know what the other values are in the row that contains the value. For example, when you are using the artist and painting tables, it’s possible to answer questions like “What is the most expensive painting in the collection, and who painted it?” One way to do this is to store the highest price in a user-defined variable and then use the variable to identify the row containing the price so that you can retrieve other columns FROM it:
-SET @MAX_price = (SELECT MAX(price) FROM painting);
-SELECT artist.name, painting.title, painting.price
-FROM artist INNER JOIN painting
-ON painting.a_id = artist.a_id
-WHERE painting.price = @MAX_price;
+### Discussion
+### Many questions involve finding largest or smallest values in a particular table column, but it’s also common to want to know what the other values are in the row that contains the value. For example, when you are using the artist and painting tables, it’s possible to answer questions like “What is the most expensive painting in the collection, and who painted it?” One way to do this is to use a subquery to find the highest price, and then identify the row containing the price so that you can retrieve other columns from it:
+
+
+```sql
+SELECT 
+    artist.name, 
+    painting.title, 
+    painting.price
+FROM 
+    artist 
+INNER JOIN 
+    painting
+ON 
+    painting.a_id = artist.a_id
+WHERE 
+    painting.price = (SELECT MAX(price) FROM painting);
+```
+
+```
 +----------+---------------+-------+
 | name  | title | price |
 +----------+---------------+-------+
 | Da Vinci | The Mona Lisa |    87 |
 +----------+---------------+-------+
-The same thing can be done by creating a temporary table to hold the maximum price and then joining it with the other tables:
-CREATE TABLE tmp SELECT MAX(price) AS MAX_price FROM painting;
-SELECT artist.name, painting.title, painting.price
-FROM artist INNER JOIN painting INNER JOIN tmp
-ON painting.a_id = artist.a_id
-AND painting.price = tmp.MAX_price;
-+----------+---------------+-------+
-| name  | title | price |
-+----------+---------------+-------+
-| Da Vinci | The Mona Lisa |    87 |
-+----------+---------------+-------+
-The techniques of using a user-defined variable or a temporary table as just shown were illustrated originally in Recipe 8.5. Their use here is similar except that now we are applying them to multiple tables.
-On the face of it, using a temporary table and a join is just a more complicated way of answering the question than with a user-defined variable. Does this technique have any practical value? Yes, it does, because it leads to a more general technique for answering more difficult questions. The previous statements show information only for the single most expensive painting in the entire painting table. What if your question is, “What is the most expensive painting for each artist?” You can’t use a user-defined variable to answer that question, because the answer requires finding one price per artist, and a variable can hold only a single value at a time. But the technique of using a temporary table works well, because the table can hold multiple rows, and a join can find matches for all of them.
-To answer the question, SELECT each artist ID and the corresponding maximum painting price into a temporary table. The table will contain not just the maximum painting price but the maximum within each group, WHERE “group” is defined as “paintings by a given artist.” Then use the artist IDs and prices stored in the tmp table to match rows in the painting table, and join the result with the artist table to get the artist names:
-CREATE TABLE tmp
-SELECT a_id, MAX(price) AS MAX_price FROM painting GROUP BY a_id;
-SELECT artist.name, painting.title, painting.price
-FROM artist INNER JOIN painting INNER JOIN tmp
-ON painting.a_id = artist.a_id
-AND painting.a_id = tmp.a_id
-AND painting.price = tmp.MAX_price;
+```
+
+
+### What if your question is, “What is the most expensive painting for each artist?” The previous statements show information only for the single most expensive painting in the entire painting table. But the technique of using a subquery still works, because the table can hold multiple rows, and a join can find matches for all of them.
+
+### To answer the question, select each artist ID and the corresponding maximum painting price into a temporary table. The table will contain not just the maximum painting price but the maximum within each group, WHERE “group” is defined as “paintings by a given artist.” Then use the artist IDs and prices stored in the tmp table to match rows in the painting table, and join the result with the artist table to get the artist names:
+
+```sql
+WITH tmp AS (
+SELECT 
+    a_id, 
+    MAX(price) AS max_price 
+FROM painting 
+GROUP BY a_id
+)
+
+SELECT 
+    artist.name, 
+    painting.title, 
+    painting.price
+FROM artist 
+INNER JOIN painting 
+INNER JOIN tmp
+ON 
+    painting.a_id = artist.a_id
+AND 
+    painting.a_id = tmp.a_id
+AND 
+    painting.price = tmp.max_price;
+```
+```
 +----------+-------------------+-------+
 | name  | title | price |
 +----------+-------------------+-------+
@@ -3878,14 +3936,30 @@ AND painting.price = tmp.MAX_price;
 | Van Gogh | The Potato Eaters |    67 |
 | Renoir    | Les Deux Soeurs   |   64 |
 +----------+-------------------+-------+
-To obtain the same result with a single statement, use a subquery in the FROM clause that retrieves the same rows contained in the temporary table:
-SELECT artist.name, painting.title, painting.price
-FROM artist INNER JOIN painting INNER JOIN
-(SELECT a_id, MAX(price) AS MAX_price FROM painting GROUP BY a_id)
- AS tmp
+```
+
+### To obtain the same result without the temporary table, use a subquery in the FROM clause that retrieves the same rows contained in the temporary table:
+
+```sql
+SELECT 
+    artist.name, 
+    painting.title, 
+    painting.price
+FROM artist 
+INNER JOIN painting 
+INNER JOIN
+(SELECT 
+    a_id, 
+    MAX(price) AS max_price 
+FROM painting 
+GROUP BY a_id)  AS tmp
+
 ON painting.a_id = artist.a_id
 AND painting.a_id = tmp.a_id
-AND painting.price = tmp.MAX_price;
+AND painting.price = tmp.max_price;
+```
+
+```
 +----------+-------------------+-------+
 | name  | title | price |
 +----------+-------------------+-------+
@@ -3893,11 +3967,25 @@ AND painting.price = tmp.MAX_price;
 | Van Gogh | The Potato Eaters |    67 |
 | Renoir    | Les Deux Soeurs   |   64 |
 +----------+-------------------+-------+
-Yet another way to answer maximum-per-group questions is to use a LEFT JOIN that joins a table to itself. The following statement identifies the highest-priced painting per artist ID (we are using IS NULL to SELECT all the rows FROM p1 for which there is no row in p2 with a higher price):
-SELECT p1.a_id, p1.title, p1.price
-FROM  painting  AS  p1  LEFT  JOIN  painting  AS p2
-ON  p1.a_id  =  p2.a_id  AND   p1.price  <  p2.price
-WHERE p2.a_id IS NULL;
+```
+
+### Yet another way to answer maximum-per-group questions is to use a `LEFT JOIN` that joins a table to itself. The following statement identifies the highest-priced painting per artist ID (we are using `IS NULL` to select all the rows FROM p1 for which there is no row in p2 with a higher price). When yu join a table to itself remember you MUST alias the table name both times.
+
+```sql
+SELECT 
+    p1.a_id, 
+    p1.title, 
+    p1.price
+FROM painting AS p1  
+LEFT JOIN painting AS p2
+ON  
+    p1.a_id  =  p2.a_id  
+AND 
+    p1.price  <  p2.price
+WHERE 
+    p2.a_id IS NULL;
+```
+```
 +------+-------------------+-------+
 | a_id | title  | price |
 +------+-------------------+-------+
@@ -3905,13 +3993,28 @@ WHERE p2.a_id IS NULL;
 |   3 | The Potato Eaters | 67 |
 |   5 | Les Deux Soeurs |   64 |
 +------+-------------------+-------+
-To display artist names rather than ID values, join the result of the LEFT JOIN to the
-artist table:
-SELECT artist.name, p1.title, p1.price
-FROM  painting  AS  p1  LEFT  JOIN  painting  AS p2
-ON  p1.a_id  =  p2.a_id  AND   p1.price  <  p2.price
-INNER JOIN artist ON p1.a_id = artist.a_id
-WHERE p2.a_id IS NULL;
+```
+
+### To display artist names rather than ID values, join the result of the `LEFT JOIN` to the artist table:
+```sql
+SELECT 
+    artist.name, 
+    p1.title, 
+    p1.price
+FROM painting AS p1
+LEFT JOIN painting AS p2
+ON 
+    p1.a_id = p2.a_id  
+AND 
+    p1.price < p2.price
+INNER JOIN artist 
+ON 
+    p1.a_id = artist.a_id
+WHERE 
+    p2.a_id IS NULL;
+```
+
+```
 +----------+-------------------+-------+
 | name  | title | price |
 +----------+-------------------+-------+
@@ -3919,11 +4022,17 @@ WHERE p2.a_id IS NULL;
 | Van Gogh | The Potato Eaters |    67 |
 | Renoir    | Les Deux Soeurs   |   64 |
 +----------+-------------------+-------+
-The self–LEFT JOIN method is perhaps somewhat less intuitive than using a temporary table or a subquery.
-The techniques just shown work for other kinds of values, such as temporal values. Consider the driver_log table that lists drivers and trips that they’ve taken:
+```
+
+### The self–LEFT JOIN method is somewhat less intuitive than using a temporary table or a subquery. But it will work.
+### The techniques just shown also work for other kinds of values, such as temporal values. Consider the driver_log table that lists drivers and trips that they’ve taken:
+
+```sql
 SELECT name, travel_date, miles
 FROM driver_log
 ORDER BY name, travel_date;
+```
+```
 +-------+------------+-------+
 | name  | travel_date  | miles |
 +-------+------------+-------+
@@ -3938,39 +4047,76 @@ ORDER BY name, travel_date;
 | Suzi  | 2006-08-29 |  391 |
 | Suzi  | 2006-09-02 |  502 |
 +-------+------------+-------+
-One type of maximum-per-group problem for this table is “show the most recent trip for each driver.” It can be solved with a temporary table like this:
-CREATE TABLE tmp
-SELECT name, MAX(travel_date) AS travel_date
-FROM driver_log GROUP BY name;
-SELECT driver_log.name, driver_log.travel_date, driver_log.miles
-FROM driver_log INNER JOIN tmp
-ON driver_log.name = tmp.name AND driver_log.travel_date = tmp.travel_date
-ORDER BY driver_log.name;
-+-------+------------+-------+
-| name  | travel_date  | miles |
-+-------+------------+-------+
-| Ben   | 2006-09-02 |  79 |
-| Henry | 2006-09-01 |  197 |
-| Suzi  | 2006-09-02 |  502 |
-+-------+------------+-------+
-You can also use a subquery in the FROM clause like this:
-SELECT driver_log.name, driver_log.travel_date, driver_log.miles
-FROM driver_log INNER JOIN
-(SELECT name, MAX(travel_date) AS travel_date
-FROM driver_log GROUP BY name) AS tmp
-ON driver_log.name = tmp.name AND driver_log.travel_date = tmp.travel_date
-ORDER BY driver_log.name;
-+-------+------------+-------+
-| name  | travel_date  | miles |
-+-------+------------+-------+
-| Ben   | 2006-09-02 |  79 |
-| Henry | 2006-09-01 |  197 |
-| Suzi  | 2006-09-02 |  502 |
-+-------+------------+-------+
-Which technique is better: the temporary table or the subquery in the FROM clause? For small tables, there might not be much difference either way. If the temporary table or subquery result is large, a general advantage of the temporary table is that you can index it after creating it and before using it in a join.
+```
+### One type of maximum-per-group problem for this table is “show the most recent trip for each driver.” It can be solved with a temporary table like this:
 
-See Also
-This recipe shows how to answer maximum-per-group questions by Selecting summary information into a temporary table and joining that table to the original one or by using a subquery in the FROM clause. These techniques have application in many contexts. One of them is calculation of team standings, WHERE the standings for each group of teams are determined by comparing each team in the group to the team with the best record. Recipe 12.7 discusses how to do this.
+```sql
+WITH recent AS (
+    SELECT 
+        name, 
+        MAX(travel_date) AS travel_date
+    FROM 
+        driver_log 
+    GROUP BY name
+)
+SELECT 
+    driver_log.name, 
+    driver_log.travel_date, 
+    driver_log.miles
+FROM 
+    driver_log 
+INNER JOIN 
+    recent
+ON 
+    driver_log.name = recent.name 
+AND 
+    driver_log.travel_date = recent.travel_date
+ORDER BY 
+    driver_log.name;
+```
+
+```
++-------+------------+-------+
+| name  | travel_date  | miles |
++-------+------------+-------+
+| Ben   | 2006-09-02 |  79 |
+| Henry | 2006-09-01 |  197 |
+| Suzi  | 2006-09-02 |  502 |
++-------+------------+-------+
+```
+
+### You can also use a subquery in the FROM clause like this:
+
+```sql
+SELECT 
+    driver_log.name, 
+    driver_log.travel_date, 
+    driver_log.miles
+FROM 
+    driver_log 
+INNER JOIN
+    (SELECT name, 
+    MAX(travel_date) AS travel_date
+    FROM driver_log GROUP BY name
+    ) AS tmp
+ON 
+    driver_log.name = tmp.name 
+AND 
+    driver_log.travel_date = tmp.travel_date
+ORDER BY 
+    driver_log.name;
+```
+```
++-------+------------+-------+
+| name  | travel_date  | miles |
++-------+------------+-------+
+| Ben   | 2006-09-02 |  79 |
+| Henry | 2006-09-01 |  197 |
+| Suzi  | 2006-09-02 |  502 |
++-------+------------+-------+
+```
+
+### Which technique is better: the temporary table or the subquery in the FROM clause? For small tables, there might not be much difference either way. If the temporary table or subquery result is large, a general advantage of the temporary table is that it is usually easier to read. Another is that you can index it after creating it and before using it in a join.
 
 
 ---
