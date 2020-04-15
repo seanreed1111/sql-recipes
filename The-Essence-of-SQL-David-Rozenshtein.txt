@@ -1,4 +1,3 @@
-
 4 The Standard Questions
 We begin our presentation of SQL with a list of standard questions, as shown in Figure 4.1. (Designation El stands for "English question 1,'' etc.) This list will be extended with additional standard questions as we proceed. The key sub­ phrases that make these questions standard are italicized for emphasis.
 
@@ -44,7 +43,7 @@ WHERE (Cno = "CS112")	 	m
 
 Finally, the SELECT clause lists the column(s) that define the structure of the answer. Since in this case we just want the student numbers retrieved, the SELECT clause becomes
 
-SELECTSno
+SELECT Sno
 
 The final query then takes the form shown in Figure 5.1.
 
@@ -146,7 +145,7 @@ II 	0  0	0
 Our standard question E3- Who takes CS112 or CS114?- is posed by query Q3shown in Figure 6.1.
 
 
-SELECTSno
+SELECT Sno
 FROM Take
 WHERE (Cno = "CS112") OR (Cno = "CS114")
 Figure 6.1: Query Q3 for question E3 - Who takes CS112 or CS114?
@@ -166,7 +165,7 @@ which uses the list membership operator IN. (Operator IN returns True if the val
 
 Our standard question E4- Who take both CS112 and CS114?- presents a much more interesting case. First, con­ sider the query of Figure 6.2.
 
-SELECTSno
+SELECT Sno
 FROM Take
 WHERE (Cno = "CS112")
 AND (Cno = "CS114")
@@ -236,7 +235,7 @@ Second, aliases are opaque- a technical term meaning that an alias completely co
 Third, it is always permitted to alias tables- even if not really necessary. Indeed, to save on typing, SQL program­ mers often use short aliases for long, meaningful table names given to them by well-meaning database designers. Consequently, our query Q4 could also have been written as shown in Figure 6.5. We stress, however, that using pre­ fix "Take.'' anywhere in this query would now be syntacti­ cally incorrect.
 
 
-SELECTXSno
+SELECT X.Sno
 FROM Take X, Take Y WHERE (X.Sno = Y.Sno)
 AND (X.Cno = "CS112") AND (Y.Cno = "CS114")
 Figure 6.5: Q4 rewritten with both copies of Take aliased.
@@ -244,21 +243,6 @@ Figure 6.5: Q4 rewritten with both copies of Take aliased.
 
 Finally, we note that aliases are an essential feature of SQL. Without them, standard questions involving the both-and construct could not have been asked as Type 1 queries.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-IITHE ESSENCE OF SQL:..A Gulde to Learning Most of SQL In th.. Least Amount ofllme•••
 
 7 Negation in SQL
 Negation is one of the most interesting and complex issues in SQL. Both question ES- Who does not take CS112?, and question E6- Who takes a course which is not CS112? involve negation.
@@ -282,25 +266,13 @@ Situation
 
 Student takes both CS112 and CS113
 
-No
-
-Yes
-Student takes nothing
-Yes
-No
-Student takes only CS112
-No
-No
-Student takes only CS113
-Yes
-Yes
 
 Figure 7.1: Orthogonality of questions ES and ES.
 
 
 The query posing question E6- Who takes a course which is not CS112?-is shown in Figure 7.2.
 
-SELECTSno
+SELECT Sno
 FROM Take
 WHERE (Cno != "CS112")
 
@@ -320,12 +292,12 @@ II 0
 
 This is a good time to mention that in addition to equality (=) and inequality (which in some SQL dialects is expressed as != and in some as <>), SQL supports all other standard binary comparators: <, <=, >, and >=. All SQL dialects sup­ port these latter comparators for numeric data types; most also support them for strings and other data types as well.
 
-Question ES - Who does not take CS112?- is much trickier. First, note that rewriting the WHERE clause as
+Question E5 - Who does not take CS112?- is much trickier. First, note that rewriting the WHERE clause as
 
 WHERE NOT (Cno = "CS112")
 will not work, because conditions NOT (Cno = "CS112") and (Cno != "CS112") are equivalent to each other, and thus would both pose question E6. (We note that SQL supports full Boolean logic including DeMorgan's and standard Boolean Distributive and Associative Laws.)
 
-A more fundamental problem with question ES emerges when one considers the basic one-pass nature of Type 1 queries. As it turns out, the answer to this question cannot be computed in a single pass, even if we do take a cross­ p;oduct of tables Student and Take. (Try it on some data examples, and observe that one pass is not enough.)
+A more fundamental problem with question E5 emerges when one considers the basic one-pass nature of Type 1 queries. As it turns out, the answer to this question cannot be computed in a single pass, even if we do take a cross­ p;oduct of tables Student and Take. (Try it on some data examples, and observe that one pass is not enough.)
 
 What is required, instead, are two passes: the first pass through table Take to select those students who do take CS112, and the second pass through table Student to  "get rid of" them. Furthermore, the first pass has to be complet­ ed- i.e., we have to identify and in a way "collect" all of these "bad students," before starting  on  the second  pass­ to eliminate them.
 
@@ -341,21 +313,6 @@ An important general difference between questions E5 and E6 is that E5 involves 
 One way to distinguish between the two is to see what is being negated- some noun constant (e.g., "is not course CS112" in E6) or a verb (e.g., "does not take" in E5). Also, question Q6 can be rephrased by replacing the English word "not" with the phrase "different from" (or "other  than"), as in Who takes some course different from CS112? This technique is a rule of thumb that works most of the time.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-IITHE ESSENCE OF SQL:00  A Gulde to Learning Most of SQL In the Least Amount ofllme...
 
 8 Standard Questions Involving "at least"
 Question E7- Who takes at least 2 courses?- is the last of our standard questions that can be posed as a Type 1 query. The query corresponding to this question, shown in Figure 8.1, is quite similar to the "both-and" query Q4, and has a very similar trace. (An alternative way to pose this query is to replace the inequality in the WHERE clause by the less­ than comparison (X.Cno < Take.Cno), assuming that the particular SQL dialect allows less-than comparisons between strings.) To eliminate duplicates from the answer we would need DISTINCT in the SELECT clause.
@@ -450,7 +407,7 @@ IITHE ESSENCE OF SQL:  A Gulde to Leaming Most of SQL In the Least Amount of nme
 A sample Type 2 query is shown in Figure 10.1. We begin the discussion by first explaining its syntax, then introduc­ ing the Type 2 evaluation mechanism, and finally tracing this query to determine the question it poses.
 
 SELECT Sno, Sname FROM Student WHERE (Sno IN
-(SELECTSno
+(SELECT Sno
 FROM Take
 WHERE (Cno = "CS112")))
 Figure 10.1: A sample Type 2 SQL query.
@@ -495,13 +452,14 @@ To execute a Type 2 query, execute its component queries in the "inside-out" ord
 
 Figure 10.3: The Type 2 SQL evaluation mechanism.
 
-In case of the query of Figure 10.1, the subquery SELECTSno
-FROMTake
-WHERE (Cno = "CS112")
-·························,---------············· Type2 SQLQuerles
+In case of the query of Figure 10.1, 
 
-which is a regular Type 1 query, is executed first. Its answer
-is then substituted into its place in the main query
+the subquery 
+SELECT Sno
+FROM Take
+WHERE (Cno = "CS112")
+
+### which is a regular Type 1 query, is executed first. Its answer is then substituted into its place in the main query
 
 SELECT Sno, Sname FROM Student WHERE (Sno IN( ...))
 
@@ -518,7 +476,7 @@ Before concluding this section, we note that, from a syntac­ tic point of view, 
 
 IITHE ESSENCE OF SQL:.. A Gulde to Learning Most of SQL In th.-Least Amount ofTlm;··
 
-11 Using Type 2 to Implement Real Negation
+Using Type 2 to Implement Real Negation
 As we have discussed in Section 7, questions involving real negation need two passes through the data, using the fol­ lowing general strategy:
 
 To pose a question "Who does not do X?"
@@ -527,9 +485,9 @@ To pose a question "Who does not do X?"
 
 Since Type 2 queries fundamentally involve multiple data passes, they give us exactly what is necessary to implement real negation in SQL. Consider the query of Figure 11.1.
 
-SELECTSno
+SELECT Sno
 FROM Student WHERE NOT (Sno IN
-(SELECTSno
+(SELECT Sno
 FROM Take
 WHERE (Cno = "CS112")))
 Figure 11.1: A mystery Type 2 SQL query Involving negation.
@@ -543,38 +501,34 @@ Since this is a Type 2 query, it is evaluated inside-out. Again, the subquery is
 
 student numbers of all other students- i.e., those student numbers that are not on the list generated by the subquery. Thus, the full query of Figure 11.1 corresponds to the ques­ tion Who does not take CS112?- i.e., our standard question E5. (Jve will refer to this query as Q5.)
 
-An interesting related query is shown in Figure 11.2.
+An interesting related query is shown below.
 
-SELECTSno
+```sql
+-- Using Take In both FROM clauses.
+SELECT Sno
 FROM Take
 WHERE NOT (Sno IN
-(SELECTSno
+(SELECT Sno
 FROM Take
 WHERE (Cno = "CS112")))
-Figure U.2: Using Take In both FROM clauses.
+```
+
+### This query was obtained from the query of Figure 11.1 by replacing table Student with table Take in the main FROM clause.
+
+### Note that this is still a Type 2 query, with the inner Sno and Cno coming from the inner Take table, and the outer Sno coming from the outer Take table. (Even though we use two copies of table Take here, because of the scope rules, no binding ambiguities arise and no aliases are necessary.)
+
+### The use of table Take in the main FROM clause limits the list of students who may potentially  appear  in  the answer to whose who are listed in Take and thus take some course. Thus, it corresponds to the question `Who takes some (i.e., at least 1) course, but does not take CS112`?
+
+As we can see, this query is different from the previous query, just as this question is different from our origi­nal question E5- `Who does not take CS112?`
 
 
-This query was obtained from the query of Figure 11.1 by replacing table Student with table Take in the main FROM clause.
+Posing Questions Involving "at most," "exactly," "only," and "either-or"
+Using the solution to question E5 as a foundation, it is now quite easy to generate solutions to questions E5 through
+E11. Specifically, question E5- Who takes at most 2 courses?-is posed by query QB of Figure 12.1.
 
-Note that this is still a Type 2 query, with the inner Sno and Cno coming from the inner Take table, and the outer Sno coming from the outer Take table. (Even though we use two copies of table Take here, because of the scope rules, no binding ambiguities arise and no aliases are necessary.)
-
-The use of table Take in the main FROM clause limits the list of students who may potentially  appear  in  the answer to whose who are listed in Take and thus take some course. Thus, it corresponds to the question Who takes some (i.e., at least 1) course, but does not take CS112?
-
-As we can see, this query is different from the query of Figure 11.1, just as this question is different from our origi­ nal question E5- Who does not take CS112?
-
-II	0	00
-
-
-
-
-
-00 0
-
-12 	Posing Questions Involving "at most," "exactly," "only," and "either-or"
-Using the solution to question ES as a foundation, it is now quite easy to generate solutions to questions ES through
-Ell. Specifically, question ES- Who takes at most 2 courses?-is posed by query QB of Figure 12.1.
-
-SELECTSno
+```sql
+-- Question E5
+SELECT Sno
 FROM Student
 WHERE NOT (Sno IN
 (SELECT X.Sno
@@ -584,19 +538,18 @@ AND (Y.Sno = Take.Sno)
 AND  (X.Cno != Y.Cno)
 AND (Y.Cno != Take.Cno) AND (X.Cno I= Take.Cno)))
 
-Figure 12.1: Query QB for question ES - Who takes at most 2courses?
+-- E5 - Who takes at most 2courses?
+```
+
+### This query is based on rephrasing question ES as Who does not take at least 3 courses? The subquery here poses the ques­tion `Who takes at least 3 courses?` The NOT in the main WHERE clause achieves the desired negation.
+
+### We note that this query will retrieve students who do not take any courses. This is appropriate, since "at most 2" means O (!), 1 or 2.
 
 
-This query is based on rephrasing question ES as Who does not take at least 3 courses? The subquery here poses the ques­ tion Who takes at least 3 courses? and is taken from Figure 8.2. The NOT in the main WHERE clause achieves the desired negation.
+### By using Take instead of Student in the main FROM clause we can change this query to ask a related question `Who  takes some (i.e., at least 1), but at most 2, courses? In other words, Who takes 1 or 2 courses?`
 
-We note that this query will retrieve students who do not take any courses. This is appropriate, since "at most 2" means O (!), 1 or 2.
-
-......................Posing Questions lnvolvlng 11at most,""exactly.'' "only," and "either-or" .II
-
-By using Take instead of Student in the main FROM clause we can change this query to ask a related question-Who  takes some (i.e., at least 1), but at most 2, courses? In other words, Who takes 1 or 2 courses?
-
-Question E9- Who takes exactly 2 courses?- is posed by query Q9 of Figure 12.2.
-
+```sql
+-- Question E9- Who takes exactly 2 courses?
 
 SELECT X.Sno
 FROM Take X, Take WHERE (X.Sno = Take.Sno)
@@ -606,26 +559,23 @@ AND NOT (X.Sno IN
 FROM Take X, Take Y, Take WHERE (X.Sno = Y.Sno)
 AND (Y.Sno = Take.Sno) AND (X.Cno < Y.Cno)
 AND (Y.Cno < Take.Cno)))
+```
 
-Figure 12.2: Query Q9 for question E9 - Who takes exactly 2 courses?
+### This query is based on rephrasing question E9 as Who takes at least 2 courses and does not take at least 3 courses? The main query poses Who takes at least 2 courses? and is copied from query Q7. 0/ve have used the less-than operator in its condi­ tion to remove duplicates from the final answer. The sub­ query again poses Who takes at least 3 courses? (Here, we have used less-than operators for conciseness.) The NOT in the main WHERE clause again achieves the desired negation.
 
-
-This query is based on rephrasing question E9 as Who takes at least 2 courses and does not take at least 3 courses? The main query poses Who takes at least 2 courses? and is copied from query Q7. 0/ve have used the less-than operator in its condi­ tion to remove duplicates from the final answer.) The sub­ query again poses Who takes at least 3 courses? (Here, we have used less-than operators for conciseness.) The NOT in the main WHERE clause again achieves the desired negation.
-
-We note that even though we have used the same alias name X in both the main query and in the subquery, because of the scope rules, no confusion arises.
-IITHE ESSENCE OFSQL:..A Gulde to Learning Most of SQL ln°th.. Least Amount ofTlme...
+### We note that even though we have used the same alias name X in both the main query and in the subquery, because of the scope rules, no confusion arises.
 
 
 
 
-Question ElO- Who takes only CS112?- is posed by query
+Question E10- Who takes only CS112?- is posed by query
 1	Ql0 of Figure 12.3.
 
-SELECTSno
+SELECT Sno
 FROM Take
 WHERE (Cno = "CS112")
 AND NOT (Sno IN
-(SELECTSno
+(SELECT Sno
 FROMTake
 WHERE (Cno != "CS112")))
 Figure 12.3: Query Q10 for question E10 - Who takes only
@@ -638,10 +588,10 @@ Two things should be noted about query Ql0. First, think­ ing that the outer NOT
 Second, the condition (Cno = "CS112") in the main WHERE clause is unnecessary in this case (!) and can be dropped without changing the query's meaning. The simplified query is shown in Figure 12.4. (Before proceeding further, try tracing it to determine why this is so.)
 
 
-SELECTSno
+SELECT Sno
 FROMTake
 WHERE NOT (Sno lN
-(SELECTSno
+(SELECT Sno
 FROM Take
 WHERE (Cno != "CS112")))
 Figure 12.4: Query of Figure 12.3 slmpllfled.
@@ -652,7 +602,7 @@ For a particular Sno to appear in the final result, it must not appear with any 
 Finally, question Ell-Who takes either CS112 or CS114?-is posed by query Qll of Figure 125.
 
 
-SELECTSno
+SELECT Sno
 FROM Take
 WHERE ((Cno = "CS112") OR (Cno = "CS114"))
 AND NOT (Sno lN
@@ -718,7 +668,7 @@ IITHE ESSENCE OF SQL:  A Gulde to Learning Most of SQL In the Least Amount o! Ti
 Consider question E12- Who are the youngest students? While the most natural way of posing this question involves the use of the aggregate function MIN() (to be presented later), this question can also be posed using a Type 2 query with negation, as shown in Figure 13.1.
 
 
-SELECTSno
+SELECT Sno
 FROM Student WHERE NOT (Age IN
 (SELECT X.Age
 FROM Student X, Student WHERE (X.Age > Student.Age)))
@@ -762,7 +712,7 @@ Syntactic enhancements are those features that make the writing of SQL queries e
 SQL permits the omission of the WHERE clause if the con­ dition of the query is always True- i.e., there really is no condition that needs to be imposed. Thus, a request to retrieve the student numbers of all students is posed by the query of Figure 14.1.
 
 
-SELECTSno
+SELECT Sno
 FROM Student
 
 Figure 14.1: Example of query with the omitted WHERE clause.
@@ -1133,9 +1083,9 @@ II THE.ESSENCE OF SQL:.•A.Gulde to Learning Most Of SQLIn the Least Amount ofTlm
 r,	17 Standard Questions Involving "every"
 Given an ability to use expressions around the IN and NOT IN operators, we can now pose question E13- Who takes every course?-as shown in Figure 17.1.
 
-SELECTSno
+SELECT Sno
 FROM Student WHERE (Sno NOT IN
-(SELECTSno
+(SELECT Sno
 FROM Student, Course WHERE (Sno + Cno NOT IN
 (SELECT Sno + Cno FROM Take))))
 
@@ -1517,7 +1467,7 @@ We note that the ability to use scalar expressions as argu­ ments to aggregate f
 22 Some Old Questions Revisited
 The questions involving "at least" posed in Section 8 as Type 1 queries, along with those involving "at most" and "exactly" posed in Section 12 as Type 2 queries, can also be posed very naturally using the queries with the GROUP BY and HAVING clauses. As an example, the question Who takes at least 3 courses? is posed by the query of Figure 22.1.
 
-SELECTSno
+SELECT Sno
 FROM Take GROUPBYSno
 HAVING (COUNT(*)>= 3)
 
@@ -1655,7 +1605,7 @@ As we have noted earlier, queries underlying  aggregation can be of any type. As
 SQL also allows for aggregates to be used in subqueries within Type 2 queries. As a motivating example, consider again question E12-Who are the youngest students?- along with the query of Figure 25.1.
 
 
-SELECTSno
+SELECT Sno
 FROM Student WHERE(AgeIN
 (SELECT MIN(Age)
 FROM Student))
@@ -1755,7 +1705,7 @@ SELECT DISTINCT Sname,
 i round(SUM(Grade*Credits)/SUM(Credits),2)
 ii FROM Student S, Take T, Course C WHERE (S.Sno = T.Sno)
 AND (T.Cno = C.Cno)
-AND (S.Sno NOT IN (SELECTSno
+AND (S.Sno NOT IN (SELECT Sno
 FROM Take
 WHERE (Cno = "CS112")))
 GROUP BY S.Sno, Sname
@@ -1790,7 +1740,7 @@ I                    I     I
 SELECT*
 FROM Student S, Take T, Course C WHERE (S.Sno=T.Sno)
 AND (T.Cno = C.Cno)
-AND (S.Sno NOT IN (SELECTSno
+AND (S.Sno NOT IN (SELECT Sno
 FROMTake
 WHERE (Cno = "CS112")))
 
@@ -2223,7 +2173,7 @@ Aliases X and Y in the outer FROM clause of this query are used not only to disa
 The query of Figure 30.2 implements question E12- Who
 are the youngest students?
 
-SELECTSno
+SELECT Sno
 FROM Student S
 WHERE NOT EXISTS
 (SELECT*
@@ -2260,7 +2210,7 @@ Our final examples of Type 3 queries are two re-implemen­ tations of question Q1
 ...Some Old0 QuestlonsRevisited-Again II
 
 
-SELECTSno
+SELECT Sno
 FROM Student WHERE NOT EXISTS
 (SELECT*
 FROM Course WHERE NOT EXISTS
@@ -2298,7 +2248,7 @@ Interestingly, the English reformulation of our question most closely correspond
 
 The second Type 3 re-implementation of question Q13 is shown in Figure 30.6.
 
-SELECTSno
+SELECT Sno
 FROM Student WHERE NOT EXISTS
 (SELECT*
 FROM Course WHERE (Cno NOT IN
