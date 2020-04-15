@@ -1,470 +1,4 @@
 
-
-
-   ssence of SQL:
-A Guide to Learning Most of SQL in the Least Amount of Time
-
-
-
-
-by David Rozenshtein
-
-
-
-
-
-?
-THE ESSENCE OF SQL:
-A Guide to Learning Most of SQL in the Least Amount of Time
-
-David Rozenshtein
-Department of Computer Science
-Long Island University
-
-?
-
-
-
-
-
-
-
-40087 Mission Boulevard, Suite167, Fremont, CA94539 (800) 943-9300 Voice
-(510) 656-5116 Fax
-http://www.sqlforum.com
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Library of Congress Catalog Card Number 96-092799 ISBN 0-9649812-1-1
-© 1996 SQL Forum Press
-
-
-
-Editor: Tom Bondur Cover concept: Anna Bondur Cover design: Tom McI<eith Inside layout MimiFujii
-
-
-
-40087 Mission Boulevard, Suite 167, Fremont, CA94539 (800) 943-9300 Voice
-(510) 656-5116 Fax
-http://www.sqlforum.com
-0 THE ESSENCE OFSQL; A Gulde to Learning Most of SQL In the Least Amount ofTim....
-
-Contents
-
-1 Introduction	1
-2 Example Database	3
-3 A Bird's Eye View of SQL	5
-4 The Standard Questions	9
-5 The First Two Questions	11
-6 Standard Questions Involving "or" and "both-and"	17
-7 Negation in SQL	23
-8 Standard Questions Involving "at least"	27
-9 Negation Revisited	29
-10 Type 2 SQL Queries	31
-11 Using 'Iype 2 to Implement Real Negation	35
-12 Posing Questions Involving "at most,"	37
-"exactly/' "only," and "either-or"
-13 Computing Extremes as 'Iype 2 Queries with Negation	43
-14 A Look at SQL Enhancements	45
-15 Handling Composite Keys	53
-16 Negation Over Composite Keys	55
-17 Standard Questions Involving "every"	59
-18 A Brief Interlude	61
-19 Additional Standard Questions	63
-20 Computing Aggregates for Groups	65
-21 Combining Scalar Expressions with Aggregation	73
-22 Some Old Questions Revisited	75
-23 Global Aggregations	77
-24 Comparing Base Values to Aggregates	79
-................	Contents
-25 Combining 'fype 2 Queries with Aggregation	83
-26 The Overall Order of Evaluation	87
-27 NULL Values in SQL	91
-28 lntroduction to 'fype 3 SQL Queries	97
-29 lnter-Query Connectors Revisited:
-Existential Quantifiers in SQL	101
-30 Some Old Questions Revisited-Again	103
-31 Data Manipulation Facilities of SQL	109
-32 Extensions to SQL	115
-33 Last Remarks	117
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-List of Figures
-
-
-Figure2.l:Example database.3Figure3.l:DDL for table Student.5Figure3.2:SQL query types.7Figure4.1:A list of standard questions.9Figure5.1:Query Ql for question El - Who takes CS112?12Figure5.2: Figure5.3:The Type 1 SQL evaluation mechanism.
-Query Q2 for question E2 - What are student numbers and names of students who take CS112?13
-14Figure5.4:Query Q2 rewritten with all explicit prefixes.16Figure6.1: Figure 6.2:
-Figure6.3: Figure 6.4:Query Q3for question E3 - Who takes CS112 or CS114?
-First attempt at question E4 - Who takes both CS112 andCS114?
-Asketch of the query for E4- Who takes both CS112 andCS114?
-Query Q4 for question E4 - Who takes both CS112 andCS114?17
-
-18
-
-20
-
-21Figure 6.5:Q4 rewritten with both copies of Take aliased.22Figure 7.1:
-Figure 7.2:Orthogonality of questions ES and E6.
-Query Q6 for question E6 - Who takes a course which is not CS112?24
-
-24Figure8.1:Query Q7for question E7- Who takes at least 2 courses?27Figure8.2:The query for question: Who takes atleast 3 courses?27Figure9.l:Questions ES through E13 rephrased to explicitly shownegation.30Figure10.1:Asample Type 2SQL query.31Figure102:The definition of a Type 2 query.33Figure10.3:The Type 2 SQL evaluation mechanism.33Figure11.1:A mystery Type 2SQL query involving negation.35Figure11.2:Using Take in both FROM clauses.36Figure 12.1:Query QB for question ES - Who takes at most 2courses?37Figure 12.2:Query Q9 for question E9 - Who takes exactly
-2courses?
-38Figure 12.3:Query QlO for question ElO - Who takes only CS112?39Figure 12.4:
-Figure 12.5:
-
-Figure 13.1:Query of Figure 12.3 simplified.
-Query Qll for question Ell - Who takes either CS112 orCS114?
-Query Q12 for question E12- Who are the youngest
-students?40
-
-40
-
-43Figure 14.1:Example of query with the omitted WHERE clause.45Figure 14.2:Using symbol* to mean "all columns."46
-.............................................................................................................	'lyl
-Us! of Figures L.	I
-
-Figure 14.3:Suppressing duplicates from the answer.47Figure 14.4:Sorting facilities of SQL.48Figure 14.5:Example useof arithmetic in SQL.50Figure 14.6:Formatting ananswer.51Figure 15.1:Query for the question What are full names andages of professors who teach CS112?53Figure 15.2:Query for the question Which courses are taught byat least 2 professors?54Figure 16.1:First attempt at the question Who does not teach CS112?55Figure 16.2:Example data for tables Professor and Teach.56Figure 16.3:Another example data for tables Professor and Teach.57Figure 16.4:Desired query form for the question Who does notteach CS112?57Figure 16.5:Using string concatenation expressions for thequestion Who does not teach CS112?58Figure 17.1:Query Q13 for question E13- Who takes every course?59Figure 19.1:Alist of additional standard questions motivatingSQL aggregation facilities.63Figure 20.1:Query Q14 for question E14-For each departmentthat has more than 3 professors older than 50, what
-is the average salary of such professors?	65
-Figure 20.2: The evaluation mechanism for queries involving
-aggregation.	67
-Figure 20.3: Aquery showing the use of all aggregate functions, and also showing the use of Boolean expressions in
-the HAVING clause.	68
-Figure 20.4: The query for the question For each department, what is the average salary of those professors
-who are older than 50?	69
-Figure 20.5: SQL query for the question For each department/ rank combination that has more than 3 professors older than50, what is the average salary of such
-professors?	70
-Figure 21.1: Query Ql5 for question EIS- What is the grade
-point average (GPA) of each student?	73
-Figure 22.1: Aquery with the GROUP BY and HAVING clauses
-for the question Who takes at least 3 courses?	75
-Figure 23.1: Query Q16 for question E16 - What is the overall
-average salary of all professors who are olderthanSO?77Figure 24.1:Query Q17 for question E17 - Whose(i.e., which professors') salary is greater than theoverall average salary?79Figure 24.2:Alternative query form for question E17 - Whose(i.e., which professors') salary is greater than theoverall average salary?81
-
-Figure 24.3: Query Q18 for question ElB-Whose salary is greater
-than the average salary within that professor's
-department?	81
-Figure 25.1: Alternative query for question E12 - Who are the
-youngest students? - showing the use of
-aggregates inside the subqueries.	83
-Figure 25.2: Alternative query for question E17-Whose salary is
-greater than the overall average salary?- showing
-             the use of binary comparators in front of subqueries. 84 Figure 26.1: Aquery involving most of the features presented so far. 87 Figure 27.1:  Truth tables for the three-valued logic.	92
-Figure 27.2. A query that will retrieve names of all professors-
-or will it?	95
-Figure 28.1:  Asample 'fype 3 query.	97
-Figure 28.2: A 'fype 3 query with two correlations, for the question
-Who teaches CS112?	99
-Figure 29.1: An example query with EXISTS.	101
-Figure 30.1: AType 3 query for question E9 - Who takes exactly
-2 courses?	103
-Figure 30.2: A'fype 3 query for question E12 - Who are the
-youngest students?	104
-Figure 30.3: A Type 3 query for question E18 - Whose salary is
-greater than the average salary within that
-professor's department?	105
-Figure 30.4: A Type 3 query for question E13-- Who takes every
-course?	106
-Figure 30.5: The middle query from Figure 30.4 after substitution forS.Sno.	106
-Figure 30.6: A 'fype 3 query with a 'fype 2 subquery for question
-E13 - Who takes every course?	107
-Figure 30.7: The middle query from Figure 30.6 after substitution forS.Sno.	108
-Figure 31.1: Inserting individual rows.	109
-Figure 31.2:  Inserting a query result.	110
-Figure 31.3: Example of a DELETE command.	111
-Figure31.4: Example of an UPDA1E command.	112
-Figure 33.1: Assorted reminders for programming in SQL.	118
-
-
-
-
-
-
-
-
-
-............................................................................................................List of Figures
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-...	......	·················································	.......................
-I THE ESSENCE OF SQL: A Gulde to Learning Most of SQL In the Least Amount of Time
-
-1 Introduction
-This essay is dedicated to the.proposition that one can often accomplish 80% of the task in 20% of the time, or, in this case, that one can learn most of the important features and capabilities of SQL quickly. To achieve this, we have developed a new approach to presenting SQL.
-
-Traditionally,SQL is presented in a "bottom-up" fashion, by enumerating all of its features in some order and illustrat­ ing each feature with an example query. While complete in its treatment of the language, this approach often fails to clearly distinguish between what is essential and what is secondary in the language, and frequently leaves an impression of too long a "laundry list" of language features. Even more importantly, by concentrating on the language first and motivation second, this approach does not clearly explain why certain features are present in the language, when they should be used, nor haw to actually pose queries usingSQL.
-
-
-
-.....................................................................................................................................
-Introduction
-
-Our approach, on the other hand, is "top-down." We begin by identifying a rather short list of standard questions, or more precisely types of questions, that are often asked of relational databases. We then show how these standard questions are posed in SQL, introducing and motivating the use of its capabilities and features as they become relevant.
-
-As a result, we develop concrete solutions for a set of well specified question types. Solutions for particular business problems can then be developed by selecting the appropriate question type or combination of types and rephrasing the corresponding standard solutions to fit the particular prob­ lem domain.
-
-It is important to note that we do not claim completeness in our approach- some features of the language will not be covered here. We also do not claim objectivity in the selec­ tion of features. This essay is based on the SQL working and teaching experience of the author, and reflects his views on the language.
-
-While we assume a familiarity with the basic relational con­ cepts of tables, attributes, keys, etc., no prior knowledge of SQL itself is assumed. In fact, those who already know some SQL should set their knowledge aside and start anew with this essay.
-
-Finally, whatever liberties we take in this essay are all moti­ vated by its primary purpose - to leave the reader with a deep understanding of the essence of SQL and a set of cook­ book recipes for its immediate use.
-
-2 Example Database
-All of the SQL queries in this essay will be posed with respect to the example database shown in Figure 2.1. This database consists of five tables, three of which correspond to entity classes: Student, Course and Professor, and two to relationships: Take- between students and courses, and Teach- between professors and courses.
-
-Student(Sno. Sname, Age) Course(Cno, Title, Credits)
-Professor(Fname, Lname, Dept, Rank, Salary, Age) Take(Sno, Cno, Grade)
-Teach(Fname, Lname. Cno)
-Figure 2.1: Example database.
-
-
-In the tables, the column name abbreviations have the fol­ lowing meaning:
-Sno:	student number;
-Sname:	student name;
-
-Cno: Fname: Lname: Dept:
-
-course number; professor's first name; professor's last name; professor's department.
-
-
-Relational keys are identified by underlining. Note that table Professor has a composite- two column-key. We have split professors' names into separate first and last names to motivate certain SQL features introduced later.
-
-.......................................................................................................Examp  le D0      a ta?basa
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-• THE ESSENCE OFSQL:.A.  Gulde to Leaming Most of SQLIn the Least Amount of Time•.•
-
-3 A Bird's Eye View of SQL
-SQL can be divided into four parts, or sublanguages, as they are traditionally called: data definition language (DDL), data manipulation language (DML), system administration language (SAL) and query language.
-
-DDL provides facilities for creating and destroying tables and indices, as well as for affecting their physical layout. A simple example of DDL, creating our table Student and its related index is shown in Figure 3.1. (In this essay, we use generic SQL syntax which, except for the data type names and minor syntactic differences, is applicable to all SQL dialects.)
-
-
-
-CREATE TABLE Student( Sno	char(9)
-Sname	varchar(20)
-Age	int
-
-
-
-NOT NULL, NULL, NULL)
-
-
-CREATE UNIQUE INDEX Student_ndx ON Student(Sno)
-
-Figure 3.1: DDL for table Student.
-
-
-The table creation syntax closely mimics record layout defi­ nitions in most modem 3GLs. Concept of NULL and the meaning of the NULL and NOT NULL qualifiers will be explained later.
-
-The index creation syntax is also straightforward- the name of the index is Student_ndx, and it is defined on table Student with respect to column Sno. Furthermore, because
-........................................-     ----.............:·;;;.•EyeVei w.  ;  ·
-
-of the UNIQUE qualifier, this index will enforce the unique­ ness of Sno values in the Student table. While the stated purpose of indices is to speed up query execution, in many systems UNIQUE indices also provide the only way to enforce uniqueness of key values.
-
-We note that details of physical layout do not shed any light on the "meaning" of SQL and are thus omitted from this example and this essay.
-
-Destruction of tables and indices is done using keyword DROP,asin
-
-DROP TABLE Student
-
-DML provides facilities to insert, delete and modify rows in tables. These facilities are best presented after the query facilities of SQL, and are left for the end of this essay.
-
-SAL provides facilities for managing the system- e.g., for setting up security and authorization schemes for the data­ base. While essential for system administration tasks, these features again do not shed any light on SQL meaning, and are omitted from this essay.
-
-The query language component of SQL provides facilities for asking questions about the data. These query facilities make SQL what it is, and this essay is devoted specifically to them.
-
-Roughly speaking, all SQL query facilities can be divided into six categories, as shown in Figure 3.2.
-
-
-
-
-IITHE ESSENCE OFSQL:..A Gulde to Learning Most of SQL In th.. Least Amount ofTim;··
-
-Type 1 Queries or Type 2 Queries or Type 3 QueriesAggregation FacilitiesEnhancementsExtensionsFigure 3.2: SQL query types.
-
-
-Types 1, 2 and 3 are the three distinct query types, each motivated by a different category of questions and database designs. For those already familiar with SQL, Type 1 queries correspond to "flat" (single level) queries, and Type 2 and Type 3 queries correspond to "nested" (multi-level) queries: Type 2- without correlations, and Type 3- with correlations.
-
-Aggregation facilities, enhancements and extensions are orthogonal to these three query types, and can be used in conjunction with all of them. They can also be used in com­ binations with each other.
-
-Aggregation facilities provide means for computing various aggregates, such as sums and averages, and for grouping the data.
-
-Enhancements are those features that make SQL more prac­ tical, but do not fundamentally increase its expressive power. For example, ability to sort the answer is one such enhancement.
-
-Extensions encompass various advanced features- most important of which .is the explicit WHILE loop- that have been added to SQL recently by various vendors. These
-
-.•.•..•.••••.•....•....•...•.	A.Bird's Eye View of SQL II
-
-extensions make the language fundamentally more power­ ful; however, they are still quite non-standard, and are con­ sidered only briefly at the end of this essay.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-i
-I
-
-
-
-
-
-
-
-
-
-
-
-
-I
-
-
-IITHE ESSENCE.OF SQL:..A Gulde to.Learning Most of SQL In the.Least Amount o!Tlme...
-
-
-
 4 The Standard Questions
 We begin our presentation of SQL with a list of standard questions, as shown in Figure 4.1. (Designation El stands for "English question 1,'' etc.) This list will be extended with additional standard questions as we proceed. The key sub­ phrases that make these questions standard are italicized for emphasis.
 
@@ -472,22 +6,21 @@ El.	Who takes (the course with the course number) CS112? (By "Who" we mean that 
 E2. What are student numbers and names of students who
 takeCS112?
 E3. Who takes CS112 or CS114?
-E4.	Who takes both CS112 and CS114? E5.	Who does not take CS112?
+E4.	Who takes both CS112 and CS114? 
+E5.	Who does not take CS112?
 E6.	Who takes a course which is not CS112?
 E7. Who takes at least 2 courses (i.e., at least 2 courses with different course numbers)?
 (Amore general question: Who takes at least 3, 4, 5,
 etc., courses?)
-EB.	Who takes at most 2 courses?
-    (More generally: 3, 4, 5, etc., courses?) E9.	Who takes exactly 2 courses?
-     (More generally: 3, 4, 5, etc., courses?) ElO. Who takes only CS112?
-Ell. Who takes either CS112 or CS114? E12. Who are the youngest students?
+E8.	Who takes at most 2 courses?
+    (More generally: 3, 4, 5, etc., courses?) 
+E9.	Who takes exactly 2 courses?
+     (More generally: 3, 4, 5, etc., courses?) 
+ElO. Who takes only CS112?
+E11. Who takes either CS112 or CS114? 
+E12. Who are the youngest students?
 (Similarly, Who are the oldest students?)
 E13. Who takes every course?
-
-Figure 4.1: A list of standard questions.
-
-................................................ The Standard Questions II
-
 
 
 5 The First Two Questions
@@ -516,7 +49,7 @@ SELECTSno
 The final query then takes the form shown in Figure 5.1.
 
 
-SELECTSno
+SELECT Sno
 FROM Take
 WHERE (Cno = "CS112")
 
@@ -561,7 +94,8 @@ By following this trace, we can now confidently assert that query Ql indeed corr
 
 We note that because evaluation mechanisms are formal devices, they do not represent actual evaluation strategies taken by real systems. (No real system would be caught dead actually taking cross-products all the time.) All that is required of them is that they always give the same result as a real system. Thus, in developing this particular form of the evaluation mechanism, we were not concerned with its apparent inefficiency, and concentrated instead on its clarity and ease of use in tracing.
 
-The SQL query corresponding to question E2- What are student numbers and names of students who take CS112?- is shown in Figure 5.3.
+The SQL query corresponding to question E2- 
+What are student numbers and names of students who take CS112?- is shown in Figure 5.3.
 
 
 SELECT Student.Sno, Sname FROM Student, Take
@@ -599,9 +133,8 @@ Again, it is by following this trace, that we can confidently conclude that quer
 While required to disambiguate which columns come from which tables when there are several same-named columns in the result of the cross-product, the prefix notation is always permitted for all column references. Thus, even though it is not necessary to use a prefix with Sname or Cno- there is only one column called Sname and only one column called Cno in the cross-product, it is perfectly legal to write our query Q2 as shown in Figure 5.4.
 
 
-SELECT Student.Sno, Student.Sname FROM Student, Take
-WHERE (Student.Sno = Take.Sno)
-AND (Take.Cno = "CS112")
+
+
 Rgure 5.4: Query Q2 rewritten with all explicit prefixes.
 
 
@@ -743,10 +276,25 @@ The second example involves a student who does not take any courses. (Or, to put
 Not only are questions E5 and E6 different, they are orthogo­ nal to each other- i.e., all four combinations of Yes/No answers for these two questions are possible, as shown in Figure7.1.
 
 
-Situation Included in answer to E5 Included in answertoE6
-Student takes both CS112 and CS113
-No
-YesStudent takes nothingYesNoStudent takes only CS112NoNoStudent takes only CS113YesYes
+Situation
+ Included in answer to E5
+ Included in answertoE6
+
+Student takes both CS112 and CS113
+
+No
+
+Yes
+Student takes nothing
+Yes
+No
+Student takes only CS112
+No
+No
+Student takes only CS113
+Yes
+Yes
+
 Figure 7.1: Orthogonality of questions ES and ES.
 
 
@@ -1487,21 +1035,67 @@ r
 row, as shown in Figure 16.2. (Since the Dept, Rank, Salary and Age values are immaterial for this example, we are not showing these columns in table Professor.)
 
 
-ProfessorFnameLname..."John""Smith""Mary""Smith"
-TeachFnameLnameCno"John""Smith""CS112"Figure 16.2: Example data for tables Professor and Teach.
+Professor
+Fname
+Lname
+...
+"John"
+"Smith"
+
+"Mary"
+"Smith"
+
+
+Teach
+Fname
+Lname
+Cno
+"John"
+"Smith"
+"CS112"
+Figure 16.2: Example data for tables Professor and Teach.
 
 
 A trace of the query of Figure 16.1 on this data shows that it will return an empty result. Yet, Mary Smith does not teach CS112, and thus should be in the answer to the question Who does not teach CS112?
 
 Changing this query to use OR in place of AND does not fix the problem either. As an example here, consider tables Professor and Teach as shown in Figure 16.3.
 
-ProfessorFnameLname..."John""Smith""Mary""Smith"'1ohn""Brown""Mary""Brown11
+Professor
+Fname
+Lname
+...
+"John"
+"Smith"
+
+"Mary"
+"Smith"
+
+'1ohn"
+"Brown"
+
+"Mary"
+"Brown11
+
+
 
 
 
 IITHE ESSENCE OFSQL:..A.Gulde to Learning Most of SQLIn th.. Least Amount of Tim....
 
-TeachFnameLnameCno"John""Smith""CS112""Mary""Smith""CS112""John""Brown""CS112"
+Teach
+Fname
+Lname
+Cno
+"John"
+"Smith"
+"CS112"
+"Mary"
+"Smith"
+"CS112"
+"John"
+"Brown"
+"CS112"
+
 Figure 16,3: Another example data for tables Professor and Teach.
 
 
@@ -2268,11 +1862,26 @@ All binary comparisons involving the operators =, !=, <, <=,
 Since traditional Boolean (two-valued) logic is not sufficient to support this new logical value Maybe, SQL  supports what is known as the three-valued logic, defined by the truth tables shown in Figure 27.1. (In these tables, symbols F, M and T stand for False, Maybe and True, respectively.) We note that for the False and True combinations these tables are consistent with their traditional Boolean counterparts.
 
 
-NOT FMT ANDFMT ORFMT TMFF
-MFF	F
-FMMF
-MFM T
-MMTTFM TTTT	T
+NOT FMT 
+AND
+FMT 
+OR
+FMT 
+TMF
+F
+M
+FF	F
+FMM
+F
+M
+FM T
+MMT
+
+T
+FM T
+T
+TT	T
+
 
 Figure 27.1: Truth tables for the three-valued logic.
 
