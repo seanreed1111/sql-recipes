@@ -2198,7 +2198,7 @@ WHERE (Dept= X.Dept)))
 Figure 30,3: A Type 3 query for question E18 - Whose salary Is greater than the average salary within that professor's department?
 
 
-This query also shows an example of using an aggregate (a global aggregate, in this case) inside a subquery. The evalua­ tion rules, however, remain exactly the same: this is a Type 3 query, so we execute it "outside-in"- we pick every pro­ fessor in turn, supply his department (through X.Dept) to the subquery, execute the subquery thus computing the average salary in that department, and then compare his salary to that average.
+This query also shows an example of using an aggregate (a global aggregate, in this case) inside a subquery. The evalua­tion rules, however, remain exactly the same: this is a Type 3 query, so we execute it "outside-in"- we pick every pro­ fessor in turn, supply his department (through X.Dept) to the subquery, execute the subquery thus computing the average salary in that department, and then compare his salary to that average.
 
 We note that the treatment of aggregates and the use of the greater-than operator in front of the subquery areexactly asthey were presented earlier in this essay. In fact, this is the whole point of this essay: Once you know the SQL building blocks and know how toconnect them-you know thelanguage.
 

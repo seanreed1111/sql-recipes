@@ -4864,12 +4864,13 @@ when 1 then 'Direct, non-employee' when 2 then 'Online'
 when 3 then 'WalMart' when 4 then 'Amazon'
 when 5 then 'Direct, employee' else 'unknown'
 end order_mode_text
-
-
 FROM orders
 WHERE order_id in (2458,2397,2355,2356)
 ;
 
+order_id 2458,2397,2355,2356
+customer_id
+order_mode_num
 
 4 rows selected
 The older DECODE statement is the most basic of the SQL functions that converts one set of values to another; you can convert numeric codes to human-readable text values or vice versa, as we do in the previous solutions. DECODE has been available in SQL since the earliest releases. DECODE has a variable number of arguments, but the arguments can be divided into three groups:
