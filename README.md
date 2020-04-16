@@ -271,8 +271,8 @@ FROM driver_log;
 ### What date range is represented by the rows in the mail table? What are the smallest and largest messages sent?
 ```sql
 SELECT
-    MIN(time_val) AS earliest, 
-    MAX(time_val) AS latest,
+    MIN(t) AS earliest, 
+    MAX(t) AS latest,
     MIN(size) AS smallest, 
     MAX(size) AS largest
 FROM mail;
@@ -4137,7 +4137,7 @@ SELECT * FROM mail;
 ```
 ```
 +---------------------+---------+---------+---------+---------+---------+
-| t | sender | srchost | recipient | dsthost | size  |
+| t                   | sender  | srchost | recipient | dsthost | size  |
 +---------------------+---------+---------+---------+---------+---------+
 | 2006-05-11 10:15:08 | barb    | saturn  | tricia | mars   |   58274 |
 | 2006-05-12 12:48:13 | tricia | mars   | gene  | venus | 194925 |
@@ -4150,8 +4150,9 @@ SELECT * FROM mail;
 
 ### To determine how many messages were sent for each hour of the day, use the following statement:
 ```sql
-SELECT HOUR(t) AS hour, COUNT(HOUR(t)) AS count
-FROM mail GROUP BY hour;
+SELECT date_part('HOUR', t) AS hour, COUNT(date_part('HOUR', t)) AS count
+FROM mail 
+GROUP BY hour;
 ```
 ```
 +------+-------+

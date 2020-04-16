@@ -1,7 +1,7 @@
 create table order (
-	order_id INT,
-	customer_id INT,
-	order_mode_num INT,
+	order_id INTEGER,
+	customer_id INTEGER,
+	order_mode_num INTEGER,
 	order_date DATE,
 	order_total VARCHAR(50)
 );
