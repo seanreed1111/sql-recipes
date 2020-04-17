@@ -20,8 +20,8 @@ CREATE TABLE course (
 );
 
 CREATE TABLE schedule (
-    studentid integer,
-    courseid varchar(5)
+    student_id integer,
+    course_id varchar(5)
 );
 
 CREATE TABLE professor (
@@ -32,8 +32,8 @@ CREATE TABLE professor (
 );
 
 CREATE TABLE teach (
-    professor varchar(10),
-    courseid varchar(5)
+    professor_name varchar(10),
+    course_id varchar(5)
 );
 
 ```
@@ -62,6 +62,12 @@ FROM student
 LIMIT 3;
 ```
 
+###output
+```
+
+
+```
+
 ## Discussion Question: What do you think might be a potential advantage of **INCLUDING** the `LIMIT` statement rather than leaving it off like in the query below?
 
 ```sql
@@ -72,9 +78,8 @@ FROM student;
 ### Let's take a look at a list of questions that we can ask about the students in our imaginary college.
 
 ```
-E1. Who takes (the course with the course number) CL101? (By "Who" we mean that we want the student num­ bers retrieved. If we want the names retrieved, we will explicitly say so.)
-E2. What are student numbers and names of students who
-takeCL101?
+E1. Who takes (the course with the course number) CL101? (By "Who" we mean that we want the student ids retrieved. If we want the names retrieved, we will explicitly say so.)
+E2. What are student ids and names of students who take CL101?
 E3. Who takes CL101 or CL109?
 E4. Who takes both CL101 and CL109? 
 E5. Who does not take CL101?
@@ -94,16 +99,13 @@ E13. Who takes every course?
 ```
 
 
-
-
-
 ### Let's start with question `E1`: Who takes CL101?
 
 ```sql
 --- E1 - Who takes CL101?
-SELECT courseid
+SELECT course_id
 FROM schedule
-WHERE courseid = 'CL101'
+WHERE course_id = 'CL101'
 
 -- NOTE: 'CL101' is a text string. So it is enclosed in SINGLE QUOTES.
 -- Please use SINGLE QUOTES when you are writing SQL queries.
@@ -114,34 +116,34 @@ WHERE courseid = 'CL101'
 --- Answer E2
 SELECT Student.id, Student.name FROM Student, schedule
 WHERE (Student.id = schedule.studentid)
-AND (schedule.courseid = "CL101")
+AND (schedule.course_id = "CL101")
 ```
 ```sql
 SELECT DISTINCT studentid
 FROM schedule
-WHERE (courseid = "CL101") OR (courseid = "CL109")
+WHERE (course_id = "CL101") OR (course_id = "CL109")
 -- Answer E3 - Who takes CL101 or CL109?
 ```
 ```sql
 SELECT DISTINCT studentid
 FROM schedule
-WHERE (courseid IN ("CL101", "CL109"))
+WHERE (course_id IN ("CL101", "CL109"))
 -- Answer E3 - Who takes CL101 or CL109?
 ```
 
 ```sql
 --- this is wrong Who takes both CL101 and CL109?
-SELECT courseid
+SELECT course_id
 FROM schedule
-WHERE (courseid = 'CL101')
-AND (courseid = 'CL109')
+WHERE (course_id = 'CL101')
+AND (course_id = 'CL109')
 
 ```
 
 ```sql
-SELECT X.courseid
-FROM schedule X, schedule WHERE (X.courseid = schedule.courseid)
-AND (X.courseid = "CL101") AND (schedule.courseid = "CL109")
+SELECT X.course_id
+FROM schedule X, schedule WHERE (X.course_id = schedule.course_id)
+AND (X.course_id = "CL101") AND (schedule.course_id = "CL109")
 
 -- E4 - Who takes both C5112 and CL109?
 ```
@@ -159,13 +161,13 @@ AND (X.courseid = "CL101") AND (schedule.courseid = "CL109")
 
 SELECT id
 FROM schedule
-WHERE (courseid != 'CL101')
+WHERE (course_id != 'CL101')
 ```
 
 ```sql
-SELECT X.courseid
-FROM schedule X, schedule WHERE (X.courseid = schedule.courseid)
-AND (X.courseid != schedule.courseid)
+SELECT X.course_id
+FROM schedule X, schedule WHERE (X.course_id = schedule.course_id)
+AND (X.course_id != schedule.course_id)
 
 -- E7 - Who takes at least 2 courses? 
 ```
@@ -173,8 +175,8 @@ AND (X.courseid != schedule.courseid)
 SELECT X.studentid
 FROM schedule X, schedule Y, schedule WHERE (X.studentid = Y.studentid)
 AND (Y.studentid = schedule.studentid)
-AND (X.courseid != Y.courseid)
-AND (Y.courseid != schedule.courseid) AND (X.courseid != schedule.courseid)
+AND (X.course_id != Y.course_id)
+AND (Y.course_id != schedule.course_id) AND (X.course_id != schedule.course_id)
 
 -- Who takes at least 3 courses?
 ```
@@ -188,7 +190,7 @@ SELECT id, name FROM Student
 WHERE id IN
     (SELECT studentid
     FROM schedule
-    WHERE courseid = 'CL101')
+    WHERE course_id = 'CL101')
 -- A sample Type 2 SQL query.
 ```
 ### Syntactically, a Type 2 SQL query is a collection of several non-correlated component queries, with some of them nested in the WHERE clauses of the others. (The meaning of the term "non-correlated"will be explained in a moment.)
@@ -209,7 +211,7 @@ clause. Then column reference is not local. SQL then looks at the next outer sco
 
 ### This process continues (using the same three possibilities) until either a column reference is successfully bound, or an ambiguity is found, or the binding process "falls off" the main query, in which case the column reference cannot be bound at all, and the appropriate error is declared.
 
-### Given this process and the query of Figure 10.1, columns id and courseid in its subquery are bound to the inner schedule table, and columns id and name in its main query are bound to the outer Student table, thus making all bindings local, the component queries non-correlated, and this entire query of Type 2.
+### Given this process and the query of Figure 10.1, columns id and course_id in its subquery are bound to the inner schedule table, and columns id and name in its main query are bound to the outer Student table, thus making all bindings local, the component queries non-correlated, and this entire query of Type 2.
 
 ### The formal syntactic condition for a multi-level (i.e., with subqueries) query to be of 'Type 2 is presented in Figure 10.2.
 
@@ -226,12 +228,12 @@ SELECT id, name FROM Student
 WHERE id IN
     (SELECT studentid
     FROM schedule
-    WHERE courseid = 'CL101')
+    WHERE course_id = 'CL101')
 ```
 
 The subquery is
 ```sql
-SELECT studentid FROM schedule WHERE (courseid = "CL101")
+SELECT studentid FROM schedule WHERE (course_id = "CL101")
 ```
 ### This is a regular Type 1 query, is executed first. Its answer is then substituted into its place in the main query, which is executed next.
 
@@ -249,7 +251,7 @@ SELECT id, name FROM Student
 WHERE id IN
     (SELECT studentid
     FROM schedule
-    WHERE courseid = 'CL101')
+    WHERE course_id = 'CL101')
 ```
 ### Answer: What are the student numbers and names of students who take CL101?
 
@@ -267,7 +269,7 @@ SELECT id
 FROM Student WHERE id NOT IN
     (SELECT studentid
     FROM schedule
-    WHERE courseid = "CL101");
+    WHERE course_id = "CL101");
 ```
 
 ### But how is this query evaluated, and what question does it pose?
@@ -300,14 +302,14 @@ AND (Y.studentid != schedule.studentid) AND (X.studentid = schedule.studentid)))
 ```sql
 -- Question E9- Who takes exactly 2 courses?
 
-SELECT X.courseid
-FROM schedule X, schedule WHERE (X.courseid = schedule.courseid)
-AND (X.courseid < schedule.courseid)
-AND NOT (X.courseid IN
-(SELECT X.courseid
-FROM schedule X, schedule Y, schedule WHERE (X.courseid = Y.courseid)
-AND (Y.courseid = schedule.courseid) AND (X.courseid < Y.courseid)
-AND (Y.courseid < schedule.courseid)))
+SELECT X.course_id
+FROM schedule X, schedule WHERE (X.course_id = schedule.course_id)
+AND (X.course_id < schedule.course_id)
+AND NOT (X.course_id IN
+(SELECT X.course_id
+FROM schedule X, schedule Y, schedule WHERE (X.course_id = Y.course_id)
+AND (Y.course_id = schedule.course_id) AND (X.course_id < Y.course_id)
+AND (Y.course_id < schedule.course_id)))
 ```
 
 ### This query is based on rephrasing question E9 as Who takes at least 2 courses and does not take at least 3 courses? The main query poses Who takes at least 2 courses? and is copied from query Q7. 0/ve have used the less-than operator in its condi­ tion to remove duplicates from the final answer. The sub­ query again poses Who takes at least 3 courses? (Here, we have used less-than operators for conciseness.) The NOT in the main WHERE clause again achieves the desired negation.

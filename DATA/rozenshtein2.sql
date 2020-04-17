@@ -24,14 +24,14 @@ create table professor (
 -- replaces Take in original schema
 drop table if exists schedule;
 create table schedule (
-	studentid integer,
-	courseid varchar(5)
+	student_id integer,
+	course_id varchar(5)
 );
 
 drop table if exists teach;
 create table teach (
 	professor_name varchar(10),
-	courseid varchar(5)
+	course_id varchar(5)
 );
 -- Changes Gillian's age to 18
 insert into student values (1, 'LISA', 20);

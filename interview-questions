@@ -23,3 +23,16 @@ UNION, UNION ALL, INTERSECT
 
 What is the difference between JOINs and SET operations?
 WHICH IS FASTER BETWEEN UNION AND UNION ALL?
+
+What is a nested subquery?
+
+A subquery in the FROM clause is also know as an inline view.
+A scalar subquery is a subquery that is found in the select clause. It returns one column and one row.
+
+What is a CTE? When might it improve the performance of your queries?
+
+What is a correlated subquery? How is it different from a nested subquery?
+
+What is the advantage of VIEWS? Can provide a view to perform a common sql statement so you have a unique answer to complicated questions. Can also limit access to sensitive info
+
+SQL Can derive calculations at runtime. It can make new columns.
