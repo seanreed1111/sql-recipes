@@ -1,9 +1,77 @@
 ```
-4 The Standard Questions
-We begin our presentation of SQL with a list of standard questions.
-This list will be extended with additional standard questions as we proceed. 
+# The Standard Questions (source: `The Essence of SQL by David Rozenshtein`)
+### We begin our presentation of SQL with a list of standard questions.
+### This list will be extended with additional standard questions as we proceed. 
+```
 
-El. Who takes (the course with the course number) CS112? (By "Who" we mean that we want the student num­ bers retrieved. If we want the names retrieved, we will explicitly say so.)
+### You have to understand what data you have and how it is organized BEFORE you can figure out what questions you can ask of it. So let's look at the organization of the data.
+
+```sql
+CREATE TABLE student (
+    id integer,
+    name varchar(10),
+    age integer
+);
+
+CREATE TABLE course (
+    id varchar(5),
+    name varchar(10),
+    credits integer
+);
+
+CREATE TABLE professor (
+    name varchar(10),
+    department varchar(10),
+    salary integer,
+    age integer
+);
+
+CREATE TABLE schedule (
+    studentid integer,
+    courseid varchar(5)
+);
+
+CREATE TABLE teach (
+    instructor varchar(10),
+    courseid varchar(5)
+);
+
+```
+
+### We see that there are five tables in our database that are of interest to us: `student`, `course`, `professor`, `schedule`, and `teach`
+
+## Discussion Question: What kinds of questions are we going to be able to ask of the data in each of these tables? 
+
+## It is CRUCIAL that you understand and identify what information is in which table BEFORE you try to do anything complicated in SQL! It is important to spend time getting to know the structure of your data before diving in. Don't be hasty! 
+
+### The one thing about SQL is that you can use simple SQL statements to figure out what data you have, before you start to think about complicated questions, even if you don't have access to a nice neat list of tables like the one above.
+
+### The way you find out what data is inside a table is by using the following command, inserting your table of interest for `table_name` (the number 3 is arbitrary. I personally like 3, but you could use 1 or 4 or 5 if you prefer):
+
+```sql
+SELECT * 
+FROM table_name 
+LIMIT 3;
+```
+
+## Discussion Question: What do you think the output of the following statement will look like given the `CREATE TABLE` statements above?
+
+```sql
+SELECT * 
+FROM student 
+LIMIT 3;
+```
+
+## Discussion Question: What do you think might be a potential advantage of INCLUDING the `LIMIT` statement rather than leaving it off like in the query below?
+
+```sql
+SELECT * 
+FROM student;
+```
+
+
+```
+E1. Who takes (the course with the course number) CS112? (By "Who" we mean that we want the student num­ bers retrieved. If we want the names retrieved, we will explicitly say so.)
 E2. What are student numbers and names of students who
 takeCS112?
 E3. Who takes CS112 or CS114?
@@ -24,13 +92,20 @@ E12. Who are the youngest students?
 E13. Who takes every course?
 ```
 
-```sql
 
+
+
+
+### Let's start with question `E1`: Who takes CS112?
+
+```sql
+--- E1 - Who takes CS112?
 SELECT Sno
 FROM Take
-WHERE (Cno = "CS112")
+WHERE Cno = 'CS112'
 
---- E1 - Who takes CS112?
+-- NOTE: 'CS112' is a text string. So it is enclosed in SINGLE QUOTES.
+-- Please use SINGLE QUOTES when you are writing SQL queries.
 ```
 
 
