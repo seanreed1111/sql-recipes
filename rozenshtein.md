@@ -19,6 +19,11 @@ CREATE TABLE course (
     credits integer
 );
 
+CREATE TABLE schedule (
+    studentid integer,
+    courseid varchar(5)
+);
+
 CREATE TABLE professor (
     name varchar(10),
     department varchar(10),
@@ -26,13 +31,8 @@ CREATE TABLE professor (
     age integer
 );
 
-CREATE TABLE schedule (
-    studentid integer,
-    courseid varchar(5)
-);
-
 CREATE TABLE teach (
-    instructor varchar(10),
+    professor varchar(10),
     courseid varchar(5)
 );
 

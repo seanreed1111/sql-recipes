@@ -30,7 +30,7 @@ create table schedule (
 
 drop table if exists teach;
 create table teach (
-	instructor varchar(10),
+	professor_name varchar(10),
 	courseid varchar(5)
 );
 -- Changes Gillian's age to 18
