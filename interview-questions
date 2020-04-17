@@ -1,0 +1,25 @@
+What is the difference between the IN and = operators?
+What is the difference between EXISTS and IN when using subqueries?
+What is the differnece between HAVING and WHERE clauses?
+  HAVING takes place AFTER the aggregation takes place.
+  WHERE takes place BEFORE the aggregation.
+
+Please explain the various types of joins.
+What is a self-join? Can you explain with an example?
+
+Please explain the various datatypes in Postgresql
+What is the difference between the date and the timestamp datatypes?
+what is the difference between a single row and a multi-row function?
+What date functions have you used before?
+
+How do CASE statements work in Postgresql?
+
+What does NULLIF do?
+What does COALESCE do?
+Explain the NULL concept in SQL?
+
+What are the SET operators in SQL?
+UNION, UNION ALL, INTERSECT
+
+What is the difference between JOINs and SET operations?
+WHICH IS FASTER BETWEEN UNION AND UNION ALL?
