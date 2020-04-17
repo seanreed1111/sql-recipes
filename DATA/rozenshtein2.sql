@@ -5,6 +5,7 @@ create table student (
 	age integer
 );
 
+-- Replaces courses in original schema
 drop table if exists course;
 create table course (
 	id varchar(5),
@@ -20,6 +21,7 @@ create table professor (
 	age integer
 );
 
+-- replaces Take in original schema
 drop table if exists schedule;
 create table schedule (
 	studentid integer,
