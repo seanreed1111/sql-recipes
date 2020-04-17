@@ -99,40 +99,125 @@ E13. Who takes every course?
 ```
 
 
-### Let's start with question `E1`: Who takes CL101?
+## `E1`: Who takes CL101?
 
 ```sql
 --- E1 - Who takes CL101?
-SELECT course_id
-FROM schedule
-WHERE course_id = 'CL101'
+SELECT 
+    student_id
+FROM 
+    schedule
+WHERE 
+    course_id = 'CL101';
 
 -- NOTE: 'CL101' is a text string. So it is enclosed in SINGLE QUOTES.
 -- Please use SINGLE QUOTES when you are writing SQL queries.
 ```
+### NOTE: 'CL101' is a text string, so it is enclosed in single quotes. 
+### Always use SINGLE QUOTES when you are writing text in SQL queries.
 
 
+## `E2`: What are student ids and names of students who take CL101?
 ```sql
---- Answer E2
-SELECT Student.id, Student.name FROM Student, schedule
-WHERE (Student.id = schedule.studentid)
-AND (schedule.course_id = "CL101")
+--- E2: What are student ids and names of students who take CL101?
+SELECT 
+    student.id, 
+    student.name 
+FROM 
+    student
+INNER JOIN 
+    schedule
+ON 
+ student.id = schedule.student_id
+WHERE 
+    schedule.course_id = 'CL101';
+
 ```
+
+## `E3`: Who takes CL101 or CL109?
 ```sql
-SELECT DISTINCT studentid
-FROM schedule
-WHERE (course_id = "CL101") OR (course_id = "CL109")
 -- Answer E3 - Who takes CL101 or CL109?
-```
-```sql
-SELECT DISTINCT studentid
-FROM schedule
-WHERE (course_id IN ("CL101", "CL109"))
--- Answer E3 - Who takes CL101 or CL109?
+SELECT 
+    student_id
+FROM 
+    schedule
+WHERE 
+    course_id = 'CL101' 
+OR 
+    course_id = 'CL109';
 ```
 
+### Notice that the output of this query has some duplicated rows.
+```
+ student_id
+------------
+          1
+          1
+          2
+          3
+          3
+          4
+          6
+```
+
+### If you ever need to get rid of redundant rows in your output, you can add the keyword `DISTINCT` to your query. This will remove duplicates but slow down your query if you have a lot of output, so only use when absolutely necessary. 
+
 ```sql
---- this is wrong Who takes both CL101 and CL109?
+SELECT DISTINCT
+    student_id
+FROM 
+    schedule
+WHERE 
+    course_id = 'CL101' 
+OR 
+    course_id = 'CL109';
+```
+
+### Output
+```
+ student_id
+------------
+          1
+          2
+          3
+          4
+          6
+```
+
+### You can use the keyword `IN` and put the choices inside of parentheses as an alternative to using `OR`. This can be useful and is preferred when you have a long list of things to include in your `WHERE` clause.
+
+```sql
+-- Answer E3 - Who takes CL101 or CL109?
+SELECT DISTINCT 
+    student_id
+FROM 
+    schedule
+WHERE 
+    course_id IN ('CL101', 'CL109');
+
+```
+### Output
+```
+ student_id
+------------
+          1
+          2
+          3
+          4
+          6
+```
+
+## Discussion Question: Describe in words how you believe SQL goes from the query to the output above. What order do you think it takes to find the answers?
+
+
+
+
+
+## `E4`: Who takes **both** CL101 and CL109?
+
+
+```sql
+--- this is wrong approach to E4: Who takes **both** CL101 and CL109?
 SELECT course_id
 FROM schedule
 WHERE (course_id = 'CL101')
@@ -143,7 +228,7 @@ AND (course_id = 'CL109')
 ```sql
 SELECT X.course_id
 FROM schedule X, schedule WHERE (X.course_id = schedule.course_id)
-AND (X.course_id = "CL101") AND (schedule.course_id = "CL109")
+AND (X.course_id = 'CL101') AND (schedule.course_id = 'CL109')
 
 -- E4 - Who takes both C5112 and CL109?
 ```
@@ -172,9 +257,9 @@ AND (X.course_id != schedule.course_id)
 -- E7 - Who takes at least 2 courses? 
 ```
 ```sql
-SELECT X.studentid
-FROM schedule X, schedule Y, schedule WHERE (X.studentid = Y.studentid)
-AND (Y.studentid = schedule.studentid)
+SELECT X.student_id
+FROM schedule X, schedule Y, schedule WHERE (X.student_id = Y.student_id)
+AND (Y.student_id = schedule.student_id)
 AND (X.course_id != Y.course_id)
 AND (Y.course_id != schedule.course_id) AND (X.course_id != schedule.course_id)
 
@@ -188,7 +273,7 @@ AND (Y.course_id != schedule.course_id) AND (X.course_id != schedule.course_id)
 ```sql
 SELECT id, name FROM Student 
 WHERE id IN
-    (SELECT studentid
+    (SELECT student_id
     FROM schedule
     WHERE course_id = 'CL101')
 -- A sample Type 2 SQL query.
@@ -226,14 +311,14 @@ In case of the query above, ie
 ```sql
 SELECT id, name FROM Student 
 WHERE id IN
-    (SELECT studentid
+    (SELECT student_id
     FROM schedule
     WHERE course_id = 'CL101')
 ```
 
 The subquery is
 ```sql
-SELECT studentid FROM schedule WHERE (course_id = "CL101")
+SELECT student_id FROM schedule WHERE (course_id = 'CL101')
 ```
 ### This is a regular Type 1 query, is executed first. Its answer is then substituted into its place in the main query, which is executed next.
 
@@ -249,7 +334,7 @@ Finally, returning once more to the entire query, what question does it answer?
 ```sql
 SELECT id, name FROM Student 
 WHERE id IN
-    (SELECT studentid
+    (SELECT student_id
     FROM schedule
     WHERE course_id = 'CL101')
 ```
@@ -267,9 +352,9 @@ To pose a question `"Who does not do X?"`
 ```sql
 SELECT id
 FROM Student WHERE id NOT IN
-    (SELECT studentid
+    (SELECT student_id
     FROM schedule
-    WHERE course_id = "CL101");
+    WHERE course_id = 'CL101');
 ```
 
 ### But how is this query evaluated, and what question does it pose?
@@ -284,12 +369,12 @@ E11. Specifically, question E5- Who takes at most 2 courses?-is posed by query Q
 SELECT id
 FROM Student
 WHERE id NOT IN
-(SELECT X.studentid
+(SELECT X.student_id
 FROM schedule X, schedule Y,schedule
-WHERE (X.studentid = Y.studentid)
-AND (Y.studentid = schedule.studentid)
-AND  (X.studentid != Y.studentid)
-AND (Y.studentid != schedule.studentid) AND (X.studentid = schedule.studentid)));
+WHERE (X.student_id = Y.student_id)
+AND (Y.student_id = schedule.student_id)
+AND  (X.student_id != Y.student_id)
+AND (Y.student_id != schedule.student_id) AND (X.student_id = schedule.student_id)));
 ```
 
 ### This query is based on rephrasing question ES as Who does not take at least 3 courses? The subquery here poses the ques­tion `Who takes at least 3 courses?` The NOT in the main WHERE clause achieves the desired negation.
