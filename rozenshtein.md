@@ -42,9 +42,11 @@ CREATE TABLE teach (
 
 ## Discussion Question: What kinds of questions are we going to be able to ask of the data in each of these tables? 
 
-## It is CRUCIAL that you understand and identify what information is in which table BEFORE you try to do anything complicated in SQL! It is important to spend time getting to know the structure of your data before diving in. Don't be hasty! 
+## Discussion Question: How are these tables connected to each other? How would you draw a diagram showing these connections?
 
-### The one thing about SQL is that you can use simple SQL statements to figure out what data you have, before you start to think about complicated questions, even if you don't have access to a nice neat list of tables like the one above.
+## It is CRUCIAL that you understand and identify what information is in your database, and also understand how the data is distributed among the different tables. No two databases you encounter will be set up exactly the same, so you it is important to spend time getting to know something about the structure of your database and tables before diving in. Don't be hasty! 
+
+### One good thing about SQL is that you can use simple SQL statements to figure out what data you have, before you start to think about complicated questions, even if you aren't given a nice neat list of tables like the one above.
 
 ### The way you find out what data is inside a table is by using the following command, inserting your table of interest for `table_name` (the number 3 is arbitrary. I personally like 3, but you could use 1 or 4 or 5 if you prefer):
 
@@ -62,20 +64,29 @@ FROM student
 LIMIT 3;
 ```
 
-###output
+### output
+```
+ id | name  | age
+----+-------+-----
+  1 | LISA  |  20
+  2 | CHUCK |  21
+  3 | CHLOE |  20
 ```
 
-
-```
-
-## Discussion Question: What do you think might be a potential advantage of **INCLUDING** the `LIMIT` statement rather than leaving it off like in the query below?
+## Discussion Question: What do you think might be a potential disadvantage of removing the `LIMIT` statement from the above query, like in the query below?
 
 ```sql
 SELECT * 
 FROM student;
 ```
 
-### Let's take a look at a list of questions that we can ask about the students in our imaginary college.
+### SQL allows us to answer questions about our data. In you future position as a data analyst, people will ask you all kinds of questions that they want to know about their customers, questions comparing this month's data to last month's, questions about who spends a lot or a little, and what kinds of products they spend the most money on, etc.
+
+### If the data is available, **and** the data is reliable (Garbage In --> Garbage Out), you can use SQL to answer many or all of these questions once you get good at it. 
+
+## Discussion: What sorts of questions could we ask about our professors? Please take a few minutes and write out some additional questions about them.
+
+### To start off let's take a look at a few questions that we might ask about the students in our imaginary school.
 
 ```
 E1. Who takes (the course with the course number) CL101? (By "Who" we mean that we want the student ids retrieved. If we want the names retrieved, we will explicitly say so.)
@@ -97,6 +108,11 @@ E12. Who are the youngest students?
 (Similarly, Who are the oldest students?)
 E13. Who takes every course?
 ```
+
+### Note: This is obviously not a random series of questions. These questions, although they all look fairly similar, require a different levels of complication wrt SQL queries. 
+
+
+
 
 
 ## `E1`: Who takes CL101?
@@ -134,6 +150,23 @@ WHERE
 
 ```
 
+### output
+```
+ id |  name
+----+--------
+  1 | LISA
+  2 | CHUCK
+  3 | CHLOE
+  4 | MAGGIE
+```
+
+
+## Discussion Question: Describe in words how you believe SQL goes from the query to the output above. What order do you think it takes to find the answers?
+
+---
+
+
+
 ## `E3`: Who takes CL101 or CL109?
 ```sql
 -- Answer E3 - Who takes CL101 or CL109?
@@ -160,7 +193,8 @@ OR
           6
 ```
 
-### If you ever need to get rid of redundant rows in your output, you can add the keyword `DISTINCT` to your query. This will remove duplicates but slow down your query if you have a lot of output, so only use when absolutely necessary. 
+### If you ever need to get rid of redundant rows in your output, you can add the keyword `DISTINCT` to your query. 
+### Note: This will remove duplicates but it `slows down your query` if you have a lot of output, so only use when absolutely necessary. 
 
 ```sql
 SELECT DISTINCT
@@ -183,6 +217,9 @@ OR
           4
           6
 ```
+
+
+
 
 ### You can use the keyword `IN` and put the choices inside of parentheses as an alternative to using `OR`. This can be useful and is preferred when you have a long list of things to include in your `WHERE` clause.
 
@@ -207,66 +244,215 @@ WHERE
           6
 ```
 
-## Discussion Question: Describe in words how you believe SQL goes from the query to the output above. What order do you think it takes to find the answers?
-
-
-
 
 
 ## `E4`: Who takes **both** CL101 and CL109?
 
 
+### This is wrong
 ```sql
---- this is wrong approach to E4: Who takes **both** CL101 and CL109?
-SELECT course_id
-FROM schedule
-WHERE (course_id = 'CL101')
-AND (course_id = 'CL109')
+--- this is wrong 
+-- bad approach to E4: Who takes **both** CL101 and CL109?
+SELECT 
+  course_id
+FROM 
+  schedule
+WHERE 
+  course_id = 'CL101'
+AND 
+  course_id = 'CL109';
 
 ```
 
-```sql
-SELECT X.course_id
-FROM schedule X, schedule WHERE (X.course_id = schedule.course_id)
-AND (X.course_id = 'CL101') AND (schedule.course_id = 'CL109')
-
--- E4 - Who takes both C5112 and CL109?
+## Discussion Question: Why are there zero rows as a result of the above query??
+```
+ course_id
+-----------
+(0 rows)
 ```
 
-### Before proceeding further, we want to make several com­ ments regarding the use of aliases. First, the choice of alias names is completely arbitrary as long as they do not conflict with each other or with any real table name used in a query.
 
-### Second, aliases are opaque- a technical term meaning that an alias completely covers and hides the name of the under­ lying table. Thus, from the point of view of the SELECT and WHERE clauses, the query of Figure 6.4 involves two tables: one named X and the other named Take.
+### To answer the question `Who takes both CL101 and CL109?` we need to join the `schedule` table with itself. When you join a table to a copy of itself, that is called a `self-join`.
+
+
+### Let's look at the full schedule
+```sql
+SELECT * FROM schedule;
+```
+
+```
+ student_id | course_id
+------------+-----------
+          1 | CL101
+          1 | CL105
+          1 | CL109
+          2 | CL101
+          3 | CL101
+          3 | CL109
+          4 | CL101
+          4 | CL105
+          5 | CL105
+          6 | CL105
+          6 | CL109
+```
+
+
+
+### Correct Answer: E4 - Who takes both CL101 and CL109?
+```sql
+-- E4 - Who takes both CL101 and CL109?
+SELECT 
+  schedule1.student_id
+FROM 
+  schedule AS schedule1
+INNER JOIN 
+  schedule AS schedule2
+ON 
+  schedule1.student_id = schedule2.student_id
+AND
+  schedule1.course_id = 'CL101'
+AND
+  schedule2.course_id = 'CL109';
+
+
+```
+
+```
+ student_id
+------------
+          1
+          3
+```
+
+### In order to do a self-join you MUST use aliases. 
+
+### Discussion Question: Why do you think aliases are required for self-joins?
+
+
+### Note: The choice of alias names is completely arbitrary as long as they do not conflict with each other or with any real table name used in a query.
+
+### Second, aliases are opaque- a technical term meaning that an alias completely covers and hides the name of the under­lying table. Thus, from the point of view of the `SELECT` and `WHERE` clauses, the query involves two tables: one named `schedule1` and the other named `schedule2`. The query CANNOT reference the table named `schedule`.
     
 ### Third, it is always permitted to alias tables, even if not really necessary. Indeed, to save on typing, SQL program­ mers often use short aliases for long, meaningful table names given to them by well-meaning database designers. 
 
-### Finally, we note that aliases are an essential feature of SQL. Without them, standard questions involving the both-and construct and self-joins could not have been asked as Type 1 queries.
+### Finally, we note that aliases are an `essential` feature of SQL. Without them, standard questions involving the both/and construct and self-joins could not have been asked as Type 1 queries.
+
+---
+
+### E5: Who does not take CL101?
+### This question should be translated as 'Which students do not take CL101?'
+### So, you must query the `STUDENT` table AND the `SCHEDULE` table!
 
 ```sql
---- Who takes a course which is not CL101?
+SELECT id
+FROM student
+WHERE 
+  id NOT IN 
+        (SELECT 
+          student_id 
+        FROM 
+          schedule 
+        WHERE 
+          schedule.course_id = 'CL101'
+        );
+```
+
+### Here we have a nested subquery, our first one!
+### The subquery is:
+
+```sql
+SELECT 
+  student_id 
+FROM 
+  schedule 
+WHERE 
+  schedule.course_id = 'CL101';
+```
+
+### Pay close attention to how we have solved the problem of figuring out which students do not take CL101.
+1. First, we figured out which students take CL101.
+2. Then, we remove those students from our full student list.
+
+### We found out who was `IN` the group in question, in this case 'CL101' students, and then we took them out, leaving us with those who were `NOT` in the group. You will be able to use this strategy over an over for many SQL queries of a similar structure!
+
+---
+
+Question `E6`: Who takes a course which is not CL101?
+
+### Question `E6` sounds similar to `E5` but is much simpler! 
+### Because we are starting with students who are taking courses, we are only concerned with the `schedule` table rather than both the  `student` and `schedule` tables.
+
+```sql
+--- E6 - Who takes a course which is not CL101?
 
 SELECT id
 FROM schedule
-WHERE (course_id != 'CL101')
+WHERE course_id != 'CL101'
 ```
+---
+
+Question E7 - Who takes at least 2 courses?
 
 ```sql
-SELECT X.course_id
-FROM schedule X, schedule WHERE (X.course_id = schedule.course_id)
-AND (X.course_id != schedule.course_id)
-
 -- E7 - Who takes at least 2 courses? 
+
+SELECT 
+  schedule1.student_id
+FROM 
+  schedule AS schedule1
+INNER JOIN 
+  schedule AS schedule2
+ON 
+  schedule1.student_id = schedule2.student_id
+AND 
+  schedule1.course_id < schedule2.course_id;
+
+
 ```
+### with duplicates
+```
+ student_id
+------------
+          1
+          1
+          1
+          3
+          4
+          6
+(6 rows)
+```
+
+
+### E7 - Who takes at least 2 courses? (Without Duplicates)
 ```sql
-SELECT X.student_id
-FROM schedule X, schedule Y, schedule WHERE (X.student_id = Y.student_id)
-AND (Y.student_id = schedule.student_id)
-AND (X.course_id != Y.course_id)
-AND (Y.course_id != schedule.course_id) AND (X.course_id != schedule.course_id)
-
--- Who takes at least 3 courses?
+SELECT 
+  schedule1.student_id
+FROM 
+  schedule AS schedule1
+INNER JOIN 
+  schedule AS schedule2
+ON 
+  schedule1.student_id = schedule2.student_id
+AND 
+  schedule1.course_id < schedule2.course_id
+GROUP BY
+  schedule1.student_id;
 ```
 
-### A sample Type 2 query is shown below
+### Output - E7 - Who takes at least 2 courses? (Without Duplicates)
+```
+ student_id
+------------
+          1
+          3
+          4
+          6
+(4 rows)
+```
+---
+
+
+### Introduction to Type 2 query is shown below
 
 ### We begin the discussion by first explaining its syntax, then introduc­ ing the Type 2 evaluation mechanism, and finally tracing this query to determine the question it poses.
 
@@ -278,7 +464,7 @@ WHERE id IN
     WHERE course_id = 'CL101')
 -- A sample Type 2 SQL query.
 ```
-### Syntactically, a Type 2 SQL query is a collection of several non-correlated component queries, with some of them nested in the WHERE clauses of the others. (The meaning of the term "non-correlated"will be explained in a moment.)
+### Syntactically, a Type 2 SQL query is a collection of several non-correlated component queries, with some of them nested in the WHERE clauses of the others. (The meaning of the term "non-correlated" will be explained in a moment.)
 
 ### Theoretically, there is no limit on the number of nesting lev­els or on the number of component queries involved. On a practical level, however, SQL compilers do impose some limitations in this regard (e.g., no more than 16 nesting lev­ els or 256 component queries), but these rarely present any real problems.
 

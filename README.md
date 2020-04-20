@@ -52,7 +52,7 @@ Use the asterisk (*) placeholder, to represent all columns for a table.
 ```sql
 SELECT *
 FROM employee
-WHERE department_id = 50 and salary < 7500;
+WHERE department_id = 50 AND salary < 7500;
 ```
 ---
 # Sorting Your Results
