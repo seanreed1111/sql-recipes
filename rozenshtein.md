@@ -669,6 +669,8 @@ WHERE id IN
 ### <<Insert Party GIF here>>
 
 
+## More Fun with Type 2 Queries
+
 ### Using Type 2 to Implement Real Negation
 ### Questions involving real negation need two passes through the data, using the fol­lowing general strategy:
 
@@ -680,7 +682,8 @@ To pose a question `"Who does not do X?"`
 
 ```sql
 SELECT id
-FROM Student WHERE id NOT IN
+FROM student 
+WHERE id NOT IN
     (SELECT student_id
     FROM schedule
     WHERE course_id = 'CL101');
@@ -694,16 +697,18 @@ Using the solution to question E5 as a foundation, it is now quite easy to gener
 E11. Specifically, question E5- Who takes at most 2 courses?-is posed by query QB of Figure 12.1.
 
 ```sql
--- Question E5 Who takes at most 2courses?
+-- Question E5 Who takes at most 2 courses?
 SELECT id
 FROM Student
 WHERE id NOT IN
 (SELECT X.student_id
 FROM schedule X, schedule Y,schedule
-WHERE (X.student_id = Y.student_id)
-AND (Y.student_id = schedule.student_id)
-AND  (X.student_id != Y.student_id)
-AND (Y.student_id != schedule.student_id) AND (X.student_id = schedule.student_id)));
+WHERE X.student_id = Y.student_id
+AND Y.student_id = schedule.student_id
+AND  X.student_id != Y.student_id
+AND Y.student_id != schedule.student_id 
+AND X.student_id = schedule.student_id
+);
 ```
 
 ### This query is based on rephrasing question ES as Who does not take at least 3 courses? The subquery here poses the ques­tion `Who takes at least 3 courses?` The NOT in the main WHERE clause achieves the desired negation.
@@ -731,3 +736,160 @@ AND (Y.course_id < schedule.course_id)))
 ### We note that even though we have used the same alias name X in both the main query and in the subquery, because of the scope rules, no confusion arises.
 
 ### Translating Your Request into SQL
+
+
+
+### What is a self join?
+```sql
+SELECT *
+FROM professor AS a
+INNER JOIN professor AS b
+ON a.name = b.name;
+```
+
+```
+ name  | department | salary | age | name  | department | salary | age
+-------+------------+--------+-----+-------+------------+--------+-----
+ CHOI  | SCIENCE    |  40000 |  45 | CHOI  | SCIENCE    |  40000 |  45
+ GUNN  | HISTORY    |  30000 |  60 | GUNN  | HISTORY    |  30000 |  60
+ MAYER | MATH       |  40000 |  55 | MAYER | MATH       |  40000 |  55
+ POMEL | SCIENCE    |  50000 |  65 | POMEL | SCIENCE    |  50000 |  65
+ FEUER | MATH       |  40000 |  40 | FEUER | MATH       |  40000 |  40
+(5 rows)
+```
+
+```sql
+SELECT *
+FROM professor AS a
+INNER JOIN professor AS b
+ON a.salary = b.salary;
+```
+
+```
+ name  | department | salary | age | name  | department | salary | age
+-------+------------+--------+-----+-------+------------+--------+-----
+ CHOI  | SCIENCE    |  40000 |  45 | FEUER | MATH       |  40000 |  40
+ CHOI  | SCIENCE    |  40000 |  45 | MAYER | MATH       |  40000 |  55
+ CHOI  | SCIENCE    |  40000 |  45 | CHOI  | SCIENCE    |  40000 |  45
+ GUNN  | HISTORY    |  30000 |  60 | GUNN  | HISTORY    |  30000 |  60
+ MAYER | MATH       |  40000 |  55 | FEUER | MATH       |  40000 |  40
+ MAYER | MATH       |  40000 |  55 | MAYER | MATH       |  40000 |  55
+ MAYER | MATH       |  40000 |  55 | CHOI  | SCIENCE    |  40000 |  45
+ POMEL | SCIENCE    |  50000 |  65 | POMEL | SCIENCE    |  50000 |  65
+ FEUER | MATH       |  40000 |  40 | FEUER | MATH       |  40000 |  40
+ FEUER | MATH       |  40000 |  40 | MAYER | MATH       |  40000 |  55
+ FEUER | MATH       |  40000 |  40 | CHOI  | SCIENCE    |  40000 |  45
+```
+
+
+```sql
+SELECT *
+FROM professor AS a
+INNER JOIN professor AS b
+ON a.salary > b.salary;
+```
+
+```
+ name  | department | salary | age | name  | department | salary | age
+-------+------------+--------+-----+-------+------------+--------+-----
+ CHOI  | SCIENCE    |  40000 |  45 | GUNN  | HISTORY    |  30000 |  60
+ MAYER | MATH       |  40000 |  55 | GUNN  | HISTORY    |  30000 |  60
+ POMEL | SCIENCE    |  50000 |  65 | CHOI  | SCIENCE    |  40000 |  45
+ POMEL | SCIENCE    |  50000 |  65 | GUNN  | HISTORY    |  30000 |  60
+ POMEL | SCIENCE    |  50000 |  65 | MAYER | MATH       |  40000 |  55
+ POMEL | SCIENCE    |  50000 |  65 | FEUER | MATH       |  40000 |  40
+ FEUER | MATH       |  40000 |  40 | GUNN  | HISTORY    |  30000 |  60
+(7 rows)
+```
+
+```sql
+SELECT *
+FROM professor AS a
+INNER JOIN professor AS b
+ON a.salary < b.salary;
+```
+
+```
+ name  | department | salary | age | name  | department | salary | age
+-------+------------+--------+-----+-------+------------+--------+-----
+ CHOI  | SCIENCE    |  40000 |  45 | POMEL | SCIENCE    |  50000 |  65
+ GUNN  | HISTORY    |  30000 |  60 | CHOI  | SCIENCE    |  40000 |  45
+ GUNN  | HISTORY    |  30000 |  60 | MAYER | MATH       |  40000 |  55
+ GUNN  | HISTORY    |  30000 |  60 | POMEL | SCIENCE    |  50000 |  65
+ GUNN  | HISTORY    |  30000 |  60 | FEUER | MATH       |  40000 |  40
+ MAYER | MATH       |  40000 |  55 | POMEL | SCIENCE    |  50000 |  65
+ FEUER | MATH       |  40000 |  40 | POMEL | SCIENCE    |  50000 |  65
+```
+
+
+```sql
+SELECT *
+FROM professor AS a
+INNER JOIN professor AS b
+ON a.salary <= b.salary;
+```
+
+```
+ name  | department | salary | age | name  | department | salary | age
+-------+------------+--------+-----+-------+------------+--------+-----
+ CHOI  | SCIENCE    |  40000 |  45 | CHOI  | SCIENCE    |  40000 |  45
+ CHOI  | SCIENCE    |  40000 |  45 | MAYER | MATH       |  40000 |  55
+ CHOI  | SCIENCE    |  40000 |  45 | POMEL | SCIENCE    |  50000 |  65
+ CHOI  | SCIENCE    |  40000 |  45 | FEUER | MATH       |  40000 |  40
+ GUNN  | HISTORY    |  30000 |  60 | CHOI  | SCIENCE    |  40000 |  45
+ GUNN  | HISTORY    |  30000 |  60 | GUNN  | HISTORY    |  30000 |  60
+ GUNN  | HISTORY    |  30000 |  60 | MAYER | MATH       |  40000 |  55
+ GUNN  | HISTORY    |  30000 |  60 | POMEL | SCIENCE    |  50000 |  65
+ GUNN  | HISTORY    |  30000 |  60 | FEUER | MATH       |  40000 |  40
+ MAYER | MATH       |  40000 |  55 | CHOI  | SCIENCE    |  40000 |  45
+ MAYER | MATH       |  40000 |  55 | MAYER | MATH       |  40000 |  55
+ MAYER | MATH       |  40000 |  55 | POMEL | SCIENCE    |  50000 |  65
+ MAYER | MATH       |  40000 |  55 | FEUER | MATH       |  40000 |  40
+ POMEL | SCIENCE    |  50000 |  65 | POMEL | SCIENCE    |  50000 |  65
+ FEUER | MATH       |  40000 |  40 | CHOI  | SCIENCE    |  40000 |  45
+ FEUER | MATH       |  40000 |  40 | MAYER | MATH       |  40000 |  55
+ FEUER | MATH       |  40000 |  40 | POMEL | SCIENCE    |  50000 |  65
+ FEUER | MATH       |  40000 |  40 | FEUER | MATH       |  40000 |  40
+```
+
+
+### What is a cross join?
+```sql
+select * 
+from 
+  professor AS a 
+cross join 
+  professor AS b;
+```
+
+### output 
+```
+name  | department | salary | age | name  | department | salary | age
+-------+------------+--------+-----+-------+------------+--------+-----
+ CHOI  | SCIENCE    |  40000 |  45 | CHOI  | SCIENCE    |  40000 |  45
+ CHOI  | SCIENCE    |  40000 |  45 | GUNN  | HISTORY    |  30000 |  60
+ CHOI  | SCIENCE    |  40000 |  45 | MAYER | MATH       |  40000 |  55
+ CHOI  | SCIENCE    |  40000 |  45 | POMEL | SCIENCE    |  50000 |  65
+ CHOI  | SCIENCE    |  40000 |  45 | FEUER | MATH       |  40000 |  40
+ GUNN  | HISTORY    |  30000 |  60 | CHOI  | SCIENCE    |  40000 |  45
+ GUNN  | HISTORY    |  30000 |  60 | GUNN  | HISTORY    |  30000 |  60
+ GUNN  | HISTORY    |  30000 |  60 | MAYER | MATH       |  40000 |  55
+ GUNN  | HISTORY    |  30000 |  60 | POMEL | SCIENCE    |  50000 |  65
+ GUNN  | HISTORY    |  30000 |  60 | FEUER | MATH       |  40000 |  40
+ MAYER | MATH       |  40000 |  55 | CHOI  | SCIENCE    |  40000 |  45
+ MAYER | MATH       |  40000 |  55 | GUNN  | HISTORY    |  30000 |  60
+ MAYER | MATH       |  40000 |  55 | MAYER | MATH       |  40000 |  55
+ MAYER | MATH       |  40000 |  55 | POMEL | SCIENCE    |  50000 |  65
+ MAYER | MATH       |  40000 |  55 | FEUER | MATH       |  40000 |  40
+ POMEL | SCIENCE    |  50000 |  65 | CHOI  | SCIENCE    |  40000 |  45
+ POMEL | SCIENCE    |  50000 |  65 | GUNN  | HISTORY    |  30000 |  60
+ POMEL | SCIENCE    |  50000 |  65 | MAYER | MATH       |  40000 |  55
+ POMEL | SCIENCE    |  50000 |  65 | POMEL | SCIENCE    |  50000 |  65
+ POMEL | SCIENCE    |  50000 |  65 | FEUER | MATH       |  40000 |  40
+ FEUER | MATH       |  40000 |  40 | CHOI  | SCIENCE    |  40000 |  45
+ FEUER | MATH       |  40000 |  40 | GUNN  | HISTORY    |  30000 |  60
+ FEUER | MATH       |  40000 |  40 | MAYER | MATH       |  40000 |  55
+ FEUER | MATH       |  40000 |  40 | POMEL | SCIENCE    |  50000 |  65
+ FEUER | MATH       |  40000 |  40 | FEUER | MATH       |  40000 |  40
+(25 rows)
+```

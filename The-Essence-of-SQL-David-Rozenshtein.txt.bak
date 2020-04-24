@@ -5,18 +5,18 @@ E1.	Who takes (the course with the course number) CS112? (By "Who" we mean that 
 E2. What are student numbers and names of students who
 take CS112?
 E3. Who takes CS112 or CS114?
-E4.	Who takes both CS112 and CS114? 
+E4.	Who takes both CS112 and CS114?
 E5.	Who does not take CS112?
 E6.	Who takes a course which is not CS112?
 E7. Who takes at least 2 courses (i.e., at least 2 courses with different course numbers)?
 (Amore general question: Who takes at least 3, 4, 5,
 etc., courses?)
 E8.	Who takes at most 2 courses?
-    (More generally: 3, 4, 5, etc., courses?) 
+    (More generally: 3, 4, 5, etc., courses?)
 E9.	Who takes exactly 2 courses?
-     (More generally: 3, 4, 5, etc., courses?) 
+     (More generally: 3, 4, 5, etc., courses?)
 ElO. Who takes only CS112?
-E11. Who takes either CS112 or CS114? 
+E11. Who takes either CS112 or CS114?
 E12. Who are the youngest students?
 (Similarly, Who are the oldest students?)
 E13. Who takes every course?
@@ -93,7 +93,7 @@ By following this trace, we can now confidently assert that query Ql indeed corr
 
 We note that because evaluation mechanisms are formal devices, they do not represent actual evaluation strategies taken by real systems. (No real system would be caught dead actually taking cross-products all the time.) All that is required of them is that they always give the same result as a real system. Thus, in developing this particular form of the evaluation mechanism, we were not concerned with its apparent inefficiency, and concentrated instead on its clarity and ease of use in tracing.
 
-The SQL query corresponding to question E2- 
+The SQL query corresponding to question E2-
 What are student numbers and names of students who take CS112?- is shown in Figure 5.3.
 
 
@@ -371,7 +371,7 @@ take both CS112 and CS114?
 
 
 
-......................................................................... 	
+.........................................................................
 
 ,	Negation Revisited II
 
@@ -452,9 +452,9 @@ To execute a Type 2 query, execute its component queries in the "inside-out" ord
 
 Figure 10.3: The Type 2 SQL evaluation mechanism.
 
-In case of the query of Figure 10.1, 
+In case of the query of Figure 10.1,
 
-the subquery 
+the subquery
 SELECT Sno
 FROM Take
 WHERE (Cno = "CS112")
@@ -705,7 +705,7 @@ If we wish to pose the question Who are the oldest students?, we can simply repl
 11THE ESSENCE OFSQL:  A Gulde to Learning Most of SQLIn the Least Amount ofTlme
 
 14 A Look at SQL Enhancements
-In this section, we take a break from the fundamental fea­ tures of the language and take a brief look at the various enhancements it provides. Roughly speaking, these enhance­ ments can be divided into three categories: syntactic enhance­ ments, presentation enhancements and scalar expressions.
+In this section, we take a break from the fundamental fea­tures of the language and take a brief look at the various enhancements it provides. Roughly speaking, these enhance­ ments can be divided into three categories: syntactic enhance­ ments, presentation enhancements and scalar expressions.
 
 Syntactic enhancements are those features that make the writing of SQL queries easier. They include: omitting the WHERE clause, using symbol * (asterisk) in the SELECT clause, and using operator NOT IN.
 
@@ -726,7 +726,7 @@ SQL provides the shorthand symbol * (asterisk) if the request is to retrieve all
 
 
 
-......................................................... 	
+.........................................................
 
 ,	ALookatSQL.Enhancements II
 
@@ -778,7 +778,7 @@ SELECT Name= Sname; ...
 Alternatively, we can follow the column reference by the keyword AS and the new name.
 
 SELECT Sname AS Name, ...
-..................... 	_	 	
+..................... 	_
 
 In both cases, when we want the new column heading to include spaces (and, in some SQL dialects, certain other characters as well), the new name should be enclosed in quotes.
 SELECT "Student Name" = Sname, ...
@@ -829,13 +829,17 @@ The basic rule of thumb for using scalar expressions in SQL is as follows: Where
 For example, the query of Figure 14.5 assumes table Room(Rno, Length, Width) and retrieves room numbers and areas of those rooms where the length of the room is within 1% of its width, sorting the answer in the descend­ ing order by area.
 
 
-SELECT Rno, Area = Length*Width FROMRoom
-WHERE abs(Length-Width)/Width <= 0.01 ORDER BY 2 DESC
+SELECT
+Rno,
+Area = Length*Width
+FROM Room
+WHERE abs(Length-Width)/Width <= 0.01
+ORDER BY 2 DESC
 
 Figure 14.5: Example use of arithmetic In SQL.
 
 
-00     	
+00
 
 
 
@@ -843,7 +847,7 @@ THE ESSENCE OF SQL: A Guide to Learning Most of SQL In the Least Amount of TIme.
 
 Since many SQL dialects forbid the use of expressions in the ORDER BY clause, and since in most of them column renaming is done after the sorting, referring to expression­ based columns by their positions in the ORDER BY clause is the only means left to achieve the desired sort.
 
-A less obvious consequence of having expressions in SQL, is that we can use the string manipulation capabilities for for­ matting query answers. As an example, Figure 14.6 shows a query that will retrieve all professor names, formatted as last name, comma, space, first initial, period, as in: "Smith,
+A less obvious consequence of having expressions in SQL, is that we can use the string manipulation capabilities for for­matting query answers. As an example, Figure 14.6 shows a query that will retrieve all professor names, formatted as last name, comma, space, first initial, period, as in: "Smith,
 J." (Function substring(Fname,1,1) gets one character start­ ing at position 1  from Fname; when used with strings,  sym­
 bol+ denotes the concatenation operator.)
 
@@ -870,56 +874,6 @@ Figure 14.6: Formatting an answer.
 
 
 
-
-...........,..., •• .........,,. 	,., 	A.
-
-Look atSQL E0   nhanceme nts   II
-
-r
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-II 		0
 
 15 Handling Composite Keys
 All of the questions considered thus far in this essay have been about students taking courses. Surely, the same types of questions can also be asked about professors teaching them. Aie there any differences, and do the same types of solutions apply?
@@ -949,7 +903,7 @@ Another question also involving "at least"- Which courses are taught by at least
 
 The tricky part here is to realize that a difference in just the first names or just the last names of two professors is suffi­ cient to make them different from each other. The correct way of expressing this condition involves the use of OR, as shown in Figure 15.2, with the necessary extra pair of parenthesis around the OR operands. As an additional exer­ cise, try posing the question Which courses are taught by at least 3 professors?
 
-SELECT X.Cno	
+SELECT X.Cno
 FROM Teach X, Teach Y
 WHERE (X.Cno = Y.Cno)
 AND ((XFname != Y.Fname)
@@ -1105,23 +1059,6 @@ Cno. The answer to the middle subquery then contains the Sno values from these c
 The condition of the outer query then fails for these stu­ dents, leaving for the final answer the student numbers of only those students who are not among those retrieved by the middle subquery. In other words, those students who take every course.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 IITHE ESSENCE OFSQ.L: A Gulde to.Learning Most of SQL In the Least Amount ofTlm;··
 
 18 A Brief Interlude
@@ -1140,46 +1077,7 @@ We have just completed all of the standard questions from Figure 4.1, covering T
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 •. 	A..  Brief lntedude II
-
-
-
-!
-
-
-I
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1198,7 +1096,7 @@ II;	-	; OF SQL: A Gulde to Learning Most of SQL in the Lea ;- :::· t of Time
 
 
 19 Additional Standard Questions
-Five additional standard questions, motivating SQL aggre­ gation facilities, are listed in Figure 19.1.
+Five additional standard questions, motivating SQL aggre­gation facilities, are listed in Figure 19.1.
 
 
 E14.		For each department that has more than 3 profes­ sors older than 50, what is the average salary of such professors?
@@ -1211,7 +1109,7 @@ E18.	Whose salary is greater than the average salary within that professor's dep
 Figure 19.1: A list of additional standard questions motivating SQL aggregation facilities.
 
 
-While the standard nature of these questions is not immedi­ ately apparent, it will become clear as we consider each question in turn.
+While the standard nature of these questions is not immedi­ately apparent, it will become clear as we consider each question in turn.
 
 
 
@@ -1249,18 +1147,23 @@ While the standard nature of these questions is not immedi­ ately apparent, it w
 
 
 
-20Computing Aggregates  for Groups
+20 Computing Aggregates  for Groups
 The query posing question El4- For each department that has more than 3 professors older than 50, what is the average salary of such professors?...:...is shown in Figure 20.1.
 
-SELECT Dept, AVG(Salary) FROM Professor
-WHERE (Age> 50) GROUP BY Dept HAVING (COUNT(*)> 3)
+SELECT
+Dept,
+AVG(Salary)
+FROM Professor
+WHERE (Age> 50)
+GROUP BY Dept
+HAVING (COUNT(*)> 3)
 
 Figure 20.1: Query Q14 for question E14 - For each department that has more than 3 professors older than 50, what Is the average salary of such professors?
 
 
 This query involves two new clauses: the GROUP BY clause, which takes a list of columns as an argument, and  the HAVING clause, which takes a condition as an argu­ ment. It also involves two aggregate Junctions: AVG() and COUNT(*).
 
-Syntactically, the HAVING clause is positioned immediately after the GROUP BY clause. The two are placed after the WHERE clause, but before the ORDER BY clause (not pre­ sent in this case).
+Syntactically, the HAVING clause is positioned immediately after the GROUP BY clause. The two are placed after the WHERE clause, but before the ORDER BY clause (not pre­sent in this case).
 
 Operationally, the following sequence of events takes place. First, SQL formulates and evaluates the query
 
@@ -1317,12 +1220,12 @@ In addition to COUNT(*) and AVG(), SQL provides four other aggregate functions: 
 
 
 
-...............,....  
+...............,....
 
 Computing Aggregates for Groups II
 
 SELECT Dept,
-MIN(Salary), MAX(Salary), AVG(Salary), COUNT(DISTINCT Salary\
+MIN(Salary), MAX(Salary), AVG(Salary), COUNT(DISTINCT Salary)
 FROM Professor WHERE (Age> 50) GROUP BY Dept
 HAVING (COUNT(*)> 3)
 OR (SUM(Salary) - 200000 > 0)
@@ -1347,7 +1250,7 @@ COUNT(DISTINCT Salary) would return 2- for the two distinct values: 20000 and 30
 
 The question corresponding to the query of Figure 20.3 can be phrased as follows: For each department that has more than 3 professors older than 50 or where the total salary of such profes­ sors exceeds $200,000, what is the minimum salary, the maxi­ mum salary, the average salary, and the number of distinct salary values, of such professors?
 
-SQL permits the omission of the HAVING clause if the con­ dition on the groups is always True- i.e., all groups are desired for the answer. (Recall the similar ability with the WHERE clause.) This allows the question For each depart­ ment, what is the average salary of those professors who are older than 50? to be posed as shown in Figure 20.4.
+SQL permits the omission of the HAVING clause if the con­dition on the groups is always True- i.e., all groups are desired for the answer. (Recall the similar ability with the WHERE clause.) This allows the question For each depart­ ment, what is the average salary of those professors who are older than 50? to be posed as shown in Figure 20.4.
 
 SELECT Dept, AVG(Salary) FROM Professor
 WHERE (Age> 50) GROUP BY Dept
@@ -1380,12 +1283,12 @@ or, for those who prefer negative formulations:
 
 It is prohibited to use an un-aggregated column in the SELECT or HAVING clauses, unless it is explicitly listed in the GROUP BY clause.
 
-          The motivation for this restriction is as  follows. Since SQL I	generates a single result row for each group, the values mak­ ing this row up must be representative -	or, deterministic­
+The motivation for this restriction is as  follows. Since SQL I	generates a single result row for each group, the values mak­ ing this row up must be representative -	or, deterministic­
 of that group. Likewise, when SQL tests the HAVING clause condition for the group, the arguments involved in this test must also be representative of it.
 
 The only columns for which this "representativeness" can be syntactically guaranteed are those found in the GROUP BY clause- by the very nature of grouping, all values for such a column will be the same within a group. Thus, these columns can appear un-aggregated in the SELECT or HAV­ ING clauses. Reference to any other column in the SELECT clause and in the HAVING clause must be aggregated. As we will see later in Section 24, this syntactic restriction has some awkward consequences.
 
-However, this restriction does not imply that all of the GROUP BY columns must appear in the SELECT or HAV­ ING clauses. For example, modifying the SELECT clause of the query of Figure 20.5 to
+However, this restriction does not imply that all of the GROUP BY columns must appear in the SELECT or HAV­ING clauses. For example, modifying the SELECT clause of the query of Figure 20.5 to
 
 SELECT Dept, AVG(Salary)
 
@@ -1442,28 +1345,6 @@ We note that the ability to use scalar expressions as argu­ ments to aggregate f
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 22 Some Old Questions Revisited
 The questions involving "at least" posed in Section 8 as Type 1 queries, along with those involving "at most" and "exactly" posed in Section 12 as Type 2 queries, can also be posed very naturally using the queries with the GROUP BY and HAVING clauses. As an example, the question Who takes at least 3 courses? is posed by the query of Figure 22.1.
 
@@ -1477,6 +1358,8 @@ Figure 22.1: A query with the GROUP BY and HAVING clauses for the question Who t
 By replacing the condition (COUNT(*) >= 3) in the HAV­ ING clause with the condition (COUNT(*) = 3), we get the question Who takes exactly 3 courses? Interestingly, by replac­ ing it with (COUNT(*) <= 3) we get the question Who takes at least 1, and at most 3, courses? and not Who takes at most 3 courses? This is because the query uses table Take in the FROM clause, and thus students who take no courses at all are simply not considered by this query.
 
 We note, however, that the ability to pose such questions using the GROUP BY and HAVING clauses does not mean that we can now forget their Type 1 and Type 2 implemen­ tations. As we will discuss later, SQL imposes certain restrictions on the use of GROUP BY and HAVING, and sometimes these questions have to be posed without them.
+
+
 ···········································--- •••••••••••••••••••••••Some Old Questions Revisited II
 
 
@@ -1505,34 +1388,6 @@ In queries involving global aggregations, SQL does not per­ mit the mixing of th
 Section 20- namely, that in queries involving aggregation, all un-aggregated columns in the SELECT clause must come from the GROUP BY clause.
 
 Further, no condition can be imposed on the single underly­ ing group in such queries. Such a condition must be placed in the HAVING clause, which in turn requires the explicit GROUP BY clause.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1649,55 +1504,15 @@ In queries with subqueries, this prohibition against double aggregation also dis
 
 For those familiar with the concept of a query tree, a more precise way of saying this is: Given a query tree, it is pro­ hibited to use aggregate functions  and/or the GROUP  BY or HAVING clauses in any two query blocks where one is a descendant of the other.
 
-The unavailability of double aggregation also sometimes forces us to use non-aggregated formulations to pose questions that have better aggregation-based solutions: As an example, try posing in a single query with subqueries the question What are the grade point iruerages of the youngest students?
+The unavailability of double aggregation also sometimes forces us to use non-aggregated formulations to pose questions that have better aggregation-based solutions: As an example, try posing in a single query with subqueries the question
+
+What are the grade point averages of the youngest students?
 
 
 
+The Overall Order of Evaluation
 
-
-
-
-
-
-
-······· •mblnlngType2  Queries   ;;  ·  :;;;:II
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-26The Overall Order of Evaluation
-One of the  principal SQL programrrtlng skills is the ability to look at a complex query involving many different fea­ tures, and to determine exactly in what order these features will be executed. As an example, we will consider the query of Figure 26.1, which involves most of the SQL features pre­ sented thus far.
+One of the  principal SQL programinng skills is the ability to look at a complex query involving many different fea­ tures, and to determine exactly in what order these features will be executed. As an example, we will consider the query of Figure 26.1, which involves most of the SQL features pre­ sented thus far.
 
 
 SELECT DISTINCT Sname,
@@ -1796,10 +1611,11 @@ This sequence of events was created by following the evalu­ ation mechanisms pre
 I I
 I
 
-27 NULL Values in SQL
-NULL is a special symbol that can be used in place of regu­ lar values in tables to mean that the value in question is cur­ rently unknown. (Other meanings of NULLs also exist, but they are much less common.) The SQL rules for handling NULLs are as follows.
 
-NULLs can appear in any column that has been declared with the NULL qualifier in the CREATE TABLE state­ ment- e.g., columns Sname and Age in table Student creat­ ed in Figure 3.1.
+27 NULL Values in SQL
+NULL is a special symbol that can be used in place of regu­lar values in tables to mean that the value in question is cur­ rently unknown. (Other meanings of NULLs also exist, but they are much less common.) The SQL rules for handling NULLs are as follows.
+
+NULLs can appear in any column that has been declared with the NULL qualifier in the CREATE TABLE state­ment- e.g., columns Sname and Age in table Student creat­ ed in Figure 3.1.
 
 All scalar arithmetic expressions involving at least one NULL evaluate to NULL. For example, given a Professor row with the NULL Age value, the expression (Age+1) eval­ uates to NULL. This is reasonable, because if an Age value is unknown, it follows that the result of (Age+1) is also unknown.
 
@@ -1812,11 +1628,11 @@ All binary comparisons involving the operators =, !=, <, <=,
 Since traditional Boolean (two-valued) logic is not sufficient to support this new logical value Maybe, SQL  supports what is known as the three-valued logic, defined by the truth tables shown in Figure 27.1. (In these tables, symbols F, M and T stand for False, Maybe and True, respectively.) We note that for the False and True combinations these tables are consistent with their traditional Boolean counterparts.
 
 
-NOT FMT 
+NOT FMT
 AND
-FMT 
+FMT
 OR
-FMT 
+FMT
 TMF
 F
 M
@@ -1860,25 +1676,6 @@ these functions return NULL. (The latter case happens when an aggregate is evalu
 
 The aggregate function COUNT(DISTINCT <column>) also counts only the regular values. Thus, as long as at least one regular value exists in a column, this function  will  return the number of distinct regular values. Given the column of all NULLs or given an empty column, it will return O (zero).
 
-
-I
-I' .
-;I'
-
-
-
-
-
-
-
-
-
-
-!'
-
-
-
-!'
 
 However, the aggregate function COUNT(*) simply returns the number of rows in a group, regardless of whether or not some of the values are NULL.
 
@@ -1944,55 +1741,6 @@ We note that any attempt to evaluate this query  "inside­ out" (as was done with
 
 
 
-I
-\,
-<j,'
-
-
-
-
-
-
-
-
-i
-'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2032,45 +1780,12 @@ Figure 28.2: A Type 3 query with two correlations, for the question Who teaches 
 
 
 
-
-
-i-'
-
-
-
-
-
-Ii
-I
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 II 		0	0
 
-29Inter-Query Connectors Revisited: Existential Quantifiers in SQL
-So far we have seen only two kinds of inter-query  connec­ tors: the list membership operator IN and, in limited cir­ cumstances, regular binary comparators  (=,  <,  etc.).  SQL also provides another inter-query operator, EXISTS, which syntactically acts as a Boolean function- i.e., it takes a sub­ query as an argument, and returns a Boolean as the result.
+29 Inter-Query Connectors Revisited: Existential Quantifiers in SQL
+So far we have seen only two kinds of inter-query  connec­tors: the list membership operator IN and, in limited cir­cumstances, regular binary comparators  (=,  <,  etc.).
+
+SQL also provides another inter-query operator, EXISTS, which syntactically acts as a Boolean function- i.e., it takes a sub­ query as an argument, and returns a Boolean as the result.
 
 Semantically, the behavior of EXISTS is defined as follows: It returns True if the subquery retrieves at least one row in its answer, and returns False otherwise- i.e., when the answer to the subquery is empty.
 
@@ -2091,9 +1806,11 @@ We can now trace the query of Figure 29.1- after all, it is just a regular Type 
 
 
 
-Three thlngs should be noted about EXISTS. First, it is not the use of EXISTS that makes the query Type 3- non-local references do. We make this point because, in practice, EXISTS and correlations are very often used together­ indeed, they do compliment each other very well. However, they do not have to be used together. We may have Type 3 queries not involving EXISTS- e.g., the two queries from the previous section. Likewise, there are cases- albeit infre­ quent ones- where EXISTS is used in conjunction with Type 2 queries.
-,,
-l	Second, by syntax, the SELECT clause of the subquery under EXISTS must contain just symbol• (asterisk). Putting anythlng else there will cause a syntax error.
+Three things should be noted about EXISTS.
+
+First, it is not the use of EXISTS that makes the query Type 3- non-local references do. We make this point because, in practice, EXISTS and correlations are very often used together­ indeed, they do compliment each other very well. However, they do not have to be used together. We may have Type 3 queries not involving EXISTS- e.g., the two queries from the previous section. Likewise, there are cases- albeit infre­ quent ones- where EXISTS is used in conjunction with Type 2 queries.
+
+Second, by syntax, the SELECT clause of the subquery under EXISTS must contain just symbol• (asterisk). Putting anythlng else there will cause a syntax error.
 
 Third, since EXISTS returns a Boolean result, it can be included  into general  logical expressions,  and  thus may
 Ii	have NOT, AND or  OR connect it  to  other parts of  the
@@ -2111,8 +1828,9 @@ i
 
 IITHE ESSENCE OF SQL:..A Gulde to Learning Most of SQL In the Least Amount otnme...
 
-30Some Old Questions Revisited-Again
-In this section we look at an assortment of previously con­ sidered questions and develop their implementations using Type 3 queries. We begin with the queries just developed.
+30 Some Old Questions Revisited-Again
+In this section we look at an assortment of previously con­sidered questions and develop their implementations using Type 3 queries.
+We begin with the queries just developed.
 
 By changing IN to NOT IN in  the  query of  Figure 28.1, we get our old question ES- Who does not take CS112? We also get this question by placing NOT directly in front of  EXISTS in the query of Figure 29.1.
 
@@ -2129,42 +1847,6 @@ WHERE (Sno = X.Sno) AND (Cno != X.Cno) AND (Cno != Y.Cno))
 
 Figure 30.1: A Type 3 query for question E9 - Who takes exactly 2 courses?
 
-
-
-
-.................................................;:: - -	tlons Revisited- Again Im
-
-,,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Ii
-I
-I
-
-
-
-
-
-
-
-
-
-.,.
 
 This implementation is based on the fact that "exactly 2" means "at least 2and not a third" In other words, a student takes exactly two courses if he takes at least two courses and there does not exist a third course (different from the first two) that he also takes.
 
@@ -2272,18 +1954,13 @@ Figure 30.7: The middle query from Rgure 30.6 after substitution .
 for S.Sno.
 
 
-This query, however, is now of Type 2! Thus, it is evaluated
-I I
-"inside-out," and retrieves all information about courses
+This query, however, is now of Type 2!
+
+Thus, it is evaluated "inside-out," and retrieves all information about courses
 that are not among those taken by student 123456789- or, rephrasing, those courses which are not taken by student 123456789. Since this gives the same intermediate result as the query of Figure 30.5, the rest of the trace proceeds as in our original query.
 
 The English reformulation of our question that most closely corresponds to this query form is: For which students, does there not exist a course which is not among the courses they take?
 
-
-
-
-......................................................................................................................................
--THE ESSENCE OF SQL: A Gulde to Learning Most of SQL In the Least Amount ofTlrne
 
 31 Data Manipulation Facilities of SQL
 The data manipulation language (DML) component of SQL provides facilities for inserting, deleting and updating rows in tables. There are two forms of insertions: one for insert­ ing individual rows, and one for inserting all rows from query results. We begin with the former.
@@ -2375,7 +2052,7 @@ The standard UPDATE command also suffers from one important limitation- while th
 
 
 
-00       	
+00
 
 
 THE ESSENCE OF SQL: A Gulde to Leaming Most of SQL In the Least Amount ofTlme•••
@@ -2384,49 +2061,10 @@ in the SET clause) can only mention the columns from the table being updated. Th
 
 To compensate for this limitation, some SQL dialects have extended the UPDATE command by permitting a FROM clause (placed between the SET and WHERE clauses), and by allowing columns from all of the tables in that FROM clause to be used in the new value expressions. (Consult appropriate SQL manuals for details.)
 
-
-
-
-
-
-
-i'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-IllTHE ESSENCE OF SQL,''A Gulde to Learning Most of SQL In th.. Least Amount of nm....
+mount of nm....
 
 32 Extensions to SQL
-To appreciate the need for and the added value of SQL extensions, it is important to understand that, when origi­ nally conceived, SQL was viewed not as a full program­ ming language, but only as a data sublanguage. It was meant to be used either interactively, allowing end-users to pose their queries one at a time, or to be used in a larger pro­ gramming system, by embedding SQL queries into some con­ ventional programming language.
+To appreciate the need for and the added value of SQL extensions, it is important to understand that, when origi­nally conceived, SQL was viewed not as a full program­ ming language, but only as a data sublanguage. It was meant to be used either interactively, allowing end-users to pose their queries one at a time, or to be used in a larger pro­ gramming system, by embedding SQL queries into some con­ ventional programming language.
 
 Consequently, it was considered unnecessary to provide SQL with facilities that were not likely to be used by users in the interactive mode, or that were already available as conventional features in the host programming language. Thus, the "classical" SQL- which is what we have present­ ed in this essay- lacks both the standard control structures and the complex data structuring mechanisms.,
 
@@ -2435,7 +2073,7 @@ In the recent years however, there ha·s been a concerted effort on the part of t
 Some of the extensions that significantly increase the expressive power of SQL are:
 
 
-........................... 	_            
+........................... 	_
 
 
 
@@ -2458,7 +2096,7 @@ i
 
 
 
-• 
+•
 the standard control structures (e.g., WHILE and FOR loops, and IF-THEN-ELSE state­ ments) and compound statement constructors (e.g., BEGIN and END), that operate on SQL query blocks;
 • scalar variables, along with the ability to use them in the SELECT clause to get values from queries, and in the WHERE and HAVING clauses to supply values to queries;
 • procedures (usually called stored procedures),
@@ -2489,190 +2127,10 @@ evaluation strategies used by real SQL systems to four sim­ ple formal evaluatio
 
 We leave you with a list of assorted reminders, shown in Figure 33.1, for programming in SQL. The items in this list were chosen for two basic reasons: first, they are important, and second, people tend to forget them.
 
-1. Do not rely on your intuition in composing or inter­ preting SQL queries; trace them according to the evalu­ ation mechanisms:
+1. Do not rely on your intuition in composing or inter­preting SQL queries; trace them according to the evalu­ation mechanisms:
 • remember the order of evaluation;
 • remember that formally Type 2 queries are evaluat­ ed inside-out;
 • remember that formally Type 3 queries are evaluat­ ed outside-in;
 2. Remember that real negation requires two passes: To find out "who does not" first find out "who does" and then get rid of them.
 3. Remember that NOT appearing in front of the sub­ query cannot be brought inside its WHERE clause; doing so changes the overall query meaning.
 4. Remember that in queries involving aggregate func­ tions and/or GROUP BY, only those columns explicitly listed in the GROUP BY clause may appear un-aggre­ gated in the SELECT clause and in the HAVING clause.
-
-Figure 33.1: Assorted reminders for programming In SQL.
-
-II
-I I.
-
-
-
-
-Acknowledgments
-I wish to express my thanks to my colleague, Professor Susan Dorchak, for her very substantial help in reviewing and editing this essay. I also wish to express my gratitude to my former student, Helen Zeldovich, for her invaluable assistance in improving the clarity of this presentation and for her tireless help in proofreading this essay.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-...................................................... 	A_ck-no_w_led_g_m_en_ts, Ill
-
-Notes
-
-
-
-
-I
-
-Notes
-
-Notes
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Notes
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Notes
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-' '
-
-
-
-
-
-
-
-
-
-
-DATABASE TECHNOLOGY LANGUAGES
-
-
-
-
-
-
-c:::;z-Essence of SQL:
-A Guide to Learnins Most of SQL in the Least Amount of Time
-by David Rozenshtein
-
-This book is ideal for programmers, managers, and students who want to quickly acquire an in-depth understanding of SOL. It takes the reader from the fundamentals of SOL through to the most complex features of the language. It explains why the vari­ ous constructs in SOL exist and how SOL can be used to solve real-world, business problems.
-
-The Essence of SQL pi-ovides a practical, problem-centered approach to the study of this powerful database language. It concentrates on those aspects of SOL which have traditionally presented problems to programmers; it promotes a smooth transition to SOL from other programming languages. This book allows the reader to gain a clear understanding of the essence of SOL in a minimum amount of time. The material pre­ sented in the book applies to all SOL dialects.
-
-Programmers will find the many SOL code examples to be useful building blocks for designing effective relational database solutions.
-Managers will find a clear description of the power of SOL and guidance on its appropriate uses in relational database systems.
-v'	Students will find the book to be an invaluable study tool and accelerated, rigorous SOL tutorial.
-
-
-
-
-
-
-
-
-
-
-
-
-SQL FORUM PRESS
-40087 Mission Boulevard, Sulla 167
-Fremont, CA 94539--3680
-(800) 943-9300 Voice
-(510) 656·5116 Fax
-http:l/www.sqlforum.com
-
-
-
-
-                      ,i The Essence of SQL: A G,Ui.
-Used Good	i
