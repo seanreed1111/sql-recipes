@@ -1,13 +1,13 @@
 4 The Standard Questions
 We begin our presentation of SQL with a list of standard questions, as shown in Figure 4.1. (Designation El stands for "English question 1,'' etc.) This list will be extended with additional standard questions as we proceed. The key sub­ phrases that make these questions standard are italicized for emphasis.
 
-E1.	Who takes (the course with the course number) CL101? (By "Who" we mean that we want the student num­ bers retrieved. If we want the names retrieved, we will explicitly say so.)
+E1.	Who takes (the course with the course number) CS112? (By "Who" we mean that we want the student num­ bers retrieved. If we want the names retrieved, we will explicitly say so.)
 E2. What are student numbers and names of students who
-take CL101?
-E3. Who takes CL101 or CL109?
-E4.	Who takes both CL101 and CL109? 
-E5.	Who does not take CL101?
-E6.	Who takes a course which is not CL101?
+take CS112?
+E3. Who takes CS112 or CS114?
+E4.	Who takes both CS112 and CS114? 
+E5.	Who does not take CS112?
+E6.	Who takes a course which is not CS112?
 E7. Who takes at least 2 courses (i.e., at least 2 courses with different course numbers)?
 (Amore general question: Who takes at least 3, 4, 5,
 etc., courses?)
@@ -15,8 +15,8 @@ E8.	Who takes at most 2 courses?
     (More generally: 3, 4, 5, etc., courses?) 
 E9.	Who takes exactly 2 courses?
      (More generally: 3, 4, 5, etc., courses?) 
-ElO. Who takes only CL101?
-E11. Who takes either CL101 or CL109? 
+ElO. Who takes only CS112?
+E11. Who takes either CS112 or CS114? 
 E12. Who are the youngest students?
 (Similarly, Who are the oldest students?)
 E13. Who takes every course?
@@ -32,12 +32,12 @@ where SELECT, FROM and WHERE are keywords designat­ ing the three basic componen
 
 In thinking about, understanding and composing SQL queries, we look at the FROM clause first. This clause lists the table(s) that need to be considered to answer the ques­ tion. (To determine this list, pretend that you have to answer this question without a computer system, using just paper copies of the tables, and think of which of them you would actually need.)
 
-In question E1- Who takes CL101?- "Who" stands for stu­ dent numbers (Sno), and CL101 stands for a course number (Cno). Thus, since all relevant information is contained in table Take, the FROM clause becomes
+In question E1- Who takes CS112?- "Who" stands for stu­ dent numbers (Sno), and CS112 stands for a course number (Cno). Thus, since all relevant information is contained in table Take, the FROM clause becomes
 
 FROM Take
 
-Next, we consider the WHERE clause. It contains a Boolean condition which defines which rows from table(s) in the FROM clause should be retrieved by the query. For ques­ tion El this condition is for the course number to be CL101, thus making the WHERE clause
-WHERE (Cno = "CL101")	 	m
+Next, we consider the WHERE clause. It contains a Boolean condition which defines which rows from table(s) in the FROM clause should be retrieved by the query. For ques­ tion El this condition is for the course number to be CS112, thus making the WHERE clause
+WHERE (Cno = "CS112")	 	m
 
 (Whether one uses single or double quotes around string literals is usually system dependent. Also, while parenthe­ sis around conditions are often not required, we use them to improve readability.)
 
@@ -50,9 +50,9 @@ The final query then takes the form shown in Figure 5.1.
 
 SELECT Sno
 FROM Take
-WHERE (Cno = "CL101")
+WHERE (Cno = "CS112")
 
-Figure 5.1: Query Q1for question E1 - Who takes CL101?
+Figure 5.1: Query Q1for question E1 - Who takes CS112?
 
 
 While it is true that this query does intuitively correspond to question El, intuition is not a reliable means for under­ standing SQL. So, to be safe in interpreting SQL queries, we introduce a conceptual device known as the query evaluation mechanism.
@@ -84,7 +84,7 @@ Figure 5.2: The Type 1 SQL evaluation mechanism.
 Given this evaluation mechanism, we can now formally trace query Ql, as follows.
 
 1. Since query Ql involves only one table, we effectively skip Step 1.
-2. We look at every row from table Take, and evaluate condition (Cno = "CL101") for it.
+2. We look at every row from table Take, and evaluate condition (Cno = "CS112") for it.
 3. We take the Sno values from those rows where this condition returns True, and place them into the result.
 
 By following this trace, we can now confidently assert that query Ql indeed corresponds to our question El. (Do not be deceived into thinking that just because this evaluation mechanism and the consequent trace are so simple, using the mechanism is the same as just using the basic intuition. As we will demonstrate very shortly, this is not at all so.)
@@ -94,13 +94,13 @@ By following this trace, we can now confidently assert that query Ql indeed corr
 We note that because evaluation mechanisms are formal devices, they do not represent actual evaluation strategies taken by real systems. (No real system would be caught dead actually taking cross-products all the time.) All that is required of them is that they always give the same result as a real system. Thus, in developing this particular form of the evaluation mechanism, we were not concerned with its apparent inefficiency, and concentrated instead on its clarity and ease of use in tracing.
 
 The SQL query corresponding to question E2- 
-What are student numbers and names of students who take CL101?- is shown in Figure 5.3.
+What are student numbers and names of students who take CS112?- is shown in Figure 5.3.
 
 
 SELECT Student.Sno, Sname FROM Student, Take
-WHERE (Student.Sno = Take.Sno) AND (Cno = "CL101")
+WHERE (Student.Sno = Take.Sno) AND (Cno = "CS112")
 Figure 5.3: Query Q2 for question E2 - What are student num­
-bers and names of students who take CL101?
+bers and names of students who take CS112?
 
 
 This query shows an example of using several tables in the FROM clause and several columns in the SELECT clause. It also introduces a new syntactic feature.
@@ -121,7 +121,7 @@ We now trace this query, using our evaluation mechanism, as follows. (To better 
 1. We take the cross-product of tables Student and Take. This cross product would con­ tain every combination of rows from these tables. (Agood way to visualize the result of this cross-product is to think of it as comprised of "wide" rows formed by "concatenating" the Student and Take rows from each combination.)
 2. We evaluate the WHERE clause condition for every such combination. This condition has two parts, with the conjunct
 (Student.Sno = Take.Sno) assuring that the
-Student row and the Take row in the com­ bination deal with the same student, and the conjunct (Cno = "CL101") assuring that we are dealing with course CL101.
+Student row and the Take row in the com­ bination deal with the same student, and the conjunct (Cno = "CS112") assuring that we are dealing with course CS112.
 3. For those combinations where the condi­ tion returns True, we choose the Sno and
 ........................... 	Th-eFirst Two Questions
 
@@ -142,16 +142,16 @@ This means that the decision of whether or not some row combination from the cro
 II 	0  0	0
 
 6 Standard Questions Involving "or" and "both-and"
-Our standard question E3- Who takes CL101 or CL109?- is posed by query Q3shown in Figure 6.1.
+Our standard question E3- Who takes CS112 or CS114?- is posed by query Q3shown in Figure 6.1.
 
 
 SELECT Sno
 FROM Take
-WHERE (Cno = "CL101") OR (Cno = "CL109")
-Figure 6.1: Query Q3 for question E3 - Who takes CL101 or CL109?
+WHERE (Cno = "CS112") OR (Cno = "CS114")
+Figure 6.1: Query Q3 for question E3 - Who takes CS112 or CS114?
 
 
-A trace of this query shows its correctness. The only new issue here is this: If some student actually does take both CL101 and CL109, then his Sno will be retrieved twice by the query- the first time when the query processes a Take row with his Sno and CL101, and the second time when it processes a Take row with his Sno and CL109. Such dupli­ cates can be eliminated by rewriting the SELECT clause as follows:
+A trace of this query shows its correctness. The only new issue here is this: If some student actually does take both CS112 and CS114, then his Sno will be retrieved twice by the query- the first time when the query processes a Take row with his Sno and CS112, and the second time when it processes a Take row with his Sno and CS114. Such dupli­ cates can be eliminated by rewriting the SELECT clause as follows:
 
 SELECT DISTINCT Sno
 
@@ -159,30 +159,30 @@ The keyword DISTINCT, which eliminates duplicate rows from the answer, is one of
 
 An interesting variation of this query is to rewrite the WHERE clause as
 
-WHERE (Cno IN ("CL101", "CL109"))
+WHERE (Cno IN ("CS112", "CS114"))
 
 which uses the list membership operator IN. (Operator IN returns True if the value on its left is equal to one of the val­ ues in the list on its right.) While just providing an alterna­ tive fonnulation in this case, this operator is actually a sig­ nificant feature of SQL and will become necessary when we introduce Type 2 queries.
 
-Our standard question E4- Who take both CL101 and CL109?- presents a much more interesting case. First, con­ sider the query of Figure 6.2.
+Our standard question E4- Who take both CS112 and CS114?- presents a much more interesting case. First, con­ sider the query of Figure 6.2.
 
 SELECT Sno
 FROM Take
-WHERE (Cno = "CL101")
-AND (Cno = "CL109")
+WHERE (Cno = "CS112")
+AND (Cno = "CS114")
 Figure 6.2: First attempt at question E4 - Who takes both
-CL101 and CL109?
+CS112 and CS114?
 
 
 This query, which was generated from query Q3 by replac­ ing OR with AND, reflects a misplaced intuition that logical operators directly model, and thus can be automatically substituted for, their English counterparts. However, intu­ ition is not a reliable tool when programming in SQL, and the query of Figure 6.2 is not a correct implementation of question E4. It will compile, however, and therefore will generate some answer. (Before proceeding further, try to figure out exactly what answer this query will generate, and why it is incorrect.)
 
 II 	00	0
 
-Recall that the conditions of Type 1 queries are evaluated on a row-by-row basis, once per row. Since no row can have a Cno value which is simultaneously equal to "CL101" and to "CL109", the condition of this query will always return False. Thus, the answer to this query will always be empty.
+Recall that the conditions of Type 1 queries are evaluated on a row-by-row basis, once per row. Since no row can have a Cno value which is simultaneously equal to "CS112" and to "CS114", the condition of this query will always return False. Thus, the answer to this query will always be empty.
 
 While question E4 can be posed as a Type 1 query, to dis­ cover this solution, we need to employ a bit of "reverse engineering." In other words, we first need to figure out how we can actually compute the answer to this question in a manner consistent with the Type 1 evaluation mecha­ nism- in effect, visualizing the corresponding trace, and then to ''back into" the SQL query itself. We note that:
 This ability to visualize traces and then reverse engineer the appropriate SQL code is the key to one's mastery of SQL.
 
-To visualize the trace, we first need to determine which table(s) need to be considered. Since the question Who takes both CL101 and CL109? involves only student numbers (Sno) and course numbers (Cno), the only tab_le that is needed is table Take.
+To visualize the trace, we first need to determine which table(s) need to be considered. Since the question Who takes both CS112 and CS114? involves only student numbers (Sno) and course numbers (Cno), the only tab_le that is needed is table Take.
 
 However, as we have just argued, since every Take row con­ tains only one Cno value, and since it is considered only once by the evaluation mechanism, we cannot evaluate our condition directly on the rows of Take. What we need instead is a table with rows that for each student would list not one, but two, course numbers for the courses he takes.
 
@@ -197,14 +197,14 @@ Sta  ard Questions lnv ;vlng "or" and "IJ =m::·
 
 Second, we can impose equality on the two Sno values in each wide row in the result of this cross-product. This would remove those wide rows where the Sno value from the first copy of Take is different from the Sno value from the second copy.
 
-Each remaining wide row would then refer to just a single student, and the two- one from each copy of Take- Cno values for the courses he takes. We can then test one of them to be "CL101" and the other to be "CL109," and for those rows where these tests would succeed, retrieve the Sno value into the answer.
+Each remaining wide row would then refer to just a single student, and the two- one from each copy of Take- Cno values for the courses he takes. We can then test one of them to be "CS112" and the other to be "CS114," and for those rows where these tests would succeed, retrieve the Sno value into the answer.
 
 Since in Type 1 SQL queries cross-products are caused by listing tables in the FROM clause, we can informally sketch a query that would have such a behavior as shown in Figure 6.3.
 
 SELECT Take.Sno FROM Take, Take
-WHERE (Take.Sno = Take.Sno) AND (Take.Cno = "CL101") AND (Take.Cno = "CL109")
+WHERE (Take.Sno = Take.Sno) AND (Take.Cno = "CS112") AND (Take.Cno = "CS114")
 Figure 6.3: A sketch of the query for E4 - Who takes both
-CL101 and CL109?
+CS112 and CS114?
 
 
 There is an obvious problem with this sketch, however. Since both tables in the FROM clause have the same name (one of them, after all, is a copy of the other), the use of table names for prefixes is not sufficient to disambiguate column references.
@@ -214,7 +214,7 @@ What we really want to say here is that in the condition (Take.Sno = Take.Sno) t
 • THE ESSENCE OFSQL:. A Gulde to Learning Most of SQL In the Least Amount of TIme•••
 
 first copy of Take, and the right Take.Sno is taken from the second copy of Take. Similarly, in the condition (Take.Cno =
-"CL101") we mean the first copy of Take and in the condi­ tion (Take.Cno = "CL109") we mean the second one. Finally,
+"CS112") we mean the first copy of Take and in the condi­ tion (Take.Cno = "CS114") we mean the second one. Finally,
 since both Sno values are the same in the wide row, it does not matter to us which one is retrieved in the SELECT clause, but we must explicitly choose one or the other. None of this, however, is reflected in our query sketch.
 
 To take care of such cases, SQL allows any table in the FROM clause to be optionally followed by its temporary alias- a new table name, which is valid only for the dura­ tion of the particular query and which is used for prefixes. The aliasing feature allows us to phrase the correct query for question E4 as shown in Figure 6.4.
@@ -222,9 +222,9 @@ To take care of such cases, SQL allows any table in the FROM clause to be option
 
 SELECT X.Sno
 FROM Take X, Take WHERE (X.Sno = Take.Sno)
-AND (X.Cno = "CL101") AND (Take.Cno = "CL109")
+AND (X.Cno = "CS112") AND (Take.Cno = "CS114")
 
-Figure 6.4: Query Q4 for question E4 - Who takes both C5112 and CL109?
+Figure 6.4: Query Q4 for question E4 - Who takes both C5112 and CS114?
 
 
 Before proceeding further, we want to make several com­ ments regarding the use of aliases. First, the choice of alias names is completely arbitrary as long as they do not conflict with each other or with any real table name used in a query.
@@ -237,7 +237,7 @@ Third, it is always permitted to alias tables- even if not really necessary. Ind
 
 SELECT X.Sno
 FROM Take X, Take Y WHERE (X.Sno = Y.Sno)
-AND (X.Cno = "CL101") AND (Y.Cno = "CL109")
+AND (X.Cno = "CS112") AND (Y.Cno = "CS114")
 Figure 6.5: Q4 rewritten with both copies of Take aliased.
 
 
@@ -245,13 +245,13 @@ Finally, we note that aliases are an essential feature of SQL. Without them, sta
 
 
 7 Negation in SQL
-Negation is one of the most interesting and complex issues in SQL. Both question ES- Who does not take CL101?, and question E6- Who takes a course which is not CL101? involve negation.
+Negation is one of the most interesting and complex issues in SQL. Both question ES- Who does not take CS112?, and question E6- Who takes a course which is not CS112? involve negation.
 
 It is important to understand that these are not restatements of each other, but are indeed different questions. The fol­ lowing two example situations, for which these two ques­ tions would generate different answers, illustrate this point. ('Iry to find them before proceeding.)
 
-The first example involves a student who takes both CL101 and some other course, say CS113. Because this student takes CL101, he will not be in the answer to question ES. However, because he takes a course- CS113, in this case-­ which is not CL101, he will be in the answer to question E6.
+The first example involves a student who takes both CS112 and some other course, say CS113. Because this student takes CS112, he will not be in the answer to question ES. However, because he takes a course- CS113, in this case-­ which is not CS112, he will be in the answer to question E6.
 
-The second example involves a student who does not take any courses. (Or, to put it another way, who takes nothing.) Since he does not take any courses, it follows that he does not take CL101; therefore, he will be in the answer to ques­ tion ES. However, he will not be in the answer to question E6, which requires him to take some course. (Note that the student number of this student would be included in table Student, but would be absent from table Take. For those familiar with the concepts of referential integrity and foreign key constraints, this situation is perfectly legal and would be allowed in this database.)
+The second example involves a student who does not take any courses. (Or, to put it another way, who takes nothing.) Since he does not take any courses, it follows that he does not take CS112; therefore, he will be in the answer to ques­ tion ES. However, he will not be in the answer to question E6, which requires him to take some course. (Note that the student number of this student would be included in table Student, but would be absent from table Take. For those familiar with the concepts of referential integrity and foreign key constraints, this situation is perfectly legal and would be allowed in this database.)
 
 
 
@@ -264,17 +264,17 @@ Situation
  Included in answer to E5
  Included in answertoE6
 
-Student takes both CL101 and CS113
+Student takes both CS112 and CS113
 
 
 Figure 7.1: Orthogonality of questions ES and ES.
 
 
-The query posing question E6- Who takes a course which is not CL101?-is shown in Figure 7.2.
+The query posing question E6- Who takes a course which is not CS112?-is shown in Figure 7.2.
 
 SELECT Sno
 FROM Take
-WHERE (Cno != "CL101")
+WHERE (Cno != "CS112")
 
 Figure 7.2: Query QS for question ES - Who takes a course which Is not C5112?
 
@@ -292,14 +292,14 @@ II 0
 
 This is a good time to mention that in addition to equality (=) and inequality (which in some SQL dialects is expressed as != and in some as <>), SQL supports all other standard binary comparators: <, <=, >, and >=. All SQL dialects sup­ port these latter comparators for numeric data types; most also support them for strings and other data types as well.
 
-Question E5 - Who does not take CL101?- is much trickier. First, note that rewriting the WHERE clause as
+Question E5 - Who does not take CS112?- is much trickier. First, note that rewriting the WHERE clause as
 
-WHERE NOT (Cno = "CL101")
-will not work, because conditions NOT (Cno = "CL101") and (Cno != "CL101") are equivalent to each other, and thus would both pose question E6. (We note that SQL supports full Boolean logic including DeMorgan's and standard Boolean Distributive and Associative Laws.)
+WHERE NOT (Cno = "CS112")
+will not work, because conditions NOT (Cno = "CS112") and (Cno != "CS112") are equivalent to each other, and thus would both pose question E6. (We note that SQL supports full Boolean logic including DeMorgan's and standard Boolean Distributive and Associative Laws.)
 
 A more fundamental problem with question E5 emerges when one considers the basic one-pass nature of Type 1 queries. As it turns out, the answer to this question cannot be computed in a single pass, even if we do take a cross­ p;oduct of tables Student and Take. (Try it on some data examples, and observe that one pass is not enough.)
 
-What is required, instead, are two passes: the first pass through table Take to select those students who do take CL101, and the second pass through table Student to  "get rid of" them. Furthermore, the first pass has to be complet­ ed- i.e., we have to identify and in a way "collect" all of these "bad students," before starting  on  the second  pass­ to eliminate them.
+What is required, instead, are two passes: the first pass through table Take to select those students who do take CS112, and the second pass through table Student to  "get rid of" them. Furthermore, the first pass has to be complet­ ed- i.e., we have to identify and in a way "collect" all of these "bad students," before starting  on  the second  pass­ to eliminate them.
 
 
 
@@ -310,7 +310,7 @@ Since the Type 1 SQL evaluation mechanism is fundamental­ ly "one pass," it is i
 
 An important general difference between questions E5 and E6 is that E5 involves "real negation" and E6 involves the so called "pseudo-negation." Questions involving pseudo­ negation can be posed as Type 1 queries; questions involv­ ing real negation cannot.
 
-One way to distinguish between the two is to see what is being negated- some noun constant (e.g., "is not course CL101" in E6) or a verb (e.g., "does not take" in E5). Also, question Q6 can be rephrased by replacing the English word "not" with the phrase "different from" (or "other  than"), as in Who takes some course different from CL101? This technique is a rule of thumb that works most of the time.
+One way to distinguish between the two is to see what is being negated- some noun constant (e.g., "is not course CS112" in E6) or a verb (e.g., "does not take" in E5). Also, question Q6 can be rephrased by replacing the English word "not" with the phrase "different from" (or "other  than"), as in Who takes some course different from CS112? This technique is a rule of thumb that works most of the time.
 
 
 
@@ -361,13 +361,13 @@ Who does not take at least 3 courses?
 E9. Who takes exactly 2 courses?
 is equivalent to
 Who takes at least 2 courses and does not
-       take at least 3 courses? ElO.	Who takes only CL101?
+       take at least 3 courses? ElO.	Who takes only CS112?
 is equivalent to
-Who takes CL101 and does not take any other course?
-Ell. Who takes either CL101 or CL109?
+Who takes CS112 and does not take any other course?
+Ell. Who takes either CS112 or CS114?
 is equivalent to
-Who takes CL101 or CSll4, and does not
-take both CL101 and CL109?
+Who takes CS112 or CSll4, and does not
+take both CS112 and CS114?
 
 
 
@@ -409,7 +409,7 @@ A sample Type 2 query is shown in Figure 10.1. We begin the discussion by first 
 SELECT Sno, Sname FROM Student WHERE (Sno IN
 (SELECT Sno
 FROM Take
-WHERE (Cno = "CL101")))
+WHERE (Cno = "CS112")))
 Figure 10.1: A sample Type 2 SQL query.
 
 
@@ -457,7 +457,7 @@ In case of the query of Figure 10.1,
 the subquery 
 SELECT Sno
 FROM Take
-WHERE (Cno = "CL101")
+WHERE (Cno = "CS112")
 
 ### which is a regular Type 1 query, is executed first. Its answer is then substituted into its place in the main query
 
@@ -467,7 +467,7 @@ which is executed next. Note that, at this point, the main query has been reduce
 
 We note that Type 2 queries fundamentally involve multiple data passes - one for each component query. In this case, the first pass is through table Take in the subquery, and the second pass is through table Student in the main query.
 
-To determine the question posed by this query, observe that the subquery is a verbatim copy of query  Ql,  and  thus poses question El- Who takes CL101? The main query, which retrieves their student numbers and names then cor­ responds to the question What are the student numbers and names of students who take CL101? In other words, this is just another way of asking our standard question E2.
+To determine the question posed by this query, observe that the subquery is a verbatim copy of query  Ql,  and  thus poses question El- Who takes CS112? The main query, which retrieves their student numbers and names then cor­ responds to the question What are the student numbers and names of students who take CS112? In other words, this is just another way of asking our standard question E2.
 
 Before concluding this section, we note that, from a syntac­ tic point of view, the condition (Sno IN ...) of the main query is just that- acondition; thus, it can itself be part of a more complex Boolean expression involving NOT, AND and OR- a feature that will become very handy in a moment.
 
@@ -489,17 +489,17 @@ SELECT Sno
 FROM Student WHERE NOT (Sno IN
 (SELECT Sno
 FROM Take
-WHERE (Cno = "CL101")))
+WHERE (Cno = "CS112")))
 Figure 11.1: A mystery Type 2 SQL query Involving negation.
 
 
 This query differs from the query of Figure 10.1 in two ways: there is a NOT in front of the main query's condition, and Sno is used alone in the main SELECT clause. But how is this query evaluated, and what question does it pose?
 
-Since this is a Type 2 query, it is evaluated inside-out. Again, the subquery is the same as query Ql and poses question El- Who takes CL101? Because of the NOT opera­ tor in its WHERE clause, the main query now retrieves the
+Since this is a Type 2 query, it is evaluated inside-out. Again, the subquery is the same as query Ql and poses question El- Who takes CS112? Because of the NOT opera­ tor in its WHERE clause, the main query now retrieves the
 
 •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••,••• Using Type2 to Implement Real Negation II
 
-student numbers of all other students- i.e., those student numbers that are not on the list generated by the subquery. Thus, the full query of Figure 11.1 corresponds to the ques­ tion Who does not take CL101?- i.e., our standard question E5. (Jve will refer to this query as Q5.)
+student numbers of all other students- i.e., those student numbers that are not on the list generated by the subquery. Thus, the full query of Figure 11.1 corresponds to the ques­ tion Who does not take CS112?- i.e., our standard question E5. (Jve will refer to this query as Q5.)
 
 An interesting related query is shown below.
 
@@ -510,16 +510,16 @@ FROM Take
 WHERE NOT (Sno IN
 (SELECT Sno
 FROM Take
-WHERE (Cno = "CL101")))
+WHERE (Cno = "CS112")))
 ```
 
 ### This query was obtained from the query of Figure 11.1 by replacing table Student with table Take in the main FROM clause.
 
 ### Note that this is still a Type 2 query, with the inner Sno and Cno coming from the inner Take table, and the outer Sno coming from the outer Take table. (Even though we use two copies of table Take here, because of the scope rules, no binding ambiguities arise and no aliases are necessary.)
 
-### The use of table Take in the main FROM clause limits the list of students who may potentially  appear  in  the answer to whose who are listed in Take and thus take some course. Thus, it corresponds to the question `Who takes some (i.e., at least 1) course, but does not take CL101`?
+### The use of table Take in the main FROM clause limits the list of students who may potentially  appear  in  the answer to whose who are listed in Take and thus take some course. Thus, it corresponds to the question `Who takes some (i.e., at least 1) course, but does not take CS112`?
 
-As we can see, this query is different from the previous query, just as this question is different from our origi­nal question E5- `Who does not take CL101?`
+As we can see, this query is different from the previous query, just as this question is different from our origi­nal question E5- `Who does not take CS112?`
 
 
 Posing Questions Involving "at most," "exactly," "only," and "either-or"
@@ -568,24 +568,24 @@ AND (Y.Cno < Take.Cno)))
 
 
 
-Question E10- Who takes only CL101?- is posed by query
+Question E10- Who takes only CS112?- is posed by query
 1	Ql0 of Figure 12.3.
 
 SELECT Sno
 FROM Take
-WHERE (Cno = "CL101")
+WHERE (Cno = "CS112")
 AND NOT (Sno IN
 (SELECT Sno
 FROMTake
-WHERE (Cno != "CL101")))
+WHERE (Cno != "CS112")))
 Figure 12.3: Query Q10 for question E10 - Who takes only
 CSU2?
 
 
-'I1tis query is based on rephrasing question E9 as Who takes CL101 and does not take any other course? Here, the main query is based on query Ql- Who takes CL101? The sub­ query is taken verbatim from query Q6- Who takes a course which is not CL101? The NOT in the main WHERE clause again achieves the desired negation.
+'I1tis query is based on rephrasing question E9 as Who takes CS112 and does not take any other course? Here, the main query is based on query Ql- Who takes CS112? The sub­ query is taken verbatim from query Q6- Who takes a course which is not CS112? The NOT in the main WHERE clause again achieves the desired negation.
 
 Two things should be noted about query Ql0. First, think­ ing that the outer NOT can be brought inside the WHERE clause of the subquery, and thus cancel the negation implied by the != operator, is a common mistake- it can­ not. Doing so would change the meaning of the query.
-Second, the condition (Cno = "CL101") in the main WHERE clause is unnecessary in this case (!) and can be dropped without changing the query's meaning. The simplified query is shown in Figure 12.4. (Before proceeding further, try tracing it to determine why this is so.)
+Second, the condition (Cno = "CS112") in the main WHERE clause is unnecessary in this case (!) and can be dropped without changing the query's meaning. The simplified query is shown in Figure 12.4. (Before proceeding further, try tracing it to determine why this is so.)
 
 
 SELECT Sno
@@ -593,28 +593,28 @@ FROMTake
 WHERE NOT (Sno lN
 (SELECT Sno
 FROM Take
-WHERE (Cno != "CL101")))
+WHERE (Cno != "CS112")))
 Figure 12.4: Query of Figure 12.3 slmpllfled.
 
 
-For a particular Sno to appear in the final result, it must not appear with any Cno value different from "CL101" in table Take. (If it did, the NOT ... lN of the main condition would "remove" that Sno from the answer.) But, for this Sno to even be considered in the main query, it must come from some Take row, and, thus must have some Cno associated with it in that row. Since this Cno cannot be anything other than CL101, it must be CL101 Thus, explicitly testing for it is unnecessary.
+For a particular Sno to appear in the final result, it must not appear with any Cno value different from "CS112" in table Take. (If it did, the NOT ... lN of the main condition would "remove" that Sno from the answer.) But, for this Sno to even be considered in the main query, it must come from some Take row, and, thus must have some Cno associated with it in that row. Since this Cno cannot be anything other than CS112, it must be CS112 Thus, explicitly testing for it is unnecessary.
 
-Finally, question Ell-Who takes either CL101 or CL109?-is posed by query Qll of Figure 125.
+Finally, question Ell-Who takes either CS112 or CS114?-is posed by query Qll of Figure 125.
 
 
 SELECT Sno
 FROM Take
-WHERE ((Cno = "CL101") OR (Cno = "CL109"))
+WHERE ((Cno = "CS112") OR (Cno = "CS114"))
 AND NOT (Sno lN
 (SELECT X.Sno
 FROM Take X, Take WHERE (X.Sno = Take.Sno)
-AND (X.Cno = "CL101") AND (Take.Cno = "CL109")))
+AND (X.Cno = "CS112") AND (Take.Cno = "CS114")))
 Figure 12.5: Query Q11for question E11- Who takes either
-CL101 or CL109?
+CS112 or CS114?
 ...................................................................................................................................
 1THE ESSENCE OFSQL:  A Guide to Learning Most of SQL In the Least Amount of Time
 
-This query which is based on rephrasing question Ell  as Who takes CL101 or CL109, and does not take both CL101 and CL109? is a combination of query Q3- Who takes CL101 or CL109?-for the main query, and query Q4- Who takes both CL101 and CL109?- for the subquery, with the outer NOT achieving the negation.
+This query which is based on rephrasing question Ell  as Who takes CS112 or CS114, and does not take both CS112 and CS114? is a combination of query Q3- Who takes CS112 or CS114?-for the main query, and query Q4- Who takes both CS112 and CS114?- for the subquery, with the outer NOT achieving the negation.
 
 Note the extra pair of parenthesis around the OR in the main condition. This forces the OR to be executed before the AND in the main condition- otherwise, the SQL standard rules of precedence for logical operators are: first NOT, then AND, and only lastly OR.
 
@@ -718,7 +718,7 @@ FROM Student
 Figure 14.1: Example of query with the omitted WHERE clause.
 
 
-SQL provides the shorthand symbol * (asterisk) if the request is to retrieve all columns from some table in the FROM clause. For example, the query of Figure 14.2 retrieves all information about students who take CL101.
+SQL provides the shorthand symbol * (asterisk) if the request is to retrieve all columns from some table in the FROM clause. For example, the query of Figure 14.2 retrieves all information about students who take CS112.
 
 
 
@@ -732,7 +732,7 @@ SQL provides the shorthand symbol * (asterisk) if the request is to retrieve all
 
 SELECT Student.* FROM Student, Take
 WHERE (Student.Sno = Take.Sno)
-AND (Cno = "CL101")
+AND (Cno = "CS112")
 Figure :14.2: Using symbol * to mean "all columns."
 
 We note that using symbol* without the prefix, as in
@@ -787,7 +787,7 @@ The sorting of a query answer can involve one or several columns from the answer
 
 SELECT Sname, Age FROM Student, Take
 WHERE (Student.Sno = Take.Sno)
-AND (Cno = "CL101")
+AND (Cno = "CS112")
 ORDER BY Sname, Age DESC
 Figure 14.4: Sorting facilities of SQL.
 
@@ -928,14 +928,14 @@ The answer is: Yes, the same types of solutions apply, but with an adjustment. S
 
 To illustrate this point, we briefly go through some of our standard questions, restated with respect to professors teaching courses. We begin with questions not involving negation.
 
-The query of Figure 15.1 poses the question What are full names and ages of professors who teach CL101?, which is simi­ lar to our standard question E2.
+The query of Figure 15.1 poses the question What are full names and ages of professors who teach CS112?, which is simi­ lar to our standard question E2.
 
 
 SELECT P.Fname, P.Lname, Age FROM Professor P, Teach T WHERE (P.Fname = T.Fname)
 AND  (P.Lname = T.Lname)
-AND (Cno = "CL101")
+AND (Cno = "CS112")
 
-Figure 15.1: Query for the question What are full names and ages of professors who teach CL101?
+Figure 15.1: Query for the question What are full names and ages of professors who teach CS112?
 
         .................	:ndllngComposl :·;:; ·11
 
@@ -957,23 +957,23 @@ At«, (X.Lname != Y.Lname))
 Figure 15.2: Query for the question Which courses are taught by at least 2 professors?
 
 Negation Over Composite Keys
-Posing negative questions regarding professors teaching courses presents its own set of interesting problems. Consider the question Who does not teach CL101? - similar to our question ES-along with the query of Figure 16.1.
+Posing negative questions regarding professors teaching courses presents its own set of interesting problems. Consider the question Who does not teach CS112? - similar to our question ES-along with the query of Figure 16.1.
 
 
 SELECT Fname, Lname FROM Professor WHERE (Fname NOT IN
 (SELECT Fname FROM Teach
-WHERE (Cno = "CL101")))
+WHERE (Cno = "CS112")))
 AND	(Lname NOT IN
 (SELECT Lname FROM Teach
-WHERE (Cno = "CL101")))
+WHERE (Cno = "CS112")))
 
 Figure 16.1: First attempt at the question Who does not teach
-'	CL101?	.
+'	CS112?	.
 
 
 However intuitive, this query is nonetheless incorrect for this question. (Try to determine why before proceeding.)
 
-The problem here is that the lists of the first names and the last names of professors who do teach CL101 are compiled and tested independently of each other. Thus, they are not "synchronized" to come from the same Teach row. As a result, professors who do not in fact teach CL101 may incor­ rectly be suppressed by this query.
+The problem here is that the lists of the first names and the last names of professors who do teach CS112 are compiled and tested independently of each other. Thus, they are not "synchronized" to come from the same Teach row. As a result, professors who do not in fact teach CS112 may incor­ rectly be suppressed by this query.
 
 To see this, consider an example where table Professor con­ tains only two rows, and table Teach contains only a single
 
@@ -1002,11 +1002,11 @@ Lname
 Cno
 "John"
 "Smith"
-"CL101"
+"CS112"
 Figure 16.2: Example data for tables Professor and Teach.
 
 
-A trace of the query of Figure 16.1 on this data shows that it will return an empty result. Yet, Mary Smith does not teach CL101, and thus should be in the answer to the question Who does not teach CL101?
+A trace of the query of Figure 16.1 on this data shows that it will return an empty result. Yet, Mary Smith does not teach CS112, and thus should be in the answer to the question Who does not teach CS112?
 
 Changing this query to use OR in place of AND does not fix the problem either. As an example here, consider tables Professor and Teach as shown in Figure 16.3.
 
@@ -1038,13 +1038,13 @@ Lname
 Cno
 "John"
 "Smith"
-"CL101"
+"CS112"
 "Mary"
 "Smith"
-"CL101"
+"CS112"
 "John"
 "Brown"
-"CL101"
+"CS112"
 
 Figure 16,3: Another example data for tables Professor and Teach.
 
@@ -1059,18 +1059,18 @@ We must first determine what it is that we actually  need. The concept of a comp
 
 SELECT Fname, Lname FROM Professor
 WHERE (Fname, Lname NOT IN (SELECT Fname, Lname FROM Teach
-WHERE (Cno = "CL101")))
-Figure 16.4: Desired query form for the question Who does not teach CL101?
+WHERE (Cno = "CS112")))
+Figure 16.4: Desired query form for the question Who does not teach CS112?
 
 Unfortunately, this is syntactically incorrect: the IN and NOT IN operators cannot be used with a list of "pairs." They can, however, be used with a list of expression results!
 
 In other words, even though the IN and NOT IN operators require that the subquery retrieve a single column in its SELECT clause, the specification for that column need not be a single basic attribute, but can be an expression. Likewise, the object to the left of IN and NOT IN can also be an expression. All that is required is that the data types of these expressions be compatible.
 
-The query of Figure 16.5 incorporates expressions to pose our question Who does not teach CL101?
+The query of Figure 16.5 incorporates expressions to pose our question Who does not teach CS112?
 
 SELECT Fname, Lname FROM Professor
 WHERE (Fname + Lname NOT IN (SELECT Fname + Lname FROMTeach
-WHERE (Cno = "CL101")))
+WHERE (Cno = "CS112")))
 
 Figure :1.6,5: Using string concatenation expressions for the question Who does not teach CS:1.:1.2?
 
@@ -1600,7 +1600,7 @@ salaries from just his department.
 
 
 25 Combining Type 2 Queries with Aggregation
-As we have noted earlier, queries underlying  aggregation can be of any type. As an illustration of the Type 2 underly­ ing query, try posing the question What is the grade point average (GPA) of each student, who does not take CL101? (A closely related query will be shown in the next section.) Type 3 underlying queries will be discussed later.
+As we have noted earlier, queries underlying  aggregation can be of any type. As an illustration of the Type 2 underly­ ing query, try posing the question What is the grade point average (GPA) of each student, who does not take CS112? (A closely related query will be shown in the next section.) Type 3 underlying queries will be discussed later.
 
 SQL also allows for aggregates to be used in subqueries within Type 2 queries. As a motivating example, consider again question E12-Who are the youngest students?- along with the query of Figure 25.1.
 
@@ -1707,7 +1707,7 @@ ii FROM Student S, Take T, Course C WHERE (S.Sno = T.Sno)
 AND (T.Cno = C.Cno)
 AND (S.Sno NOT IN (SELECT Sno
 FROM Take
-WHERE (Cno = "CL101")))
+WHERE (Cno = "CS112")))
 GROUP BY S.Sno, Sname
 I	HAVING (SUM(Credits) > 12) ORDER BY 2 DESC, Sname
 
@@ -1716,7 +1716,7 @@ Figure 26.1: A query Involving most of the features presented so far.
 
 This query corresponds to the following question.:
 
-What is the grade point average (GPA) of each student, who does not take CL101, but who takes more than 12 credits in to'tal? Show the answer as student name/GPA pairs, without duplia,tes, and with GPA rounded to 2 decimal digits, sorted first in de
+What is the grade point average (GPA) of each student, who does not take CS112, but who takes more than 12 credits in to'tal? Show the answer as student name/GPA pairs, without duplia,tes, and with GPA rounded to 2 decimal digits, sorted first in de
 ing order by GPA, and then in increasing order by student /l.ttfe,
 'f!!,::f:_
 ..................................................................................................................,...................
@@ -1742,12 +1742,12 @@ FROM Student S, Take T, Course C WHERE (S.Sno=T.Sno)
 AND (T.Cno = C.Cno)
 AND (S.Sno NOT IN (SELECT Sno
 FROMTake
-WHERE (Cno = "CL101")))
+WHERE (Cno = "CS112")))
 
 Since this is a Type 2 query, itssubquery is executed first, followed by the main query, with the clauses considered in the following order:
 
 1.1. the inner FROM clause: FROM Take;
-1.2. the inner WHERE clause: WHERE (Cno="CL101");
+1.2. the inner WHERE clause: WHERE (Cno="CS112");
 1.3. the inner SELECT clause: SELECT Sno;
 1.4. the outer FROM clause:
 
@@ -1927,7 +1927,7 @@ In concluding this section, we note that we have not addressed here any semantic
 While there are very few questions that really require Type 3 queries- all of them too convoluted to be included in this essay- Type 3 queries form an essential part of SQL and provide an important alternative to the Type 2 formulations.
 Consider the query of Figure 28.1. SELECT Sno, Sname
 FROM Student
-WHERE ("CL101" IN
+WHERE ("CS112" IN
 (SELECTCno
 FROM Take
 WHERE (Sno = Student.Sno)))
@@ -2007,7 +2007,7 @@ We then evaluate the subquery for that value of Student.Sno, evaluate the IN ope
 
 We then repeat this process for every other row from the outer Student table.
 
-By following this trace, we can determine that this query asks our question E2- What are student numbers and names of students who take CL101?
+By following this trace, we can determine that this query asks our question E2- What are student numbers and names of students who take CS112?
 
 Several things should be noted here. First, we do evaluate the subquery anew for every outer Student row.
 
@@ -2017,15 +2017,15 @@ Third, the IN operator used here is the same old IN intro­ duced earlier; we onl
 
 Fourth, we are not limited to just a single correlation. For. example, the query of Figure 28.2 (which poses the question
 
-Who teaches CL101?) uses two correlations: Professor.Fname and Professor.Lname, both of which get their values from the outer Professor rows.
+Who teaches CS112?) uses two correlations: Professor.Fname and Professor.Lname, both of which get their values from the outer Professor rows.
 
 
-SELECT Fname, Lname FROM Professor WHERE ("CL101" IN
+SELECT Fname, Lname FROM Professor WHERE ("CS112" IN
 (SELECTCno
 FROM Take
 WHERE (Fname = Professor.Fname) AND (Lname = Professor.Lname)))
 
-Figure 28.2: A Type 3 query with two correlations, for the question Who teaches CL101?
+Figure 28.2: A Type 3 query with two correlations, for the question Who teaches CS112?
 
 
 
@@ -2080,12 +2080,12 @@ An example of the use of EXISTS is shown in Figure 29.1.
 SELECT Sno, Sname FROM Student
 WHERE EXISTS (SELECT•
 FROM Take
-WHERE (Sno = Student.Sno) AND (Cno = "CL101"))
+WHERE (Sno = Student.Sno) AND (Cno = "CS112"))
 
 Figure 29.1: An example query with EXISTS.
 
 
-We can now trace the query of Figure 29.1- after all, it is just a regular Type 3 query- anddetermine that it again poses our question E2- What are student numbers and names of students who take CL101? (We are intentionally staying with the same question here.)
+We can now trace the query of Figure 29.1- after all, it is just a regular Type 3 query- anddetermine that it again poses our question E2- What are student numbers and names of students who take CS112? (We are intentionally staying with the same question here.)
 
 
 
@@ -2114,9 +2114,9 @@ IITHE ESSENCE OF SQL:..A Gulde to Learning Most of SQL In the Least Amount otnme
 30Some Old Questions Revisited-Again
 In this section we look at an assortment of previously con­ sidered questions and develop their implementations using Type 3 queries. We begin with the queries just developed.
 
-By changing IN to NOT IN in  the  query of  Figure 28.1, we get our old question ES- Who does not take CL101? We also get this question by placing NOT directly in front of  EXISTS in the query of Figure 29.1.
+By changing IN to NOT IN in  the  query of  Figure 28.1, we get our old question ES- Who does not take CS112? We also get this question by placing NOT directly in front of  EXISTS in the query of Figure 29.1.
 
-By changing IN to NOT IN in the query  of  Figure  28.2, we get the question Who does not teach CL101? (Try posing this question using NOT EXISTS yourself.)
+By changing IN to NOT IN in the query  of  Figure  28.2, we get the question Who does not teach CS112? (Try posing this question using NOT EXISTS yourself.)
 
 We now consider the query of Figure 30.1, which shows an interesting implementation of question E9- Who takes exactly 2 courses?
 

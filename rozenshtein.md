@@ -109,10 +109,73 @@ E12. Who are the youngest students?
 E13. Who takes every course?
 ```
 
-### Note: This is obviously not a random series of questions. These questions, although they all look fairly similar, require a different levels of complication wrt SQL queries. 
+### Note: The above is obviously not a random series of questions. These questions, although they all look fairly similar, require a different levels of complication wrt SQL queries. 
+
+### We will start with `Type 1` Queries
+
+---
+
+# Introductionction to Type 1 Queries 
+
+### Questions E1 and E2 fall into the category of what we will call `Type 1`queries. 
+### IMPORTANT NOTE: The classification system we will use calls different queries `Type 1`, `Type 2`, and `Type 3` according to their properties. This classification is not used in the industry but I believe it is wonderful as a teaching tool. So don't expect anyone who hasn't read `The Essence of SQL` by David Rozenshtein to understand what a `Type 1`, `Type 2`, or `Type 3` query is before you explain it to them! 
+
+### All `Type 1A` SQL queries have the following basic form:
+
+```sql
+SELECT 
+  <list of desired columns> 
+FROM 
+  <table>
+WHERE 
+  <Boolean condition>;
+```
+### where `SELECT`, `FROM` and `WHERE` are SQL keywords designat­ing the three basic components, or clauses, of the query. 
+
+## IMPORTANT NOTE: While SQL is generally case insensitive, the (weak) consensus is that SQL is easier to read when you put ALL SQL KEYWORDS IN UPPER CASE without exception. So, you are REQUIRED to put ALL SQL KEYWORDS IN UPPER CASE in this class. Only relax the requirement of putting ALL SQL KEYWORDS IN UPPER CASE if your current/future boss gives you a direct order to do so, and even then you should put up a decent fight against the change before agreeing.
+
+### In thinking about, understanding, and composing `Type 1A` queries, ALWAYS CONSIDER THE `FROM` CLAUSE FIRST. 
+
+### The `FROM` clause lists the table or tables that need to be considered to answer the ques­tion. To determine which tables should go in this list, pretend that you have to answer the question without a computer system, using just paper copies of the tables, and think of which of them you would actually need.
+
+In question E1- Who takes CS112?- "Who" stands for stu­ dent numbers (Sno), and CS112 stands for a course number (Cno). Thus, since all relevant information is contained in table Take, the FROM clause becomes
+
+FROM Take
+
+Next, we consider the WHERE clause. It contains a Boolean condition which defines which rows from table(s) in the FROM clause should be retrieved by the query. For ques­ tion El this condition is for the course number to be CS112, thus making the WHERE clause
+WHERE (Cno = "CS112")   m
+
+(Whether one uses single or double quotes around string literals is usually system dependent. Also, while parenthe­ sis around conditions are often not required, we use them to improve readability.)
+
+Finally, the SELECT clause lists the column(s) that define the structure of the answer. Since in this case we just want the student numbers retrieved, the SELECT clause becomes
+
+SELECT Sno
+
+The final query then takes the form shown in Figure 5.1.
 
 
+SELECT Sno
+FROM Take
+WHERE (Cno = "CS112")
 
+Figure 5.1: Query Q1for question E1 - Who takes CS112?
+
+
+While it is true that this query does intuitively correspond to question El, intuition is not a reliable means for under­ standing SQL. So, to be safe in interpreting SQL queries, we introduce a conceptual device known as the query evaluation mechanism.
+
+A query evaluation mechanism gives us a precise and for­ mal algorithm to trace queries.
+
+This ability to trace is fundamental to all SQL
+programming, since it is only by following the trace
+that we can see how the answer is actually computed, and thus understand its true meaning.
+
+Different types of SQL queries have different evaluation mechanisms. The Type 1 evaluation mechanism is shown in Figure5.2
+
+1. Take a cross-product of all tables in the FROM clause­ i.e., create a temporary table consisting of all possible combinations of rows from all of the tables in the FROM clause. (If the FROM clause contains a single table, skip the cross-product and just use the table itself.)
+2. Consider every row from the result of Step 1 exactly once, and evaluate the WHERE clause condition for it.
+3. If the condition returns True in Step 2, formulate a resulting row according to the SELECT clause, and retrieve it.
+
+Figure 5.2: The Type 1 SQL evaluation mechanism.
 
 
 ## `E1`: Who takes CL101?
@@ -133,6 +196,25 @@ WHERE
 ### Always use SINGLE QUOTES when you are writing text in SQL queries.
 
 
+### All `Type 1B` SQL queries have the following basic form:
+
+```sql
+SELECT 
+  <list of desired columns> 
+FROM 
+  <table1>
+INNER JOIN 
+  <table2>
+ON
+  <join parameters>
+WHERE 
+  <Boolean condition>;
+```
+
+### We will see later that there are different join types in SQL that can be substituted for `INNER JOIN` in `Type 1B` queries.
+
+### Our Question `E2` from above (What are student ids and names of students who take CL101?) can be solved with a `Type 1B` query.
+
 ## `E2`: What are student ids and names of students who take CL101?
 ```sql
 --- E2: What are student ids and names of students who take CL101?
@@ -150,7 +232,7 @@ WHERE
 
 ```
 
-### output
+### Here is the query's output, aka the answer to Question `E2`:
 ```
  id |  name
 ----+--------
@@ -449,30 +531,84 @@ GROUP BY
           6
 (4 rows)
 ```
+
 ---
 
 
-### Introduction to Type 2 query is shown below
+## Introduction to Type 2 query
 
-### We begin the discussion by first explaining its syntax, then introduc­ ing the Type 2 evaluation mechanism, and finally tracing this query to determine the question it poses.
+### We begin the discussion by first explaining its syntax, then introduc­ing the Type 2 evaluation mechanism, and finally tracing this query to determine the question it poses.
+
+### A sample Type 2 SQL query.
 
 ```sql
-SELECT id, name FROM Student 
+SELECT id, name 
+FROM student 
 WHERE id IN
     (SELECT student_id
     FROM schedule
-    WHERE course_id = 'CL101')
--- A sample Type 2 SQL query.
+    WHERE course_id = 'CL101'
+    );
+
 ```
-### Syntactically, a Type 2 SQL query is a collection of several non-correlated component queries, with some of them nested in the WHERE clauses of the others. (The meaning of the term "non-correlated" will be explained in a moment.)
+## Definition: A **Type 2 SQL Query** is a collection of one or more non-correlated component queries, with some of them nested in the WHERE clauses of the others. (The meaning of the term "non-correlated" will be explained in a moment.)
 
-### Theoretically, there is no limit on the number of nesting lev­els or on the number of component queries involved. On a practical level, however, SQL compilers do impose some limitations in this regard (e.g., no more than 16 nesting lev­ els or 256 component queries), but these rarely present any real problems.
+### Theoretically, there is no limit on the number of nesting lev­els or on the number of component queries involved. On a practical level, however, SQL compilers do impose some limitations in this regard (e.g., no more than 16 nesting lev­els), but these rarely present any real problems.
 
-### In the above example, we have two component queries. The inner query (called the subquery) is nested in the WHERE clause of the outer query (called the main query), and the queries are connected by the list-membership operator `IN`. 
+### Our Sample Type 2 query has two component queries. The inner query (called the subquery) is nested in the WHERE clause of the outer query (called the main query), and the queries are connected by the list-membership operator `IN`. 
 
-### A query is called non-correlated if all column references in it are local- i.e., all columns come from, or are bound to, the tables in the local FROM clause. Any non-local column ref­ erence is called a correlation, and the query containing it becomes correlated.
+### Where is the Inner Query?
+```sql
+SELECT id, name FROM student 
+WHERE id IN
+    (<INNER QUERY>);
+```
 
-### In determining these column-to-table bindings, SQL follows the standard "inside-out, try the local scope first" scope rules. Specifically, given a column reference, SQL first tries to find some table in the local FROM clause containing that column. If the column reference also involves a prefix­ either a table name or an alias- then SQL also looks for the match on that prefix. Three alternative outcomes are then possible.
+### Where is the Outer Query?
+```sql
+<OUTER QUERY> IN
+    (SELECT student_id
+    FROM schedule
+    WHERE course_id = 'CL101');
+```
+
+### Now put the Outer and Inner Queries back together again. The Outer Query goes on the outside and the Inner Query on the inside!
+```sql
+SELECT id, name FROM student 
+WHERE id IN
+    (SELECT student_id
+    FROM schedule
+    WHERE course_id = 'CL101');
+
+```
+
+### What is a non-correlated query?
+### Definition: A query is called **non-correlated** if all column references in it are local- i.e., all columns come from, or are bound to, the tables in the local `FROM` clause. Any non-local column ref­erence is called a correlation, and the query containing it becomes correlated.
+
+### Alternative Definition: A Query is non-correlated when any **INNER QUERY** CAN BE RUN SEPARATELY ON ITS OWN IF DESIRED, i.e., IT HAS NO REFERENCE TO any of the columns, tables, or aliases in the *OUTER QUERY*!
+
+### We see that the *Inner Query* (shown again below) works perfectly fine on a stand-alone basis and produces valid SQL output. 
+### Therefore our sample query is *non-correlated*.
+
+```sql
+SELECT student_id 
+FROM schedule
+WHERE course_id = 'CL101';
+```
+
+### Output
+```
+ student_id
+------------
+          1
+          2
+          3
+          4
+
+```
+### In oue 
+
+### In determining these column-to-table bindings, SQL follows the standard "inside-out, try the local scope first" scope rules. Specifically, given a column reference, SQL first tries to find some table in the local FROM clause containing that column. If the column reference also involves a prefix­ either a table name or an alias, then SQL also looks for the match on that prefix. Three alternative outcomes are then possible.
 
 1. SQL finds a single such table and successfully binds that column reference to that table.
 2. SQL finds several such tables. Then column reference
@@ -586,3 +722,5 @@ AND (Y.course_id < schedule.course_id)))
 ### This query is based on rephrasing question E9 as Who takes at least 2 courses and does not take at least 3 courses? The main query poses Who takes at least 2 courses? and is copied from query Q7. 0/ve have used the less-than operator in its condi­ tion to remove duplicates from the final answer. The sub­ query again poses Who takes at least 3 courses? (Here, we have used less-than operators for conciseness.) The NOT in the main WHERE clause again achieves the desired negation.
 
 ### We note that even though we have used the same alias name X in both the main query and in the subquery, because of the scope rules, no confusion arises.
+
+### Translating Your Request into SQL
