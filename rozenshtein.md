@@ -557,14 +557,14 @@ WHERE id IN
 
 ### Our Sample Type 2 query has two component queries. The inner query (called the subquery) is nested in the WHERE clause of the outer query (called the main query), and the queries are connected by the list-membership operator `IN`. 
 
-### Where is the Inner Query?
+### Where is the Inner Query (aka the subquery)?
 ```sql
 SELECT id, name FROM student 
 WHERE id IN
     (<INNER QUERY>);
 ```
 
-### Where is the Outer Query?
+### Where is the Outer Query (aka the main query)?
 ```sql
 <OUTER QUERY> IN
     (SELECT student_id
@@ -587,7 +587,7 @@ WHERE id IN
 
 ### Alternative Definition: A Query is non-correlated when any **INNER QUERY** CAN BE RUN SEPARATELY ON ITS OWN IF DESIRED, i.e., IT HAS NO REFERENCE TO any of the columns, tables, or aliases in the *OUTER QUERY*!
 
-### We see that the *Inner Query* (shown again below) works perfectly fine on a stand-alone basis and produces valid SQL output. 
+### We see that the **Inner Query** (shown again below) works perfectly fine on a stand-alone basis and produces valid SQL output. 
 ### Therefore our sample query is *non-correlated*.
 
 ```sql
@@ -604,9 +604,10 @@ WHERE course_id = 'CL101';
           2
           3
           4
-
 ```
-### In oue 
+
+
+## The Gory Details!
 
 ### In determining these column-to-table bindings, SQL follows the standard "inside-out, try the local scope first" scope rules. Specifically, given a column reference, SQL first tries to find some table in the local FROM clause containing that column. If the column reference also involves a prefix­ either a table name or an alias, then SQL also looks for the match on that prefix. Three alternative outcomes are then possible.
 
@@ -618,40 +619,40 @@ clause. Then column reference is not local. SQL then looks at the next outer sco
 
 ### This process continues (using the same three possibilities) until either a column reference is successfully bound, or an ambiguity is found, or the binding process "falls off" the main query, in which case the column reference cannot be bound at all, and the appropriate error is declared.
 
-### Given this process and the query of Figure 10.1, columns id and course_id in its subquery are bound to the inner schedule table, and columns id and name in its main query are bound to the outer Student table, thus making all bindings local, the component queries non-correlated, and this entire query of Type 2.
-
-### The formal syntactic condition for a multi-level (i.e., with subqueries) query to be of 'Type 2 is presented in Figure 10.2.
+### Given this process, `student_id` and `course_id` in the inner query are bound to the inner `schedule` table, and columns `id` and `name` in its main query are bound to the outer student table, thus making all bindings local, the component queries non-correlated, and this entire query of Type 2.
 
 ### A query with subqueries is of Type 2 if every component query in it is non-correlated or, equivalently, if every column reference in it is local.
+
+
+### Now that we've seen the gory details, let's go through it for our sample Type 2 query.
 
 The evaluation mechanism for Type 2 queries is presented below:
 
 ## To execute a Type 2 query, execute its component queries in the "inside-out" order- i.e., with the inner-most nested subquery first, replacing each query by its result as it gets evaluated.
 
-In case of the query above, ie
-
+### The full query
 ```sql
 SELECT id, name FROM Student 
 WHERE id IN
     (SELECT student_id
     FROM schedule
-    WHERE course_id = 'CL101')
+    WHERE course_id = 'CL101');
 ```
 
-The subquery is
+### The subquery (aka inner query) is
 ```sql
-SELECT student_id FROM schedule WHERE (course_id = 'CL101')
+SELECT student_id FROM schedule WHERE (course_id = 'CL101');
 ```
 ### This is a regular Type 1 query, is executed first. Its answer is then substituted into its place in the main query, which is executed next.
 
 ```sql
-SELECT id, name FROM Student WHERE (id IN( ...))
+SELECT id, name FROM student WHERE id IN (<subquery>);
 ```
 ### Note that, at this point, the main query has been reduced to a simple Type 1 query. Also note that, since the subquery retrieves a single column in its SELECT clause, the answer to it is just a list of values. Thus, the use of the list membership operator IN as the inter­ query connector is quite appropriate.
 
-### We note that Type 2 queries fundamentally involve multiple data passes - one for each component query. In this case, the first pass is through table schedule in the subquery, and the second pass is through table Student in the main query.
+### We note that Type 2 queries fundamentally involve multiple data passes; one for each component query. In this case, the first pass is through table `schedule` in the subquery, and the second pass is through table `student` in the main query.
 
-Finally, returning once more to the entire query, what question does it answer?
+### Finally, returning once more to the entire query, what question does it answer?
 
 ```sql
 SELECT id, name FROM Student 
@@ -660,7 +661,13 @@ WHERE id IN
     FROM schedule
     WHERE course_id = 'CL101')
 ```
-### Answer: What are the student numbers and names of students who take CL101?
+
+### This query answers the question: What are the student numbers and names of students who take CL101?
+
+
+### Congratulations! You've just learned all about Type 2 Queries!
+### <<Insert Party GIF here>>
+
 
 ### Using Type 2 to Implement Real Negation
 ### Questions involving real negation need two passes through the data, using the fol­lowing general strategy:
